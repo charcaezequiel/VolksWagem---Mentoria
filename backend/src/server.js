@@ -1,0 +1,99 @@
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
+const cron = require('node-cron');
+
+const { sequelize, User } = require('./models');
+const errorHandler = require('./middleware/errorHandler');
+
+const authRoutes = require('./routes/auth');
+const deviceRoutes = require('./routes/devices');
+const consumptionRoutes = require('./routes/consumption');
+const invoiceRoutes = require('./routes/invoices');
+const alertRoutes = require('./routes/alerts');
+const tariffRoutes = require('./routes/tariffs');
+const predictionRoutes = require('./routes/predictions');
+const dashboardRoutes = require('./routes/dashboard');
+const { checkThreshold, checkPeakDetection } = require('./services/alertService');
+
+const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CORS_ORIGIN || '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/auth', authRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/consumption', consumptionRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/tariffs', tariffRoutes);
+app.use('/api/predictions', predictionRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use(errorHandler);
+
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.on('join-user', (userId) => {
+    socket.join(`user-${userId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+app.set('io', io);
+
+cron.schedule('0 * * * *', async () => {
+  console.log('Running hourly alert checks...');
+  try {
+    const users = await User.findAll({ where: { is_active: true } });
+    for (const user of users) {
+      await checkThreshold(user.id);
+      await checkPeakDetection(user.id);
+    }
+    console.log('Alert checks completed.');
+  } catch (error) {
+    console.error('Error running alert checks:', error.message);
+  }
+});
+
+const PORT = process.env.PORT || 3001;
+
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connected.');
+
+    await sequelize.sync({ force: false });
+    console.log('Database synchronized.');
+
+    server.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+module.exports = { app, server, io };
