@@ -1,0 +1,29 @@
+{
+  "name": "controlar-energia-backend",
+  "version": "1.0.0",
+  "description": "ControlAR Energía - Backend API REST",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "db:migrate": "node src/config/migrate.js",
+    "db:seed": "node seeds/seed.js",
+    "db:reset": "node src/config/migrate.js && node seeds/seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "2.4.3",
+    "cors": "2.8.5",
+    "dotenv": "10.0.0",
+    "express": "4.17.3",
+    "express-validator": "6.15.0",
+    "jsonwebtoken": "8.5.1",
+    "node-cron": "3.0.2",
+    "pg": "8.7.3",
+    "pg-hstore": "2.3.4",
+    "sequelize": "6.21.0",
+    "socket.io": "4.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "2.0.20"
+  }
+}
