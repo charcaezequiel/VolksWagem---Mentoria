@@ -9,9 +9,11 @@ const Invoice = require('./Invoice');
 const Alert = require('./Alert');
 const Tariff = require('./Tariff');
 const Prediction = require('./Prediction');
+const Recommendation = require('./Recommendation');
 
 User.hasMany(Device, { foreignKey: 'user_id', as: 'devices' });
 User.hasMany(Alert, { foreignKey: 'user_id', as: 'alerts' });
+User.hasMany(Recommendation, { foreignKey: 'user_id', as: 'recommendations' });
 User.belongsTo(Province, { foreignKey: 'province_id', as: 'province' });
 
 Device.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -28,6 +30,9 @@ Invoice.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 Alert.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Alert.belongsTo(Device, { foreignKey: 'device_id', as: 'device' });
+
+Recommendation.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Recommendation.belongsTo(Device, { foreignKey: 'device_id', as: 'device' });
 
 Province.hasMany(User, { foreignKey: 'province_id', as: 'users' });
 Province.hasMany(Tariff, { foreignKey: 'province_id', as: 'tariffs' });
@@ -47,4 +52,5 @@ module.exports = {
   Alert,
   Tariff,
   Prediction,
+  Recommendation,
 };

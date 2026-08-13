@@ -63,3 +63,6 @@ Desktop.ini
 # ============ Misc del proyecto ============
 .db-initialized
 *.zip
+
+# Backup de editores
+*~

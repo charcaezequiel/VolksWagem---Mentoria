@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield } from 'lucide-react';
+import { User, Shield, Mail, MapPin, BellRing } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import PageSection from '../components/common/PageSection';
+import Field from '../components/common/Field';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
@@ -21,7 +23,7 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       await updateProfile(form);
-      toast.success('Perfil actualizado');
+      toast.success('Perfil actualizado correctamente');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al actualizar');
     }
@@ -43,53 +45,59 @@ export default function ProfilePage() {
   };
 
   return (
-    <div>
+    <div className="profile-page">
       <div className="page-header">
-        <h2><User size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />Mi Perfil</h2>
+        <div className="page-header-text">
+          <h2><User size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />Mi Perfil</h2>
+          <p className="page-header-subtitle">Administrá tus datos personales, tu provincia y las preferencias de alertas.</p>
+        </div>
       </div>
 
-      <div className="profile-card">
-        <div className="card profile-section">
-          <h3>Información Personal</h3>
+      <div className="profile-grid">
+        <PageSection icon={<User size={18} />} title="Información personal" subtitle="Estos datos se usan para calcular tus tarifas y predicciones.">
           <form onSubmit={handleProfileUpdate}>
             <div className="form-group">
-              <label className="form-label">Nombre</label>
-              <input className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+              <Field label="Nombre completo" icon={<User size={15} />} required>
+                <input className="form-input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required placeholder="Tu nombre" />
+              </Field>
             </div>
             <div className="form-group">
-              <label className="form-label">Email</label>
-              <input className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.6 }} />
+              <Field label="Email" icon={<Mail size={15} />} hint="No se puede modificar.">
+                <input className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.6 }} />
+              </Field>
             </div>
             <div className="form-group">
-              <label className="form-label">Provincia</label>
-              <select className="form-select" value={form.province_id} onChange={e => setForm({ ...form, province_id: e.target.value })}>
-                <option value="">Seleccionar provincia</option>
-                {provinces.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>)}
-              </select>
+              <Field label="Provincia" icon={<MapPin size={15} />} hint="Se usa para aplicar las tarifas de tu distribuidor.">
+                <select className="form-select" value={form.province_id} onChange={e => setForm({ ...form, province_id: e.target.value })}>
+                  <option value="">Seleccionar provincia</option>
+                  {provinces.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>)}
+                </select>
+              </Field>
             </div>
             <div className="form-group">
-              <label className="form-label">Umbral de Alerta (kWh/mes)</label>
-              <input className="form-input" type="number" step="0.1" value={form.alert_threshold_kwh} onChange={e => setForm({ ...form, alert_threshold_kwh: e.target.value })} placeholder="Ej: 400" />
-              <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Recibirás alertas si superás este consumo mensual</small>
+              <Field label="Umbral de alerta (kWh/mes)" icon={<BellRing size={15} />} hint="Recibirás alertas si superás este consumo mensual.">
+                <input className="form-input" type="number" step="0.1" value={form.alert_threshold_kwh} onChange={e => setForm({ ...form, alert_threshold_kwh: e.target.value })} placeholder="Ej: 400" />
+              </Field>
             </div>
-            <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar Cambios'}</button>
+            <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
           </form>
-        </div>
+        </PageSection>
 
-        <div className="card profile-section">
-          <h3><Shield size={16} style={{ marginRight: 8, verticalAlign: 'middle' }} />Cambiar Contraseña</h3>
+        <PageSection icon={<Shield size={18} />} title="Seguridad" subtitle="Cambiá tu contraseña de acceso.">
           <form onSubmit={handlePasswordChange}>
             <div className="form-group">
-              <label className="form-label">Contraseña Actual</label>
-              <input className="form-input" type="password" value={passwords.currentPassword} onChange={e => setPasswords({ ...passwords, currentPassword: e.target.value })} required />
+              <Field label="Contraseña actual" icon={<Shield size={15} />} required>
+                <input className="form-input" type="password" value={passwords.currentPassword} onChange={e => setPasswords({ ...passwords, currentPassword: e.target.value })} required placeholder="••••••••" />
+              </Field>
             </div>
             <div className="form-group">
-              <label className="form-label">Nueva Contraseña</label>
-              <input className="form-input" type="password" value={passwords.newPassword} onChange={e => setPasswords({ ...passwords, newPassword: e.target.value })} required minLength={6} />
+              <Field label="Nueva contraseña" icon={<Shield size={15} />} required hint="Mínimo 6 caracteres.">
+                <input className="form-input" type="password" value={passwords.newPassword} onChange={e => setPasswords({ ...passwords, newPassword: e.target.value })} required minLength={6} placeholder="••••••••" />
+              </Field>
             </div>
-            <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Cambiando...' : 'Cambiar Contraseña'}</button>
+            <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Cambiando...' : 'Cambiar contraseña'}</button>
           </form>
-        </div>
+        </PageSection>
       </div>
     </div>
   );

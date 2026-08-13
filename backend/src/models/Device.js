@@ -63,6 +63,15 @@ const Device = sequelize.define('Device', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  device_token: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+    unique: true,
+  },
+  last_seen_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

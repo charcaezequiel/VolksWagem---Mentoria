@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Calculator } from 'lucide-react';
+import { DollarSign, Calculator, MapPin, Scale, Building2 } from 'lucide-react';
 import { api } from '../services/api';
 import DataTable from '../components/common/DataTable';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import PageSection from '../components/common/PageSection';
+import Field from '../components/common/Field';
 import toast from 'react-hot-toast';
 
 export default function TariffsPage() {
@@ -50,49 +52,65 @@ export default function TariffsPage() {
   };
 
   const columns = [
-    { header: 'Rango (kWh)', key: 'range', render: (_, r) => `${r.tier_from || 0} - ${r.tier_to || '∞'}` },
-    { header: 'Precio ($/kWh)', key: 'price', render: (_, r) => `$${(r.price_per_kwh || 0).toFixed(4)}` },
+    { header: 'Rango (kWh)', key: 'range', render: (_, r) => <span className="table-mono">{r.tier_from || 0} - {r.tier_to || '∞'}</span> },
+    { header: 'Precio ($/kWh)', key: 'price', render: (_, r) => <span className="table-mono"><strong>${(r.price_per_kwh || 0).toFixed(4)}</strong></span> },
   ];
 
-  const selectedProvinceName = provinces.find(p => (p.id || p._id) === selectedProvince)?.name || '';
+  const selectedProvinceData = provinces.find(p => (p.id || p._id) === selectedProvince);
 
   return (
     <div>
       <div className="page-header">
-        <h2><DollarSign size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />Tarifas</h2>
+        <div className="page-header-text">
+          <h2><DollarSign size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />Tarifas de Energía</h2>
+          <p className="page-header-subtitle">Consultá las escalas tarifarias de cada provincia y calculá el costo de tu consumo.</p>
+        </div>
       </div>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="form-group">
-          <label className="form-label">Seleccionar Provincia</label>
-          <select className="form-select" value={selectedProvince} onChange={e => setSelectedProvince(e.target.value)} style={{ maxWidth: 300 }}>
+      <PageSection
+        icon={<MapPin size={18} />}
+        title="Seleccionar provincia"
+        subtitle={selectedProvinceData ? `Distribuidora: ${selectedProvinceData.distributor_name || 'N/A'} · Regulador: ${selectedProvinceData.regulator_name || 'N/A'}` : 'Elegí una provincia para ver sus tarifas.'}
+        style={{ marginBottom: 24 }}
+      >
+        <div className="province-picker">
+          <Building2 size={18} />
+          <select className="form-select" value={selectedProvince} onChange={e => setSelectedProvince(e.target.value)}>
             {provinces.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>)}
           </select>
         </div>
-        {selectedProvinceName && <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Distribuidora: {provinces.find(p => (p.id || p._id) === selectedProvince)?.distributor_name || 'N/A'}</p>}
-      </div>
+      </PageSection>
 
       {loading ? <LoadingSpinner /> : (
         <div className="dashboard-charts">
-          <div className="card">
-            <h3 className="chart-title">Escalas Tarifarias — {selectedProvinceName}</h3>
+          <PageSection
+            icon={<Scale size={18} />}
+            title={`Escalas tarifarias — ${selectedProvinceData?.name || ''}`}
+            subtitle="Rangos de consumo y precio por kWh"
+            style={{ marginBottom: 0 }}
+          >
             <DataTable columns={columns} data={tariffs} emptyMessage="No hay tarifas disponibles para esta provincia" />
-          </div>
+          </PageSection>
 
-          <div className="tariff-calculator">
-            <h3 className="chart-title"><Calculator size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} />Calculadora de Costo</h3>
+          <PageSection
+            icon={<Calculator size={18} />}
+            title="Calculadora de costo"
+            subtitle="Estimá cuánto pagarías según tu consumo"
+            style={{ marginBottom: 0 }}
+          >
             <div className="form-group">
-              <label className="form-label">Consumo estimado (kWh)</label>
-              <input className="form-input" type="number" step="0.01" value={calcKwh} onChange={e => setCalcKwh(e.target.value)} placeholder="Ej: 350" />
+              <Field label="Consumo estimado (kWh)" icon={<DollarSign size={15} />} hint="Aplicá las tarifas de la provincia seleccionada.">
+                <input className="form-input" type="number" step="0.01" min="0" value={calcKwh} onChange={e => setCalcKwh(e.target.value)} placeholder="Ej: 350" />
+              </Field>
             </div>
             <button className="btn btn-primary" onClick={calculateCost}>Calcular</button>
             {calcResult && (
-              <div style={{ marginTop: 20, padding: 16, background: '#fff', borderRadius: 8, border: '1px solid #bbf7d0' }}>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Para {calcResult.kwh} kWh:</div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--primary)' }}>${calcResult.total}</div>
+              <div className="calc-result">
+                <div className="calc-result-label">Para {calcResult.kwh} kWh:</div>
+                <div className="calc-result-value">${calcResult.total}</div>
               </div>
             )}
-          </div>
+          </PageSection>
         </div>
       )}
     </div>

@@ -8,7 +8,7 @@ const { addReading } = require('../validators/consumptionValidators');
 
 router.post('/readings', authenticateToken, validate(addReading), async (req, res, next) => {
   try {
-    const { instant_watts, accumulated_kwh_day, device_id, source } = req.body;
+    const { instant_watts, accumulated_kwh_day, device_id, source, voltage, current, frequency, power_factor } = req.body;
 
     const reading = await ConsumptionReading.create({
       user_id: req.user.id,
@@ -16,7 +16,16 @@ router.post('/readings', authenticateToken, validate(addReading), async (req, re
       accumulated_kwh_day,
       device_id,
       source,
+      voltage: voltage != null ? voltage : null,
+      current: current != null ? current : null,
+      frequency: frequency != null ? frequency : null,
+      power_factor: power_factor != null ? power_factor : null,
     });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user-${req.user.id}`).emit('reading:new', { reading });
+    }
 
     res.status(201).json({ reading });
   } catch (error) {

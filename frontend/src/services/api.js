@@ -33,6 +33,8 @@ export const api = {
     update: (id, data) => instance.put(`/devices/${id}`, data),
     delete: (id) => instance.delete(`/devices/${id}`),
     getCategories: () => instance.get('/devices/categories'),
+    getReadings: (id, params) => instance.get(`/devices/${id}/readings`, { params }),
+    regenerateToken: (id) => instance.post(`/devices/${id}/regenerate-token`),
   },
   appliances: {
     getAll: () => instance.get('/appliances'),
@@ -76,5 +78,17 @@ export const api = {
     getDaily: (params) => instance.get('/dashboard/daily', { params }),
     getMonthly: (params) => instance.get('/dashboard/monthly', { params }),
     getDeviceBreakdown: (params) => instance.get('/dashboard/device-breakdown', { params }),
+  },
+  ai: {
+    getStatus: () => instance.get('/ai/status'),
+    getInsights: () => instance.get('/ai/insights'),
+    getRecommendations: () => instance.get('/ai/recommendations'),
+    generateRecommendations: (force) => instance.post('/ai/recommendations/generate', null, { params: { force } }),
+    updateRecommendation: (id, data) => instance.put(`/ai/recommendations/${id}`, data),
+    deleteRecommendation: (id) => instance.delete(`/ai/recommendations/${id}`),
+    chat: (data) => instance.post('/ai/chat', data),
+  },
+  sensor: {
+    addReading: (data) => instance.post('/sensor/readings', data),
   },
 };

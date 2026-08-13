@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const crypto = require('crypto');
+const { User, Device } = require('../models');
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -44,4 +45,36 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-module.exports = { authenticateToken, optionalAuth };
+const generateDeviceToken = () => {
+  return crypto.randomBytes(24).toString('hex');
+};
+
+const authenticateSensor = async (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  const deviceToken = token || req.headers['x-device-token'] || req.body.device_token;
+
+  if (!deviceToken) {
+    return res.status(401).json({ error: 'Device token required' });
+  }
+
+  try {
+    const device = await Device.findOne({ where: { device_token: deviceToken } });
+    if (!device || !device.is_active) {
+      return res.status(401).json({ error: 'Invalid or inactive device token' });
+    }
+
+    const user = await User.findByPk(device.user_id);
+    if (!user || !user.is_active) {
+      return res.status(401).json({ error: 'Invalid or inactive user' });
+    }
+
+    req.device = device;
+    req.user = user;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid device token' });
+  }
+};
+
+module.exports = { authenticateToken, optionalAuth, authenticateSensor, generateDeviceToken };

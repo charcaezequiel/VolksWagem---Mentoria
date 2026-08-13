@@ -1,53 +1,8 @@
-/*
- * ============================================================
- *  ControlAR Energia - Monitor de consumo con ESP32 + PZEM-004T
- * ============================================================
- *  Mide voltaje, corriente, potencia activa, energia acumulada,
- *  frecuencia y factor de potencia, y los envia al backend de
- *  ControlAR (Node.js/Express + PostgreSQL) mediante HTTP POST:
- *
- *      POST /api/consumption/readings
- *      Authorization: Bearer <JWT_TOKEN>
- *      Body: { "instant_watts": 1250.5,
- *              "accumulated_kwh_day": 3.214,
- *              "device_id": "<UUID>",
- *              "source": "sensor" }
- *
- *  Hardware:
- *    - ESP32 (este codigo usa Serial2 en pines 16/17)
- *    - Modulo medidor de energia PZEM-004T v3.0
- *    - Fuente de 5V para el ESP32
- *
- *  Conexiones PZEM-004T v3.0  <->  ESP32:
- *    PZEM VCC (5V)  ->  ESP32 VIN
- *    PZEM GND       ->  ESP32 GND
- *    PZEM TX        ->  ESP32 RX2 (pin 16)
- *    PZEM RX        ->  ESP32 TX2 (pin 17)
- *
- *  Librerias (Arduino IDE 2.x -> Administrador de librerias):
- *    - "PZEM004Tv30"  de olehs
- *    - "ArduinoJson"  de Benoit Blanchon
- *
- *  Pasos antes de subir el codigo:
- *    1) Crear el dispositivo en la web (Dispositivos) y copiar su UUID.
- *    2) Obtener un token JWT iniciando sesion:
- *         curl -X POST http://localhost:3001/api/auth/login \
- *              -H "Content-Type: application/json" \
- *              -d '{"email":"demo@controlar.com","password":"123456"}'
- *       (copiar el campo "token" de la respuesta; dura 7 dias)
- *    3) Completar WIFI_SSID, WIFI_PASS, SERVER_URL, JWT_TOKEN y DEVICE_ID.
- *
- *  Nota: la energia acumulada se reinicia a 0 cada dia a medianoche
- *  (hora local) para que "accumulated_kwh_day" sea el consumo del dia.
- * ============================================================
- */
 
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <PZEM004Tv30.h>
-
-/* ---------------- CONFIGURACION (editá estos valores) ---------------- */
 
 // Red Wi-Fi del hogar
 const char* WIFI_SSID = "TU_RED_WIFI";
@@ -57,11 +12,11 @@ const char* WIFI_PASS = "TU_CLAVE_WIFI";
 //   ej. "http://192.168.1.50:3001"
 // Si el backend corre en la misma PC con USB, probá con tu IP local.
 const char* SERVER_URL = "http://192.168.1.50:3001";
-const String API_PATH = "/api/consumption/readings";
+const String API_PATH = "/api/sensor/readings";
 
-// Token JWT (del paso 2) y UUID del dispositivo (del paso 1)
-const String JWT_TOKEN = "PEGAR_TOKEN_AQUI";
-const String DEVICE_ID = "PEGAR_UUID_DEL_DISPOSITIVO";
+// Token del sensor del dispositivo (se genera en el backend al crear el
+// dispositivo y se puede copiar/regenerar desde la pagina de Detalle).
+const String DEVICE_TOKEN = "PEGAR_TOKEN_DEL_SENSOR";
 
 // Intervalo de envio en milisegundos (30 s = 30000, 1 min = 60000)
 const unsigned long SEND_INTERVAL_MS = 30000;
@@ -128,16 +83,12 @@ void sendReading(float voltage, float current, float power,
   HTTPClient http;
   http.begin(String(SERVER_URL) + API_PATH);
   http.addHeader("Content-Type", "application/json");
-  http.addHeader("Authorization", "Bearer " + JWT_TOKEN);
+  http.addHeader("Authorization", "Bearer " + DEVICE_TOKEN);
 
-  // Documento JSON con los campos que espera el backend
+  // Documento JSON con los campos que espera el endpoint /api/sensor/readings
   StaticJsonDocument<256> doc;
   doc["instant_watts"] = roundf(power * 100.0) / 100.0;          // requerido
   doc["accumulated_kwh_day"] = roundf(energy * 1000.0) / 1000.0; // kWh del dia
-  doc["device_id"] = DEVICE_ID;                                   // UUID
-  doc["source"] = "sensor";
-
-  // Datos adicionales (el backend los ignora por ahora, pero quedan en el log)
   doc["voltage"] = roundf(voltage * 10.0) / 10.0;
   doc["current"] = roundf(current * 1000.0) / 1000.0;
   doc["frequency"] = roundf(frequency * 10.0) / 10.0;

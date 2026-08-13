@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Cpu, Zap, FileText, Bell, Brain, DollarSign, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Cpu, Zap, FileText, Bell, Brain, DollarSign, Bot, Lightbulb, User, LogOut, Menu, X } from 'lucide-react';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,6 +11,11 @@ const navItems = [
   { to: '/alerts', label: 'Alertas', icon: Bell },
   { to: '/predictions', label: 'Predicciones', icon: Brain },
   { to: '/tariffs', label: 'Tarifas', icon: DollarSign },
+];
+
+const aiItems = [
+  { to: '/assistant', label: 'Asistente IA', icon: Bot, highlight: true },
+  { to: '/recommendations', label: 'Recomendaciones', icon: Lightbulb },
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
@@ -30,6 +35,23 @@ export default function Sidebar({ collapsed, onToggle }) {
             {!collapsed && <span>{label}</span>}
           </NavLink>
         ))}
+
+        {!collapsed && <div className="sidebar-section-label">Inteligencia Artificial</div>}
+        {aiItems.map(({ to, label, icon: Icon, highlight }) => (
+          <NavLink
+            key={to}
+            to={to}
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''} ${highlight ? 'sidebar-ai' : ''}`}
+          >
+            <Icon size={20} />
+            {!collapsed && <span>{label}</span>}
+          </NavLink>
+        ))}
+
+        <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <User size={20} />
+          {!collapsed && <span>Perfil</span>}
+        </NavLink>
       </nav>
       <div className="sidebar-footer">
         {!collapsed && (

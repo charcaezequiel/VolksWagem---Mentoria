@@ -18,6 +18,8 @@ const alertRoutes = require('./routes/alerts');
 const tariffRoutes = require('./routes/tariffs');
 const predictionRoutes = require('./routes/predictions');
 const dashboardRoutes = require('./routes/dashboard');
+const aiRoutes = require('./routes/ai');
+const sensorRoutes = require('./routes/sensor');
 const { checkThreshold, checkPeakDetection } = require('./services/alertService');
 
 const app = express();
@@ -42,6 +44,8 @@ app.use('/api/alerts', alertRoutes);
 app.use('/api/tariffs', tariffRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/sensor', sensorRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -68,8 +72,13 @@ cron.schedule('0 * * * *', async () => {
   try {
     const users = await User.findAll({ where: { is_active: true } });
     for (const user of users) {
-      await checkThreshold(user.id);
-      await checkPeakDetection(user.id);
+      const thresholdAlert = await checkThreshold(user.id);
+      const peakAlert = await checkPeakDetection(user.id);
+      for (const alert of [thresholdAlert, peakAlert]) {
+        if (alert && io) {
+          io.to(`user-${user.id}`).emit('alert:new', { alert });
+        }
+      }
     }
     console.log('Alert checks completed.');
   } catch (error) {

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Brain, RefreshCw, AlertTriangle, Wallet, Zap, CalendarDays, ShieldCheck } from 'lucide-react';
+import { Brain, RefreshCw, AlertTriangle, Wallet, Zap, CalendarDays, ShieldCheck, TrendingUp, Scale, Target } from 'lucide-react';
 import { api } from '../services/api';
 import LineChart from '../components/charts/LineChart';
 import BarChart from '../components/charts/BarChart';
 import DataTable from '../components/common/DataTable';
 import StatCard from '../components/common/StatCard';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import PageSection from '../components/common/PageSection';
 import toast from 'react-hot-toast';
 
 const formatARS = (value) =>
@@ -81,7 +82,10 @@ export default function PredictionsPage() {
   return (
     <div>
       <div className="page-header">
-        <h2><Brain size={20} style={{ marginRight: 8, verticalAlign: 'middle' }} />Predicción de Boleta — IA</h2>
+        <div className="page-header-text">
+          <h2><Brain size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />Predicción de Boleta — IA</h2>
+          <p className="page-header-subtitle">Estimación de tu consumo y costo del próximo mes con el modelo de predicción.</p>
+        </div>
         <button className="btn btn-primary" onClick={handleRegenerate} disabled={regenerating}>
           <RefreshCw size={16} className={regenerating ? 'spinning' : ''} />
           {regenerating ? 'Recalculando...' : 'Recalcular Pronóstico'}
@@ -89,11 +93,9 @@ export default function PredictionsPage() {
       </div>
 
       {loading ? <LoadingSpinner /> : !forecast ? (
-        <div className="card" style={{ textAlign: 'center', padding: 60 }}>
-          <Zap size={48} style={{ color: 'var(--text-muted)', marginBottom: 16 }} />
-          <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>
-            No hay datos suficientes para generar el pronóstico. Asegurate de tener tu provincia configurada y datos de consumo cargados.
-          </p>
+        <div className="card empty-state" style={{ padding: 60 }}>
+          <Zap size={40} />
+          <p>No hay datos suficientes para generar el pronóstico. Asegurate de tener tu provincia configurada y datos de consumo cargados.</p>
           <button className="btn btn-primary" onClick={load}>Reintentar</button>
         </div>
       ) : (
@@ -126,47 +128,42 @@ export default function PredictionsPage() {
             />
           </div>
 
-          <div className="dashboard-charts">
-            <div className="card">
-              <h3 className="chart-title">Pronóstico diario — {forecast.month_name} {forecast.year}</h3>
+          <div className="dashboard-charts" style={{ marginBottom: 24 }}>
+            <PageSection icon={<TrendingUp size={18} />} title={`Pronóstico diario — ${forecast.month_name} ${forecast.year}`} subtitle={`${forecast.province} · ${forecast.distributor} · Modelo ${forecast.model_version}`} style={{ marginBottom: 0 }}>
               {dailyChartData.length > 0 && (
                 <LineChart data={dailyChartData} xKey="date" yKey="kwh" color="#8b5cf6" />
               )}
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: 8 }}>
-                Provincia: {forecast.province} — Distribuidor: {forecast.distributor} — Modelo: {forecast.model_version}
-              </p>
-            </div>
-
-            <div className="card">
-              <h3 className="chart-title">Comparación mensual (kWh)</h3>
+            </PageSection>
+            <PageSection icon={<Scale size={18} />} title="Comparación mensual (kWh)" subtitle="Últimos meses contra el mes pronosticado" style={{ marginBottom: 0 }}>
               {monthChartData.length > 0 && (
                 <BarChart data={monthChartData} xKey="month" yKey="consumption" color="#10b981" />
               )}
-            </div>
+            </PageSection>
           </div>
 
           <div className="dashboard-charts">
-            <div className="card">
-              <h3 className="chart-title">Desglose de la boleta estimada</h3>
+            <PageSection icon={<Wallet size={18} />} title="Desglose de la boleta estimada" subtitle="Cálculo por rango tarifario de tu provincia" style={{ marginBottom: 0 }}>
               <DataTable columns={breakdownColumns} data={forecast.cost_breakdown || []} emptyMessage="Sin desglose disponible" />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontWeight: 700 }}>
+              <div className="forecast-total">
                 <span>Total estimado</span>
                 <span>{formatARS(forecast.predicted_cost)}</span>
               </div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: 6 }}>
+              <p className="forecast-meta">
                 Tarifa promedio: {formatARS(forecast.price_per_kwh_avg)}/kWh — Pico diario: {forecast.peak_day_kwh} kWh ({forecast.peak_day_date})
               </p>
-            </div>
-
-            <div className="card">
-              <h3 className="chart-title">Últimos meses vs. pronóstico</h3>
+            </PageSection>
+            <PageSection icon={<Target size={18} />} title="Últimos meses vs. pronóstico" subtitle="Consumo y costo de períodos anteriores" style={{ marginBottom: 0 }}>
               <DataTable columns={monthColumns} data={forecast.month_comparison || []} emptyMessage="Sin datos de meses anteriores" />
-            </div>
+            </PageSection>
           </div>
 
           {accuracy && accuracy.accuracy != null && (
-            <div className="card" style={{ marginBottom: 20 }}>
-              <h3 className="chart-title">Precisión del Modelo</h3>
+            <PageSection
+              icon={<ShieldCheck size={18} />}
+              title="Precisión del modelo"
+              subtitle="Qué tan cerca estuvo el pronóstico de lo real"
+              style={{ marginBottom: 24 }}
+            >
               <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--primary)' }}>{accuracy.accuracy}%</div>
@@ -179,12 +176,15 @@ export default function PredictionsPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </PageSection>
           )}
 
           {anomalies.length > 0 && (
-            <div className="card">
-              <h3 className="chart-title"><AlertTriangle size={18} style={{ marginRight: 8, verticalAlign: 'middle', color: 'var(--warning)' }} />Anomalías Detectadas</h3>
+            <PageSection
+              icon={<AlertTriangle size={18} />}
+              title="Anomalías detectadas"
+              subtitle="Días con consumo fuera de lo esperado"
+            >
               {anomalies.map((a, i) => (
                 <div key={i} className="alert-item unread">
                   <div className="alert-dot warning"></div>
@@ -195,7 +195,7 @@ export default function PredictionsPage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </PageSection>
           )}
         </>
       )}

@@ -37,6 +37,31 @@ const ConsumptionReading = sequelize.define('ConsumptionReading', {
       min: { args: [0], msg: 'Accumulated kWh must be positive' },
     },
   },
+  voltage: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    validate: {
+      min: { args: [0], msg: 'Voltage must be positive' },
+    },
+  },
+  current: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    validate: {
+      min: { args: [0], msg: 'Current must be positive' },
+    },
+  },
+  frequency: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    validate: {
+      min: { args: [0], msg: 'Frequency must be positive' },
+    },
+  },
+  power_factor: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+  },
   reading_timestamp: {
     type: DataTypes.DATE,
     allowNull: false,

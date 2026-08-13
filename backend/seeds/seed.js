@@ -1,5 +1,6 @@
 require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 
+const crypto = require('crypto');
 const {
   sequelize,
   User,
@@ -11,6 +12,8 @@ const {
   Invoice,
   Alert,
   Tariff,
+  Prediction,
+  Recommendation,
 } = require('../src/models');
 
 async function seed() {
@@ -230,6 +233,7 @@ async function seed() {
         hours_daily_usage: 24,
         is_custom: false,
         is_active: true,
+        device_token: crypto.randomBytes(24).toString('hex'),
       },
       {
         user_id: demoUser.id,
@@ -241,6 +245,7 @@ async function seed() {
         hours_daily_usage: 6,
         is_custom: false,
         is_active: true,
+        device_token: crypto.randomBytes(24).toString('hex'),
       },
       {
         user_id: demoUser.id,
@@ -252,6 +257,7 @@ async function seed() {
         hours_daily_usage: 8,
         is_custom: false,
         is_active: true,
+        device_token: crypto.randomBytes(24).toString('hex'),
       },
       {
         user_id: demoUser.id,
@@ -263,6 +269,7 @@ async function seed() {
         hours_daily_usage: 1,
         is_custom: false,
         is_active: true,
+        device_token: crypto.randomBytes(24).toString('hex'),
       },
       {
         user_id: demoUser.id,
@@ -274,6 +281,7 @@ async function seed() {
         hours_daily_usage: 24,
         is_custom: false,
         is_active: true,
+        device_token: crypto.randomBytes(24).toString('hex'),
       },
       {
         user_id: demoUser.id,
@@ -285,6 +293,7 @@ async function seed() {
         hours_daily_usage: 8,
         is_custom: false,
         is_active: true,
+        device_token: crypto.randomBytes(24).toString('hex'),
       },
     ]);
     console.log(`${devices.length} devices created for demo user.`);
@@ -454,6 +463,75 @@ async function seed() {
       },
     ]);
     console.log(`${alerts.length} alerts created.`);
+
+    const predictions = await Prediction.bulkCreate([
+      {
+        user_id: demoUser.id,
+        prediction_date: '2026-08-01',
+        predicted_kwh: 14.2,
+        confidence_score: 0.85,
+        model_version: 'v2.1-bill-ai',
+      },
+      {
+        user_id: demoUser.id,
+        prediction_date: '2026-08-02',
+        predicted_kwh: 13.8,
+        confidence_score: 0.85,
+        model_version: 'v2.1-bill-ai',
+      },
+      {
+        user_id: demoUser.id,
+        prediction_date: '2026-08-03',
+        predicted_kwh: 15.1,
+        confidence_score: 0.85,
+        model_version: 'v2.1-bill-ai',
+      },
+      {
+        user_id: demoUser.id,
+        prediction_date: '2026-08-04',
+        predicted_kwh: 13.5,
+        confidence_score: 0.85,
+        model_version: 'v2.1-bill-ai',
+      },
+    ]);
+    console.log(`${predictions.length} predictions created.`);
+
+    const recommendations = await Recommendation.bulkCreate([
+      {
+        user_id: demoUser.id,
+        device_id: devices[2].id,
+        title: 'Optimizá el uso del aire acondicionado',
+        description: 'El aire acondicionado es el dispositivo que más consume en tu hogar. Configurá el termostato a 24°C y usá el modo eco: por cada grado de menos, el consumo aumenta hasta un 8%.',
+        category: 'eficiencia',
+        priority: 'high',
+        potential_savings_kwh: 28,
+        potential_savings_cost: 2380,
+        source: 'local',
+        status: 'pending',
+      },
+      {
+        user_id: demoUser.id,
+        device_id: devices[0].id,
+        title: 'Revisá las gomas de tu heladera',
+        description: 'Si la puerta de la heladera no cierra bien, el compresor trabaja de más. Verificá los burletes y mantené 10 cm de separación con la pared.',
+        category: 'mantenimiento',
+        priority: 'medium',
+        source: 'local',
+        status: 'pending',
+      },
+      {
+        user_id: demoUser.id,
+        title: 'Desconectá los consumos en stand-by',
+        description: 'Televisores, decodificadores y cargadores consumen energía en stand-by. Usá zapatillas con interruptor y apagalas de noche.',
+        category: 'comportamiento',
+        priority: 'medium',
+        potential_savings_kwh: 300,
+        potential_savings_cost: 25500,
+        source: 'local',
+        status: 'pending',
+      },
+    ]);
+    console.log(`${recommendations.length} recommendations created.`);
 
     console.log('\n--- Seed completed successfully ---');
     console.log('Provinces:', provinces.length);
