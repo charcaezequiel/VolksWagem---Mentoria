@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Cpu, Wifi, Layers, Wrench, Zap } from 'lucide-react';
+import { Plus, Edit2, Trash2, Cpu, Wifi, WifiOff, Layers, Wrench, Zap } from 'lucide-react';
 import { api } from '../services/api';
 import DataTable from '../components/common/DataTable';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -68,7 +68,8 @@ export default function DevicesPage() {
 
   const filtered = filter ? devices.filter((d) => (d.category_id || d.category?.id) === filter) : devices;
 
-  const sensorsOnline = devices.filter((d) => d.device_token && d.last_seen_at && new Date(d.last_seen_at) > Date.now() - 10 * 60 * 1000).length;
+  const sensorsOnline = devices.filter((d) => d.device_token && d.last_seen_at && (Date.now() - new Date(d.last_seen_at).getTime()) < 10 * 60 * 1000).length;
+  const sensorsOffline = devices.filter((d) => d.device_token && (!d.last_seen_at || (Date.now() - new Date(d.last_seen_at).getTime()) >= 10 * 60 * 1000)).length;
 
   const columns = [
     { header: 'Nombre', key: 'name', render: (_, r) => (
@@ -80,9 +81,13 @@ export default function DevicesPage() {
     { header: 'Watts', key: 'nominal_watts', render: (v) => <span className="table-mono">{v ?? '—'}</span> },
     { header: 'kWh/día', key: 'daily_kwh', render: (v) => <span className="table-mono">{v ?? '—'}</span> },
     { header: 'Horas/día', key: 'hours_daily_usage', render: (v) => <span className="table-mono">{v ?? '—'}</span> },
-    { header: 'Sensor', key: 'sensor', render: (_, r) => r.device_token ? (
-      <span className="badge badge-success"><Wifi size={12} style={{ marginRight: 4 }} /> Activo</span>
-    ) : <span className="badge badge-warning">Sin token</span> },
+    { header: 'Sensor', key: 'sensor', render: (_, r) => {
+      if (!r.device_token) return <span className="badge badge-warning"><WifiOff size={12} style={{ marginRight: 4 }} />Sin sensor</span>;
+      const isRecent = r.last_seen_at && (Date.now() - new Date(r.last_seen_at).getTime()) < 10 * 60 * 1000;
+      return isRecent
+        ? <span className="badge badge-success"><Wifi size={12} style={{ marginRight: 4 }} />En linea</span>
+        : <span className="badge badge-danger"><WifiOff size={12} style={{ marginRight: 4 }} />Sin conexion</span>;
+    } },
     { header: 'Acciones', key: 'actions', render: (_, r) => (
       <div className="table-actions">
         <button className="btn btn-sm btn-primary" onClick={(e) => { e.stopPropagation(); navigate(`/devices/${r.id}`); }}>
@@ -130,6 +135,13 @@ export default function DevicesPage() {
           <div className="stat-card-content">
             <h3 className="stat-card-value">{sensorsOnline}</h3>
             <p className="stat-card-label">Sensores en línea</p>
+          </div>
+        </div>
+        <div className="stat-card stat-card-danger">
+          <div className="stat-card-icon"><WifiOff size={22} /></div>
+          <div className="stat-card-content">
+            <h3 className="stat-card-value">{sensorsOffline}</h3>
+            <p className="stat-card-label">Sensores sin conexión</p>
           </div>
         </div>
         <div className="stat-card stat-card-warning">

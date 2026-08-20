@@ -97,16 +97,19 @@ export default function DeviceDetailPage() {
         />
         <StatCard
           icon={stats?.is_online ? <Wifi size={20} /> : <WifiOff size={20} />}
-          value={stats?.is_online ? 'En línea' : 'Offline'}
-          label="Estado del sensor"
-          color={stats?.is_online ? 'primary' : 'danger'}
+          value={!device.device_token ? 'Sin sensor' : stats?.is_online ? 'En linea' : 'Sin conexion'}
+          label={!device.device_token ? 'No hay sensor configurado' : 'Estado del sensor'}
+          color={!device.device_token ? 'warning' : stats?.is_online ? 'primary' : 'danger'}
         />
       </div>
 
       <PageSection
         icon={<KeyRound size={18} />}
-        title="Conectar tu sensor ESP32 + PZEM-004T"
-        subtitle="Copiá el token del dispositivo y pegálo en el sketch de Arduino. El sensor envía lecturas automáticamente a la base de datos."
+        title={!device.device_token ? "Sensor no conectado" : "Conectar tu sensor ESP32 + PZEM-004T"}
+        subtitle={!device.device_token
+          ? "Este dispositivo no tiene un sensor IoT configurado. Genera un token y cargalo en el sketch de Arduino para empezar a medir."
+          : "Copiá el token del dispositivo y pegálo en el sketch de Arduino. El sensor envía lecturas automáticamente a la base de datos."
+        }
         style={{ marginBottom: 24 }}
       >
         <div className="device-token-row">
