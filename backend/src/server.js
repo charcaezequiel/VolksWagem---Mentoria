@@ -25,14 +25,18 @@ const { checkThreshold, checkPeakDetection } = require('./services/alertService'
 const app = express();
 const server = http.createServer(app);
 
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  : '*';
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: corsOrigins,
     methods: ['GET', 'POST'],
   },
 });
 
-app.use(cors());
+app.use(cors({ origin: corsOrigins }));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);

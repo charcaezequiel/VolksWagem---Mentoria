@@ -1,6 +1,11 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+const isCloudDB = process.env.DB_HOST && !process.env.DB_HOST.includes('localhost');
+if (isCloudDB) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -15,6 +20,12 @@ const sequelize = new Sequelize(
       min: 0,
       acquire: 30000,
       idle: 10000,
+    },
+    dialectOptions: {
+      ssl: isCloudDB ? {
+        require: true,
+        rejectUnauthorized: false,
+      } : {},
     },
     define: {
       timestamps: true,
