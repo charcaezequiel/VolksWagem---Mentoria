@@ -640,31 +640,339 @@ VolksWagem---Mentoria/
 
 ## Requisitos previos
 
-- **Node.js** >= 14 (recomendado 18 LTS)
-- **npm** >= 6.x
-- **Git**
-- **Supabase** (ya configurado, no necesita PostgreSQL local)
-
-> Con `start.bat` (Windows) o `start.sh` (Linux/WSL) no es necesario instalar nada manualmente.
+| Requisito | Version minima | Verificar con |
+|---|---|---|
+| **Node.js** | >= 14 (recomendado 18 LTS) | `node -v` |
+| **npm** | >= 6.x | `npm -v` |
+| **Git** | Cualquier version | `git --version` |
+| **PostgreSQL** (solo forma sin internet) | >= 12 | `psql --version` |
 
 ---
 
 ## Instalacion y ejecucion
 
-### Opcion 1: Inicio automatico (recomendada)
+> **IMPORTANTE:** Hay dos formas de correr el proyecto. Elegi la que se adapte a tu situacion.
+
+### Forma 1: CON internet (Supabase en la nube)
+
+> Usa la base de datos en la nube de Supabase. No necesita PostgreSQL local.
+> Funciona desde cualquier PC con internet.
+
+#### Paso 1 - Clonar el repositorio
+
+```powershell
+git clone https://github.com/charcaezequiel/VolksWagem---Mentoria.git
+cd VolksWagem---Mentoria
+```
+
+#### Paso 2 - Instalar Node.js (si no lo tenes)
+
+1. Ir a https://nodejs.org
+2. Descargar la version **LTS** (18 o superior)
+3. Instalar con las opciones por defecto
+4. Verificar en una terminal:
+
+```powershell
+node -v    # Deberia mostrar v18.x.x o superior
+npm -v     # Deberia mostrar 9.x.x o superior
+```
+
+#### Paso 3 - Configurar el backend
+
+Abrir una terminal (PowerShell o cmd) y ejecutar:
+
+```powershell
+cd backend
+
+# Instalar todas las dependencias del proyecto
+npm install
+
+# Configurar las variables de entorno
+# Copiar el .env.example como .env
+copy .env.example .env
+```
+
+Abrir el archivo `backend/.env` con un editor de texto y verificar que tenga esta configuracion:
+
+```env
+NODE_ENV=development
+PORT=3001
+DB_HOST=db.sjyzifasyshgcwaleovs.supabase.co
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres
+DB_PASSWORD=W8hQo6SdtHkBKwfq
+JWT_SECRET=controlar_f54e219e79ea42232848b50b78a6b0dd
+JWT_EXPIRES_IN=7d
+CORS_ORIGIN=http://localhost:3000
+GEMINI_API_KEY=AQ.Ab8RN6KLhk9Ix5oafP5g9UniNMxRvyQCKKgy-yB7DvPCFdNQSg
+GEMINI_MODEL=gemini-3.6-flash
+```
+
+> Si queres que otros dispositivos de la red accedan, cambia CORS_ORIGIN:
+> `CORS_ORIGIN=http://localhost:3000,http://192.168.x.x:3000`
+> (reemplaza 192.168.x.x con la IP de tu PC)
+
+#### Paso 4 - Crear la base de datos en Supabase
+
+Las tablas y datos iniciales se crean con un solo comando:
+
+```powershell
+npm run db:reset
+```
+
+Esto conecta a Supabase y crea:
+- 11 tablas (users, devices, consumption_readings, invoices, alerts, etc.)
+- 6 provincias con sus tarifas
+- 107 electrodomesticos del catalogo
+- 1 usuario demo con 6 dispositivos y 930 lecturas
+
+Si ves "Database synchronized" y "Seed completed successfully", todo esta bien.
+
+#### Paso 5 - Arrancar el backend
+
+```powershell
+npm run dev
+```
+
+Deberias ver:
+```
+Database connected.
+Database synchronized.
+Server running on port 3001 (0.0.0.0)
+```
+
+**Dejar esta terminal abierta.** Abrir una **segunda terminal** para el frontend.
+
+#### Paso 6 - Configurar y arrancar el frontend
+
+En la **segunda terminal**:
+
+```powershell
+cd frontend
+
+# Instalar dependencias
+npm install
+
+# Crear el archivo .env del frontend
+echo DISABLE_ESLINT_PLUGIN=true > .env
+
+# Arrancar el servidor de desarrollo
+npm start
+```
+
+Despues de unos segundos se abrira automaticamente el navegador en:
+```
+http://localhost:3000
+```
+
+#### Paso 7 - Iniciar sesion
+
+1. Ir a `http://localhost:3000/login`
+2. Usar las credenciales de demo:
+   - Email: `demo@controlar.com`
+   - Contrasena: `123456`
+3. Hacer clic en "Iniciar sesion"
+
+**Listo!** El proyecto esta funcionando con la base de datos de Supabase en la nube.
+
+---
+
+### Forma 2: SIN internet (PostgreSQL local, en la escuela)
+
+> Usa una base de datos PostgreSQL instalada en la PC.
+> No necesita conexion a internet para la base de datos.
+> **Requisito:** Las carpetas `backend/node_modules` y `frontend/node_modules` deben existir
+> (se copian de una PC que ya tenga internet, o se instalan previamente).
+
+#### Paso 1 - Copiar el proyecto a la PC
+
+Si no tenes internet, copia la carpeta completa del proyecto (con `node_modules` ya instalados) a la PC de la escuela. Podes usar un pendrive, disco externo o red local.
+
+La carpeta debe tener esta estructura:
+```
+VolksWagem---Mentoria/
+├── backend/
+│   ├── node_modules/    <-- DEBE EXISTIR
+│   ├── src/
+│   ├── seeds/
+│   ├── .env             <-- Lo creamos en el Paso 3
+│   └── package.json
+├── frontend/
+│   ├── node_modules/    <-- DEBE EXISTIR
+│   ├── src/
+│   ├── .env             <-- Lo creamos en el Paso 4
+│   └── package.json
+└── ...
+```
+
+> **Si no tenes `node_modules`:** Necesitas internet una sola vez para ejecutar
+> `npm install` en ambas carpetas (backend y frontend). Despues podes copiar
+> la carpeta completa a la PC sin internet.
+
+#### Paso 2 - Verificar que PostgreSQL este instalado y corriendo
+
+Abrir PowerShell y ejecutar:
+
+```powershell
+psql --version
+```
+
+Si muestra algo como `psql (PostgreSQL) 18.6`, esta instalado.
+
+Verificar que el servicio este corriendo:
+
+```powershell
+Get-Service postgresql*
+```
+
+Debe mostrar Status = "Running". Si no esta corriendo:
+
+```powershell
+Start-Service postgresql-x64-18
+```
+
+> Si no tenes PostgreSQL instalado, podes descargarlo de https://www.postgresql.org/download/windows/
+> Durante la instalacion usa la contrasena `postgres` para el usuario postgres.
+
+#### Paso 3 - Configurar el backend para PostgreSQL local
+
+```powershell
+cd backend
+copy .env.example .env
+```
+
+Abrir `backend/.env` y **cambiar** las lineas de base de datos para que apunte a PostgreSQL local:
+
+```env
+NODE_ENV=development
+PORT=3001
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=controlar_energia
+DB_USER=postgres
+DB_PASSWORD=postgres
+JWT_SECRET=controlar_f54e219e79ea42232848b50b78a6b0dd
+JWT_EXPIRES_IN=7d
+CORS_ORIGIN=http://localhost:3000
+GEMINI_API_KEY=AQ.Ab8RN6KLhk9Ix5oafP5g9UniNMxRvyQCKKgy-yB7DvPCFdNQSg
+GEMINI_MODEL=gemini-3.6-flash
+```
+
+> **Cambio clave:** `DB_HOST=localhost` en vez de `db.sjyzifasyshgcwaleovs.supabase.co`
+> Esto hace que se conecte a PostgreSQL instalado en la misma PC.
+
+#### Paso 3b - Configurar autenticacion de PostgreSQL (solo primera vez)
+
+Si PostgreSQL no acepta contraseñas (error `password authentication failed`):
+
+1. Buscar el archivo `pg_hba.conf` (generalmente en `C:\Program Files\PostgreSQL\18\data\`)
+2. Abrirlo como administrador
+3. Cambiar las lineas `host ... peer` por `trust` para conexiones locales:
+
+```
+#TYPE  DATABASE  USER  ADDRESS       METHOD
+local   all       all                 trust
+host    all       all   127.0.0.1/32  trust
+host    all       all   ::1/128       trust
+```
+
+4. Reiniciar el servicio de PostgreSQL:
+
+```powershell
+Restart-Service postgresql-x64-18
+```
+
+> **Atajos:** El archivo `fix_postgres.bat` hace esto automaticamente (ejecutar como administrador).
+
+#### Paso 4 - Configurar el frontend
+
+En la **segunda terminal**:
+
+```powershell
+cd frontend
+echo DISABLE_ESLINT_PLUGIN=true > .env
+```
+
+#### Paso 5 - Crear la base de datos y cargar datos
+
+En la terminal del backend (que ya esta en la carpeta `backend/`):
+
+```powershell
+npm run db:reset
+```
+
+Esto:
+1. Crea la base de datos `controlar_energia` si no existe
+2. Crea todas las tablas (11 modelos)
+3. Carga los datos iniciales (provincias, tarifas, catalogo, usuario demo, etc.)
+
+Deberias ver al final:
+```
+--- Seed completed successfully ---
+Provinces: 6
+Categories: 7
+Appliances: 107
+...
+User: demo@controlar.com / 123456
+```
+
+> Si ves "Database connected" y "Seed completed", todo esta funcionando.
+
+#### Paso 6 - Arrancar el backend
+
+```powershell
+npm run dev
+```
+
+Deberias ver:
+```
+Database connected.
+Database synchronized.
+Server running on port 3001 (0.0.0.0)
+```
+
+**Dejar esta terminal abierta.**
+
+#### Paso 7 - Arrancar el frontend
+
+En la **segunda terminal** (que ya esta en `frontend/`):
+
+```powershell
+npm start
+```
+
+Despues de unos segundos se abrira el navegador en `http://localhost:3000`.
+
+#### Paso 8 - Iniciar sesion
+
+1. Ir a `http://localhost:3000/login`
+2. Email: `demo@controlar.com` / Contrasena: `123456`
+3. Hacer clic en "Iniciar sesion"
+
+**Listo!** El proyecto funciona con PostgreSQL local, sin necesidad de internet.
+
+---
+
+### Forma 3: Inicio automatico (start.bat / start.sh)
+
+Los scripts de inicio hacen todo automaticamente. Detectan tu IP, configuran la base de datos y levantan todo.
 
 #### Windows
 
-```
-Doble clic en start.bat
+Doble clic en `start.bat` (o ejecutar desde PowerShell):
+
+```powershell
+.\start.bat
 ```
 
-El script automaticamente:
-1. Detecta la IP de la red local
-2. Configura CORS con esa IP
-3. Instala dependencias del backend y frontend
-4. Crea tablas y datos iniciales en Supabase (solo la primera vez)
-5. Levanta backend (puerto 3001) y frontend (puerto 3000)
+El script:
+1. Detecta la IP de la red
+2. Verifica Node.js y npm
+3. Instala dependencias con `npm install`
+4. Configura PostgreSQL (local o Supabase segun el `.env`)
+5. Crea tablas y datos iniciales (solo la primera vez)
+6. Levanta backend (puerto 3001) y frontend (puerto 3000)
 
 #### Linux / macOS / WSL
 
@@ -673,49 +981,9 @@ chmod +x start.sh
 ./start.sh
 ```
 
-Hace lo mismo que start.bat pero para sistemas Unix.
+Hace lo mismo pero para sistemas Unix.
 
-### Opcion 2: Instalacion manual
-
-#### 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/TU_USUARIO/VolksWagem---Mentoria.git
-cd VolksWagem---Mentoria
-```
-
-#### 2. Configurar el Backend
-
-```bash
-cd backend
-
-# Instalar dependencias
-npm install
-
-# Crear tablas y cargar datos iniciales en Supabase
-npm run db:reset
-
-# Arrancar el servidor (puerto 3001)
-npm run dev
-```
-
-#### 3. Configurar el Frontend (otra terminal)
-
-```bash
-cd frontend
-
-# Instalar dependencias
-npm install
-
-# Arrancar el servidor de desarrollo (puerto 3000)
-npm start
-```
-
-#### 4. Abrir en el navegador
-
-```
-http://localhost:3000
-```
+---
 
 ### Comandos utiles del Backend
 
@@ -729,9 +997,9 @@ http://localhost:3000
 
 ### Verificar que funciona
 
-```bash
+```powershell
 # Health check del backend
-curl http://localhost:3001/api/health
+Invoke-WebRequest -Uri "http://localhost:3001/api/health"
 # Respuesta: {"status":"ok","timestamp":"2026-..."}
 
 # Abrir en el navegador
@@ -747,6 +1015,18 @@ Desde otra PC o Notebook:
 ```
 
 Los scripts de inicio muestran la IP detectada al arrancar.
+
+### Que base de datos usa cada forma?
+
+| Forma | Base de datos | Host en .env | Necesita internet? |
+|---|---|---|---|
+| **Forma 1** (Supabase) | Supabase (nube) | `db.sjyzifasyshgcwaleovs.supabase.co` | Si |
+| **Forma 2** (Local) | PostgreSQL local | `localhost` | No |
+| **Forma 3** (start.bat) | Segun el `.env` configurado | Variable | Segun config |
+
+> **Tip para la escuela:** Si las PCs de la escuela no tienen internet pero si
+> tienen PostgreSQL instalado, usa la Forma 2. Si no tienen PostgreSQL ni internet,
+> copia la carpeta desde una PC que si tenga internet con `node_modules` ya instalados.
 
 ---
 
