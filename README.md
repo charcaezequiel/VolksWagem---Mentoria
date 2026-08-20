@@ -23,7 +23,7 @@ Incluye integracion IoT con ESP32 + PZEM-004T para lecturas en tiempo real.
 | Campo | Valor |
 |---|---|
 | **API Key** | `AQ.Ab8RN6KLhk9Ix5oafP5g9UniNMxRvyQCKKgy-yB7DvPCFdNQSg` |
-| **Modelo** | `gemini-1.5-flash` |
+| **Modelo** | `gemini-3.6-flash` |
 | **Obtener en** | [Google AI Studio](https://aistudio.google.com) |
 
 ---
@@ -897,7 +897,7 @@ JWT_SECRET=controlar_f54e219e79ea42232848b50b78a6b0dd
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=http://localhost:3000,http://TU_IP:3000
 GEMINI_API_KEY=AQ.Ab8RN6KLhk9Ix5oafP5g9UniNMxRvyQCKKgy-yB7DvPCFdNQSg
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-3.6-flash
 ```
 
 ### Frontend (`frontend/.env`)

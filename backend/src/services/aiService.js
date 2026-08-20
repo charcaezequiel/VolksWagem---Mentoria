@@ -12,7 +12,7 @@ const {
 } = require('../models');
 const { generateBillForecast } = require('./predictionService');
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
 let genAI = null;
 if (process.env.GEMINI_API_KEY) {

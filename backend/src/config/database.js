@@ -21,12 +21,12 @@ const sequelize = new Sequelize(
       acquire: 30000,
       idle: 10000,
     },
-    dialectOptions: {
-      ssl: isCloudDB ? {
+    dialectOptions: isCloudDB ? {
+      ssl: {
         require: true,
         rejectUnauthorized: false,
-      } : {},
-    },
+      },
+    } : {},
     define: {
       timestamps: true,
       underscored: true,

@@ -90,6 +90,6 @@ exports.status = (req, res) => {
   res.json({
     provider: aiService.isConfigured() ? 'gemini' : 'local',
     configured: aiService.isConfigured(),
-    model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    model: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
   });
 };

@@ -120,7 +120,7 @@ JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=http://localhost:${FRONTEND_PORT}
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-3.6-flash
 EOF
     echo ">>> .env creado."
 fi
