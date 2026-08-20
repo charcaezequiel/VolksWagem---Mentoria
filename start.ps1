@@ -3,11 +3,11 @@
 #  Detecta la IP de la red, configura CORS,
 #  instala dependencias y levanta
 #  backend + frontend automaticamente.
-#  Ejecutar desde PowerShell o mediante start.bat
+#  Funciona desde cualquier PC/Notebook de la red.
 # ============================================
 
 $ErrorActionPreference = "Stop"
-$BACKEND_PORT = 3001
+$BACKEND_PORT  = 3001
 $FRONTEND_PORT = 3000
 
 Write-Host "=============================================" -ForegroundColor Cyan
@@ -26,18 +26,37 @@ function Die($msg) {
 
 # ---------- 1. Detectar IP de la red ----------
 Write-Host ">>> Detectando IP de la red..."
+
+# Intento 1: Interfaz activa con gateway (Wi-Fi o Ethernet real)
 $NETWORK_IP = (
-    Get-NetIPAddress -AddressFamily IPv4 |
-    Where-Object { $_.IPAddress -ne "127.0.0.1" -and $_.PrefixOrigin -ne "WellKnown" } |
+    Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.IPAddress -ne "127.0.0.1" -and
+        $_.IPAddress -notlike "169.254.*" -and
+        $_.PrefixOrigin -ne "WellKnown"
+    } |
+    Sort-Object { [int]($_.InterfaceAlias -replace '[^0-9]', '') } |
     Select-Object -First 1 -ExpandProperty IPAddress
 )
+
+# Intento 2: Cualquier IPv4 no-loopback
 if (-not $NETWORK_IP) {
     $NETWORK_IP = (
-        Get-NetIPAddress -AddressFamily IPv4 |
-        Where-Object { $_.IPAddress -ne "127.0.0.1" } |
+        Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+        Where-Object { $_.IPAddress -ne "127.0.0.1" -and $_.IPAddress -notlike "169.254.*" } |
         Select-Object -First 1 -ExpandProperty IPAddress
     )
 }
+
+# Intento 3: ipconfig como fallback
+if (-not $NETWORK_IP) {
+    $ipConfig = ipconfig 2>$null
+    $match = $ipConfig | Select-String -Pattern "IPv4.*?:\s+([\d.]+)"
+    if ($match) {
+        $NETWORK_IP = ($match.Matches[0].Groups[1].Value).Trim()
+    }
+}
+
 if (-not $NETWORK_IP) { $NETWORK_IP = "localhost" }
 Write-Host ">>> IP de red detectada: $NETWORK_IP" -ForegroundColor Green
 
@@ -81,6 +100,8 @@ DB_PASSWORD=postgres
 JWT_SECRET=$JWT_SECRET
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=http://localhost:$FRONTEND_PORT
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-1.5-flash
 "@
     Set-Content -Path ".env" -Value $envContent
     Write-Host ">>> .env creado."
@@ -88,7 +109,7 @@ CORS_ORIGIN=http://localhost:$FRONTEND_PORT
 
 # Actualizar CORS_ORIGIN con la IP de la red
 $envFile = Get-Content ".env" -Raw
-$CORS_VALUE = "http://localhost:$FRONTEND_PORT,http://${NETWORK_IP}:${FRONTEND_PORT}"
+$CORS_VALUE = "http://localhost:$FRONTEND_PORT,http://${NETWORK_IP}:${FRONTEND_PORT},http://${NETWORK_IP}:${BACKEND_PORT}"
 
 if ($envFile -match "^CORS_ORIGIN=.*" ) {
     $envFile = $envFile -replace "^CORS_ORIGIN=.*", "CORS_ORIGIN=$CORS_VALUE"
@@ -136,7 +157,7 @@ if (-not (Test-Path ".db-initialized")) {
     Write-Host ">>> Base de datos ya inicializada."
 }
 
-Write-Host ">>> Iniciando backend en el puerto $BACKEND_PORT..."
+Write-Host ">>> Iniciando backend en el puerto $BACKEND_PORT (0.0.0.0)..."
 $backendProc = Start-Process -FilePath "node" -ArgumentList "src/server.js" -WorkingDirectory $backendDir -PassThru -NoNewWindow
 Write-Host ">>> Backend PID: $($backendProc.Id)"
 
@@ -151,21 +172,24 @@ for ($i = 0; $i -lt 30; $i++) {
     } catch {}
 }
 if ($ready) { Write-Host ">>> Backend listo." -ForegroundColor Green }
-else { Write-Host ">>> Backend tardó, pero continuando..." -ForegroundColor Yellow }
+else { Write-Host ">>> Backend tardo, pero continuando..." -ForegroundColor Yellow }
 
 # ---------- 5. Frontend ----------
 $frontendDir = Join-Path $PSScriptRoot "frontend"
 Set-Location $frontendDir
 
-if (-not (Test-Path ".env")) {
-    Set-Content ".env" "DISABLE_ESLINT_PLUGIN=true"
-}
+# Crear .env del frontend con la URL del backend
+$frontendEnv = "DISABLE_ESLINT_PLUGIN=true`r`n"
+$frontendEnv += "REACT_APP_BACKEND_URL=http://${NETWORK_IP}:${BACKEND_PORT}`r`n"
+Set-Content -Path ".env" -Value $frontendEnv -NoNewline
+Write-Host ">>> Frontend .env configurado (backend: http://${NETWORK_IP}:${BACKEND_PORT})"
 
 Write-Host ">>> Instalando dependencias del frontend..."
 & npm install
 if ($LASTEXITCODE -ne 0) { Die "Fallo 'npm install' en el frontend." }
 
 Write-Host ">>> Iniciando frontend en el puerto $FRONTEND_PORT..."
+$env:BROWSER = "none"
 $frontendProc = Start-Process -FilePath "npm" -ArgumentList "start" -WorkingDirectory $frontendDir -PassThru -NoNewWindow
 Write-Host ">>> Frontend PID: $($frontendProc.Id)"
 
@@ -180,6 +204,8 @@ Write-Host ""
 Write-Host "  Desde otros dispositivos en la red:"
 Write-Host "    Frontend: http://${NETWORK_IP}:${FRONTEND_PORT}" -ForegroundColor Yellow
 Write-Host "    Backend:  http://${NETWORK_IP}:${BACKEND_PORT}"  -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  API Health: http://${NETWORK_IP}:${BACKEND_PORT}/api/health" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "  Usuario demo: demo@controlar.com"
 Write-Host "  Contrasena:   123456"

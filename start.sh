@@ -4,8 +4,8 @@
 #  Detecta la IP de la red, configura CORS,
 #  instala dependencias y levanta
 #  backend + frontend automaticamente.
-#  Compatible con Ubuntu/Debian y WSL.
-#  En Windows nativo usá start.bat
+#  Compatible con Ubuntu/Debian, macOS y WSL.
+#  Funciona desde cualquier PC/Notebook de la red.
 # ============================================
 
 NODE_MAJOR=18
@@ -27,7 +27,7 @@ die() {
     exit 1
 }
 
-# Detectar entorno Windows
+# Detectar entorno Windows nativo
 case "$(uname -s)" in
     MINGW*|MSYS*|CYGWIN*)
         echo ""
@@ -40,14 +40,21 @@ esac
 # Detectar IP de la red local
 detect_ip() {
     local ip=""
+    # Método 1: ruta a internet
     if command_exists ip; then
         ip=$(ip route get 1.1.1.1 2>/dev/null | grep -oP 'src \K\S+')
     fi
+    # Método 2: hostname
     if [ -z "$ip" ]; then
         ip=$(hostname -I 2>/dev/null | awk '{print $1}')
     fi
+    # Método 3: ifconfig
     if [ -z "$ip" ]; then
         ip=$(ifconfig 2>/dev/null | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' | awk '{print $2}' | head -1)
+    fi
+    # Método 4: macOS
+    if [ -z "$ip" ]; then
+        ip=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
     fi
     echo "${ip:-localhost}"
 }
@@ -66,6 +73,10 @@ trap cleanup EXIT INT TERM
 check_port() {
     if command_exists ss; then
         if ss -tln 2>/dev/null | grep -q ":$1 "; then
+            echo "AVISO: el puerto $1 ya esta en uso."
+        fi
+    elif command_exists lsof; then
+        if lsof -i :"$1" -sTCP:LISTEN &>/dev/null; then
             echo "AVISO: el puerto $1 ya esta en uso."
         fi
     fi
@@ -95,7 +106,7 @@ if [ ! -f .env ]; then
     if command_exists openssl; then
         JWT_SECRET="controlar_$(openssl rand -hex 16)"
     else
-        JWT_SECRET="controlar_energia_secret_key_$(date +%s)"
+        JWT_SECRET="controlar_energia_secret_key_$(date +%s)_$RANDOM"
     fi
     cat > .env <<EOF
 NODE_ENV=development
@@ -108,6 +119,8 @@ DB_PASSWORD=postgres
 JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=http://localhost:${FRONTEND_PORT}
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-1.5-flash
 EOF
     echo ">>> .env creado."
 fi
@@ -115,15 +128,14 @@ fi
 # Actualizar CORS_ORIGIN con la IP de la red (para acceso desde otros dispositivos)
 echo ">>> IP de red detectada: ${NETWORK_IP}"
 
-# Construir CORS_ORIGIN con localhost y la IP de red
-CORS_VALUE="http://localhost:${FRONTEND_PORT},http://${NETWORK_IP}:${FRONTEND_PORT}"
+CORS_VALUE="http://localhost:${FRONTEND_PORT},http://${NETWORK_IP}:${FRONTEND_PORT},http://${NETWORK_IP}:${BACKEND_PORT}"
 
-# Actualizar CORS_ORIGIN en .env
 if grep -q "^CORS_ORIGIN=" .env; then
     sed -i "s|^CORS_ORIGIN=.*|CORS_ORIGIN=${CORS_VALUE}|" .env
 else
     echo "CORS_ORIGIN=${CORS_VALUE}" >> .env
 fi
+echo ">>> CORS configurado para: $CORS_VALUE"
 
 # Si tiene DB_HOST=localhost y no tiene Supabase, instalar PostgreSQL local
 if grep -q "^DB_HOST=localhost" .env && ! grep -q "supabase" .env; then
@@ -181,7 +193,7 @@ else
     echo ">>> Base de datos ya inicializada."
 fi
 
-echo ">>> Iniciando backend en el puerto ${BACKEND_PORT}..."
+echo ">>> Iniciando backend en el puerto ${BACKEND_PORT} (0.0.0.0)..."
 npm run dev &
 BACKEND_PID=$!
 
@@ -198,16 +210,18 @@ done
 # ---------- 3. Frontend ----------
 cd ../frontend || die "No se encontro la carpeta frontend/."
 
-if [ ! -f .env ]; then
-    echo ">>> Creando frontend/.env..."
-    echo "DISABLE_ESLINT_PLUGIN=true" > .env
-fi
+# Crear .env del frontend
+cat > .env <<EOF
+DISABLE_ESLINT_PLUGIN=true
+REACT_APP_BACKEND_URL=http://${NETWORK_IP}:${BACKEND_PORT}
+EOF
+echo ">>> Frontend .env configurado (backend: http://${NETWORK_IP}:${BACKEND_PORT})"
 
 echo ">>> Instalando dependencias del frontend..."
 npm install || die "Fallo 'npm install' en el frontend."
 
 echo ">>> Iniciando frontend en el puerto ${FRONTEND_PORT}..."
-npm start &
+BROWSER=none npm start &
 FRONTEND_PID=$!
 
 # Esperar a que el frontend este listo
@@ -230,6 +244,8 @@ echo ""
 echo "  Desde otros dispositivos en la red:"
 echo "    Frontend: http://${NETWORK_IP}:${FRONTEND_PORT}"
 echo "    Backend:  http://${NETWORK_IP}:${BACKEND_PORT}"
+echo ""
+echo "  API Health: http://${NETWORK_IP}:${BACKEND_PORT}/api/health"
 echo ""
 echo "  Usuario demo: demo@controlar.com"
 echo "  Contrasena:   123456"

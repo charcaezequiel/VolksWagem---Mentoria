@@ -5,6 +5,7 @@ REM  ControlAR Energia - Inicio rapido (Windows)
 REM  Doble clic o ejecutar desde cmd.
 REM  Detecta la IP de la red automaticamente
 REM  y levanta backend + frontend.
+REM  Funciona desde cualquier PC/Notebook.
 REM  Uso:  start.bat
 REM ============================================
 
@@ -33,6 +34,10 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
+echo >>> Node: & node -v
+echo >>> npm:  & npm -v
+echo.
 
 echo >>> Ejecutando setup automatico...
 echo.

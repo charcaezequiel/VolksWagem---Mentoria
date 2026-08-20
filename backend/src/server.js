@@ -100,8 +100,18 @@ const startServer = async () => {
     await sequelize.sync({ force: false });
     console.log('Database synchronized.');
 
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    server.listen(PORT, '0.0.0.0', () => {
+      const nets = require('os').networkInterfaces();
+      const ips = [];
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+          if (net.family === 'IPv4' && !net.internal) ips.push(net.address);
+        }
+      }
+      console.log(`Server running on port ${PORT} (0.0.0.0)`);
+      if (ips.length) {
+        console.log(`Network access: ${ips.map((ip) => `http://${ip}:${PORT}`).join(' | ')}`);
+      }
     });
   } catch (error) {
     console.error('Failed to start server:', error);
