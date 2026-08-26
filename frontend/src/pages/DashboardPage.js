@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Zap, DollarSign, Cpu, Bell, LayoutDashboard, Activity, Bot, Lightbulb, TrendingUp } from 'lucide-react';
 import { api } from '../services/api';
 import { useSocket } from '../context/SocketContext';
+import { useTranslation } from '../context/LanguageContext';
 import StatCard from '../components/common/StatCard';
 import LineChart from '../components/charts/LineChart';
 import BarChart from '../components/charts/BarChart';
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { connected, on } = useSocket();
+  const { t } = useTranslation();
 
   const load = useCallback(() => {
     Promise.all([
@@ -36,8 +38,8 @@ export default function DashboardPage() {
         setBreakdown(b.map(item => ({ name: item.category_name, value: parseFloat(item.total_kwh) || 0 })));
       }),
       api.alerts.getAll({ limit: 5 }).then(r => setAlerts(r.data.alerts || r.data || [])),
-    ]).catch(() => toast.error('Error al cargar datos')).finally(() => setLoading(false));
-  }, []);
+    ]).catch(() => toast.error(t('dashboard.error'))).finally(() => setLoading(false));
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -54,46 +56,46 @@ export default function DashboardPage() {
     <div>
       <div className="page-header">
         <div className="page-header-text">
-          <h2><LayoutDashboard size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />Panel de Control</h2>
+          <h2><LayoutDashboard size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />{t('dashboard.title')}</h2>
           <p className="page-header-subtitle">
-            {connected ? '● En tiempo real — recibiendo datos de tus sensores' : 'Resumen general de tu consumo energético'}
+            {connected ? t('dashboard.realtime') : t('dashboard.offline')}
           </p>
         </div>
         <div className="quick-actions" style={{ marginBottom: 0 }}>
-          <Link to="/assistant" className="btn btn-primary"><Bot size={16} /> Asistente IA</Link>
-          <Link to="/recommendations" className="btn btn-secondary"><Lightbulb size={16} /> Recomendaciones</Link>
-          <Link to="/consumption" className="btn btn-secondary"><Activity size={16} /> Agregar Lectura</Link>
+          <Link to="/assistant" className="btn btn-primary"><Bot size={16} /> {t('dashboard.assistant')}</Link>
+          <Link to="/recommendations" className="btn btn-secondary"><Lightbulb size={16} /> {t('dashboard.recommendations')}</Link>
+          <Link to="/consumption" className="btn btn-secondary"><Activity size={16} /> {t('dashboard.add_reading')}</Link>
         </div>
       </div>
 
       <div className="dashboard-grid" style={{ marginBottom: 24 }}>
-        <StatCard icon={<Zap size={22} />} value={`${stats.current_month_kwh || 0} kWh`} label="Consumo del mes actual" change={stats.comparison_percentage} color="primary" />
-        <StatCard icon={<DollarSign size={22} />} value={`$${stats.current_month_cost || 0}`} label="Costo estimado" color="warning" />
-        <StatCard icon={<Cpu size={22} />} value={stats.total_devices || 0} label="Dispositivos registrados" color="info" />
-        <StatCard icon={<Bell size={22} />} value={stats.unread_alerts || 0} label="Alertas sin leer" color="danger" />
+        <StatCard icon={<Zap size={22} />} value={`${stats.current_month_kwh || 0} kWh`} label={t('dashboard.month_kwh')} change={stats.comparison_percentage} color="primary" />
+        <StatCard icon={<DollarSign size={22} />} value={`$${stats.current_month_cost || 0}`} label={t('dashboard.estimated_cost')} color="warning" />
+        <StatCard icon={<Cpu size={22} />} value={stats.total_devices || 0} label={t('dashboard.total_devices')} color="info" />
+        <StatCard icon={<Bell size={22} />} value={stats.unread_alerts || 0} label={t('dashboard.unread_alerts')} color="danger" />
       </div>
 
       <div className="dashboard-charts" style={{ marginBottom: 24 }}>
-        <PageSection icon={<TrendingUp size={18} />} title="Consumo diario" subtitle="Últimos 7 días" style={{ marginBottom: 0 }}>
+        <PageSection icon={<TrendingUp size={18} />} title={t('dashboard.daily_title')} subtitle={t('dashboard.daily_subtitle')} style={{ marginBottom: 0 }}>
           <LineChart data={daily} xKey="date" yKey="consumption" title="" />
         </PageSection>
-        <PageSection icon={<TrendingUp size={18} />} title="Consumo mensual" subtitle="Últimos 12 meses" style={{ marginBottom: 0 }}>
+        <PageSection icon={<TrendingUp size={18} />} title={t('dashboard.monthly_title')} subtitle={t('dashboard.monthly_subtitle')} style={{ marginBottom: 0 }}>
           <BarChart data={monthly} xKey="month" yKey="consumption" title="" />
         </PageSection>
       </div>
 
       <div className="dashboard-charts">
-        <PageSection icon={<Cpu size={18} />} title="Desglose por categoría" subtitle="Participación de cada categoría en el consumo" style={{ marginBottom: 0 }}>
+        <PageSection icon={<Cpu size={18} />} title={t('dashboard.breakdown_title')} subtitle={t('dashboard.breakdown_subtitle')} style={{ marginBottom: 0 }}>
           <PieChart data={breakdown} nameKey="name" valueKey="value" title="" />
         </PageSection>
         <PageSection
           icon={<Bell size={18} />}
-          title="Alertas recientes"
-          subtitle="Últimas notificaciones de tu cuenta"
+          title={t('dashboard.alerts_title')}
+          subtitle={t('dashboard.alerts_subtitle')}
           style={{ marginBottom: 0 }}
-          actions={alerts.length > 0 && <Link to="/alerts" className="btn btn-sm btn-secondary">Ver todas</Link>}
+          actions={alerts.length > 0 && <Link to="/alerts" className="btn btn-sm btn-secondary">{t('dashboard.alerts_view_all')}</Link>}
         >
-          {alerts.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>Sin alertas recientes 🎉</p>}
+          {alerts.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>{`${t('dashboard.no_alerts')} 🎉`}</p>}
           {alerts.map(a => (
             <div key={a.id || a._id} className={`alert-item ${a.is_read ? 'read' : 'unread'}`}>
               <div className={`alert-dot ${a.severity || 'info'}`}></div>

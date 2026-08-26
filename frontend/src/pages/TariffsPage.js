@@ -6,8 +6,10 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageSection from '../components/common/PageSection';
 import Field from '../components/common/Field';
 import toast from 'react-hot-toast';
+import { useTranslation } from '../context/LanguageContext';
 
 export default function TariffsPage() {
+  const { t } = useTranslation();
   const [provinces, setProvinces] = useState([]);
   const [selectedProvince, setSelectedProvince] = useState('');
   const [tariffs, setTariffs] = useState([]);
@@ -20,7 +22,7 @@ export default function TariffsPage() {
       const provs = res.data.provinces || res.data || [];
       setProvinces(provs);
       if (provs.length > 0) setSelectedProvince(provs[0].id || provs[0]._id);
-    }).catch(() => toast.error('Error al cargar provincias'));
+    }).catch(() => toast.error(t('tariffs.error_province')));
   }, []);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function TariffsPage() {
     setLoading(true);
     api.tariffs.getByProvince(selectedProvince).then(res => {
       setTariffs(res.data.tariffs || res.data || []);
-    }).catch(() => toast.error('Error al cargar tarifas')).finally(() => setLoading(false));
+    }).catch(() => toast.error(t('tariffs.error_tariffs'))).finally(() => setLoading(false));
   }, [selectedProvince]);
 
   const calculateCost = () => {
@@ -52,8 +54,8 @@ export default function TariffsPage() {
   };
 
   const columns = [
-    { header: 'Rango (kWh)', key: 'range', render: (_, r) => <span className="table-mono">{r.tier_from || 0} - {r.tier_to || '∞'}</span> },
-    { header: 'Precio ($/kWh)', key: 'price', render: (_, r) => <span className="table-mono"><strong>${(r.price_per_kwh || 0).toFixed(4)}</strong></span> },
+    { header: t('tariffs.col_range'), key: 'range', render: (_, r) => <span className="table-mono">{r.tier_from || 0} - {r.tier_to || '∞'}</span> },
+    { header: t('tariffs.col_price'), key: 'price', render: (_, r) => <span className="table-mono"><strong>${(r.price_per_kwh || 0).toFixed(4)}</strong></span> },
   ];
 
   const selectedProvinceData = provinces.find(p => (p.id || p._id) === selectedProvince);
@@ -62,15 +64,15 @@ export default function TariffsPage() {
     <div>
       <div className="page-header">
         <div className="page-header-text">
-          <h2><DollarSign size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />Tarifas de Energía</h2>
-          <p className="page-header-subtitle">Consultá las escalas tarifarias de cada provincia y calculá el costo de tu consumo.</p>
+          <h2><DollarSign size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />{t('tariffs.title')}</h2>
+          <p className="page-header-subtitle">{t('tariffs.subtitle')}</p>
         </div>
       </div>
 
       <PageSection
         icon={<MapPin size={18} />}
-        title="Seleccionar provincia"
-        subtitle={selectedProvinceData ? `Distribuidora: ${selectedProvinceData.distributor_name || 'N/A'} · Regulador: ${selectedProvinceData.regulator_name || 'N/A'}` : 'Elegí una provincia para ver sus tarifas.'}
+        title={t('tariffs.select_province')}
+        subtitle={selectedProvinceData ? `${t('tariffs.distributor')} ${selectedProvinceData.distributor_name || 'N/A'} · ${t('tariffs.regulator')} ${selectedProvinceData.regulator_name || 'N/A'}` : t('tariffs.select_hint')}
         style={{ marginBottom: 24 }}
       >
         <div className="province-picker">
@@ -85,28 +87,28 @@ export default function TariffsPage() {
         <div className="dashboard-charts">
           <PageSection
             icon={<Scale size={18} />}
-            title={`Escalas tarifarias — ${selectedProvinceData?.name || ''}`}
-            subtitle="Rangos de consumo y precio por kWh"
+            title={t('tariffs.scale_title', { province: selectedProvinceData?.name })}
+            subtitle={t('tariffs.scale_subtitle')}
             style={{ marginBottom: 0 }}
           >
-            <DataTable columns={columns} data={tariffs} emptyMessage="No hay tarifas disponibles para esta provincia" />
+            <DataTable columns={columns} data={tariffs} emptyMessage={t('tariffs.empty')} />
           </PageSection>
 
           <PageSection
             icon={<Calculator size={18} />}
-            title="Calculadora de costo"
-            subtitle="Estimá cuánto pagarías según tu consumo"
+            title={t('tariffs.calc_title')}
+            subtitle={t('tariffs.calc_subtitle')}
             style={{ marginBottom: 0 }}
           >
             <div className="form-group">
-              <Field label="Consumo estimado (kWh)" icon={<DollarSign size={15} />} hint="Aplicá las tarifas de la provincia seleccionada.">
-                <input className="form-input" type="number" step="0.01" min="0" value={calcKwh} onChange={e => setCalcKwh(e.target.value)} placeholder="Ej: 350" />
+              <Field label={t('tariffs.calc_input')} icon={<DollarSign size={15} />} hint={t('tariffs.calc_hint')}>
+                <input className="form-input" type="number" step="0.01" min="0" value={calcKwh} onChange={e => setCalcKwh(e.target.value)} placeholder={t('tariffs.calc_placeholder')} />
               </Field>
             </div>
-            <button className="btn btn-primary" onClick={calculateCost}>Calcular</button>
+            <button className="btn btn-primary" onClick={calculateCost}>{t('tariffs.calc_button')}</button>
             {calcResult && (
               <div className="calc-result">
-                <div className="calc-result-label">Para {calcResult.kwh} kWh:</div>
+                <div className="calc-result-label">{t('tariffs.calc_result', { kwh: calcResult.kwh })}</div>
                 <div className="calc-result-value">${calcResult.total}</div>
               </div>
             )}

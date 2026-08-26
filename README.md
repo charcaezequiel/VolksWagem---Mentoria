@@ -1,30 +1,7 @@
 # ControlAR Energia
 
 Sistema web de monitoreo, analisis y prediccion del consumo energetico residencial en Argentina.
-Incluye integracion IoT con ESP32 + PZEM-004T para lecturas en tiempo real.
-
----
-
-## Credenciales Supabase (Base de Datos)
-
-| Campo | Valor |
-|---|---|
-| **Host** | `db.sjyzifasyshgcwaleovs.supabase.co` |
-| **Port** | `5432` |
-| **Database** | `postgres` |
-| **User** | `postgres` |
-| **Password** | `W8hQo6SdtHkBKwfq` |
-| **URL completa** | `postgresql://postgres:W8hQo6SdtHkBKwfq@db.sjyzifasyshgcwaleovs.supabase.co:5432/postgres` |
-
----
-
-## Credenciales de IA (Gemini)
-
-| Campo | Valor |
-|---|---|
-| **API Key** | `AQ.Ab8RN6KLhk9Ix5oafP5g9UniNMxRvyQCKKgy-yB7DvPCFdNQSg` |
-| **Modelo** | `gemini-3.6-flash` |
-| **Obtener en** | [Google AI Studio](https://aistudio.google.com) |
+Incluye integracion IoT con **ESP8266MOD + PZEM-004T v3.0 + Bobina CT (dona encintada)** para lecturas en tiempo real, con interfaz bilingue (Espanol / Ingles).
 
 ---
 
@@ -43,10 +20,11 @@ Incluye integracion IoT con ESP32 + PZEM-004T para lecturas en tiempo real.
 11. [Credenciales de demostracion](#credenciales-de-demostracion)
 12. [API REST - Endpoints](#api-rest---endpoints)
 13. [Variables de entorno](#variables-de-entorno)
-14. [Cambios recientes](#cambios-recientes)
-15. [Problemas encontrados y soluciones](#problemas-encontrados-y-soluciones)
-16. [Mejoras a futuro](#mejoras-a-futuro)
-17. [Integrantes del equipo](#integrantes-del-equipo)
+14. [Internacionalizacion (i18n)](#internacionalizacion-i18n)
+15. [Cambios recientes](#cambios-recientes)
+16. [Problemas encontrados y soluciones](#problemas-encontrados-y-soluciones)
+17. [Mejoras a futuro](#mejoras-a-futuro)
+18. [Integrantes del equipo](#integrantes-del-equipo)
 
 ---
 
@@ -75,50 +53,48 @@ El proyecto esta orientado al contexto energetico argentino, contemplando las pa
 │                      ControlAR Energia - Argentina                   │
 └─────────────────────────────────────────────────────────────────────┘
 
-  ┌──────────────┐      WiFi       ┌──────────────────┐
-  │   ESP32 +    │ ──────────────> │   Backend API    │
-  │  PZEM-004T   │   POST cada     │  (Node.js +      │
-  │  (Sensor)    │   30 segundos   │   Express)       │
-  │              │                 │   Puerto 3001    │
-  │ Mide:        │   JSON:         │                  │
-  │ - Voltaje    │   { watts,      │  ┌────────────┐  │
-  │ - Corriente  │     kwh,        │  │  Socket.IO │──────> Dashboard en vivo
-  │ - Potencia   │     voltage,    │  └────────────┘  │
-  │ - Energia    │     current,    │         │        │
-  │ - Frecuencia │     freq,       │         ▼        │
-  │ - FP         │     pf }        │  ┌────────────┐  │
-  └──────────────┘                 │  │  Sequelize │  │
-                                   │  │    ORM     │  │
-                                   │  └─────┬──────┘  │
-                                   └────────┼─────────┘
-                                            │
-                                            ▼
-                                   ┌─────────────────┐
-                                   │    Supabase      │
-                                   │  (PostgreSQL)    │
-                                   │  Host: db.sjyz   │
-                                   │  ifasyshgcwa...  │
-                                   │  Puerto: 5432    │
-                                   └─────────────────┘
-                                            ▲
-                                            │
-                                   ┌─────────────────┐
-                                   │   Frontend       │
-                                   │  (React 18)     │
-                                   │  Puerto 3000    │
-                                   │                  │
-                                   │  - Dashboard     │
-                                   │  - Graficos      │
-                                   │  - Alertas       │
-                                   │  - Asistente IA  │
-                                   │  - Modo oscuro   │
-                                   └─────────────────┘
+  ┌──────────────────┐      WiFi       ┌──────────────────┐
+  │  ESP8266MOD      │ ──────────────> │   Backend API    │
+  │  + PZEM-004T     │   POST cada     │  (Node.js +      │
+  │  + Bobina CT     │   10 segundos   │   Express)       │
+  │  (Sensores)      │                 │   Puerto 3001    │
+  │                   │   JSON:         │                  │
+  │ Mide:             │   { watts,      │  ┌────────────┐  │
+  │ - Voltaje (PZEM)  │     kwh,        │  │  Socket.IO │──────> Dashboard en vivo
+  │ - Corriente (PZEM)│     voltage,    │  └────────────┘  │
+  │ - Potencia (PZEM) │     current,    │         │        │
+  │ - Energia (PZEM)  │     freq,       │         ▼        │
+  │ - Frecuencia(PZEM)│     pf,         │  ┌────────────┐  │
+  │ - FP (PZEM)       │     ct_amps }   │  │  Sequelize │  │
+  │ - Corriente CT    │                 │  │    ORM     │  │
+  └──────────────────┘                 │  └─────┬──────┘  │
+                                       └────────┼─────────┘
+                                                │
+                                                ▼
+                                       ┌─────────────────┐
+                                       │    Supabase      │
+                                       │  (PostgreSQL)    │
+                                       └─────────────────┘
+                                                ▲
+                                                │
+                                       ┌─────────────────┐
+                                       │   Frontend       │
+                                       │  (React 18)     │
+                                       │  Puerto 3000    │
+                                       │                  │
+                                       │  - Dashboard     │
+                                       │  - Graficos      │
+                                       │  - Alertas       │
+                                       │  - Asistente IA  │
+                                       │  - Modo oscuro   │
+                                       │  - ES / EN toggle│
+                                       └─────────────────┘
 ```
 
 ### Flujo de datos en tiempo real
 
 ```
-ESP32 mide voltaje/corriente/potencia (cada 30s)
+ESP8266 mide voltaje/corriente/potencia + CT (cada 10s)
         │
         ▼
 POST /api/sensor/readings (con device_token)
@@ -157,51 +133,53 @@ Browser (React)                    Backend (Express)              Supabase
 
 | # | Componente | Cantidad | Descripcion |
 |---|---|---|---|
-| 1 | **ESP32** (DevKit V1, WROOM-32) | 1 | Microcontrolador con WiFi. Cualquier placa ESP32 compatible |
-| 2 | **Sensor PZEM-004T v3.0** | 1 | Mide tension, corriente, potencia activa, energia acumulada, frecuencia y factor de potencia. Incluye bobina de corriente (CT) interna |
-| 3 | **Fuente USB 5V** | 1 | Alimenta el ESP32 (minimo 500mA, recomendado 1A) |
-| 4 | **Cables jumper hembra-hembra (dupont)** | 4 | Conexiones entre el PZEM y el ESP32 |
-| 5 | **Cable de fase y neutro** | 2 segmentos | Para pasar la linea de 220V por el PZEM |
-| 6 | **Caja aislante** (opcional) | 1 | Proteccion y seguridad |
+| 1 | **ESP8266MOD** (ESP-12F) | 1 | Microcontrolador con WiFi |
+| 2 | **Sensor PZEM-004T v3.0** | 1 | Mide tension, corriente, potencia activa, energia acumulada, frecuencia y factor de potencia |
+| 3 | **Bobina CT / Transformador dona encintada** | 1 | Sensor de corriente tipo toroidal, se engancha alrededor del cable de fase sin cortarlo |
+| 4 | **Fuente USB 5V** | 1 | Alimenta el ESP8266 (minimo 500mA) |
+| 5 | **Cables jumper hembra-hembra** | 4+ | Conexiones entre el PZEM y el ESP8266 |
+| 6 | **Cable de fase y neutro** | 2 segmentos | Para pasar la linea de 220V por el PZEM |
 
-> **ADVERTENCIA:** el PZEM se conecta en serie con la linea electrica de **220V CA**. Cualquier manipulacion debe hacerse con la **llave termica cortada** y, idealmente, por alguien con conocimientos de instalaciones electricas.
+> **ADVERTENCIA:** el PZEM se conecta en serie con la linea electrica de **220V CA**. La bobina CT se engancha al cable de fase. Cualquier manipulacion debe hacerse con la **llave termica cortada** y, idealmente, por alguien con conocimientos de instalaciones electricas.
 
 ### Diagrama de conexiones
 
 ```
     ┌─────────────────────┐
-    │      ESP32          │
-    │   (DevKit V1)       │
+    │   ESP8266MOD        │
+    │   (ESP-12F)         │
     │                     │
-    │   GPIO 16 (RX2) ◄──┼──────── RX  ┐
-    │   GPIO 17 (TX2) ──►┼──────── TX  │
-    │   5V ──────────────┼──────── 5V  ├──── PZEM-004T v3.0
+    │   D1 (GPIO5) ◄──────┼──────── RX  ┐
+    │   D2 (GPIO4) ──────►┼──────── TX  │  PZEM-004T v3.0
+    │   5V ──────────────┼──────── 5V  ├────
     │   GND ─────────────┼──────── GND ┘
     │                     │
+    │   A0 ◄──────────────┼──────── Salida CT (bobina dona)
     └─────────────────────┘
                                  │
                           ┌──────┴──────┐
                           │   PZEM-004T │
                           │             │
-                          │  L (tornillo)──── Fase 220V (en serie)
-                          │  N (tornillo)──── Neutro 220V
+                          │  L ──────────── Fase 220V (en serie)
+                          │  N ──────────── Neutro 220V
                           │             │
-                          │  Bobina CT  │──── Cable de fase pasa por el orificio
+                          │  Cable fase ──── Pasa por el orificio de la dona CT
                           └─────────────┘
 ```
 
 ### Pinout detallado
 
-| Pin del PZEM-004T | Se conecta a | Funcion |
+| Pin del PZEM / CT | Se conecta a | Funcion |
 |---|---|---|
-| `RX` | **GPIO 16** del ESP32 | Serial2 RX (recibe datos del PZEM) |
-| `TX` | **GPIO 17** del ESP32 | Serial2 TX (envia comandos al PZEM) |
-| `5V` | **5V** del ESP32 | Alimentacion del sensor |
-| `GND` | **GND** del ESP32 | Tierra comun |
-| `L` (tornillo) | Fase de la linea 220V | En serie con la carga a medir |
-| `N` (tornillo) | Neutro de la linea 220V | Neutro |
+| `PZEM RX` | **D1 (GPIO5)** del ESP8266 | RX SoftwareSerial (recibe datos del PZEM) |
+| `PZEM TX` | **D2 (GPIO4)** del ESP8266 | TX SoftwareSerial (envia comandos al PZEM) |
+| `PZEM 5V` | **5V** del ESP8266 | Alimentacion del sensor |
+| `PZEM GND` | **GND** del ESP8266 | Tierra comun |
+| `PZEM L` | Fase de la linea 220V | En serie con la carga a medir |
+| `PZEM N` | Neutro de la linea 220V | Neutro |
+| `CT salida` | **A0** del ESP8266 | Corriente inducida por la dona |
 
-### M草dulos que mide el PZEM-004T
+### Mediciones del PZEM-004T
 
 | Medicion | Rango | Precision |
 |---|---|---|
@@ -212,65 +190,83 @@ Browser (React)                    Backend (Express)              Supabase
 | Frecuencia (Hz) | 45-65 Hz | +-0.5Hz |
 | Factor de potencia | 0.00-1.00 | +-2% |
 
-### Configuracion del sketch Arduino
+### Bobina CT - Transformador dona encintada
 
-Al inicio de `arduino/esp32_pzem_monitor/esp32_pzem_monitor.ino` hay que completar 4 valores:
+La bobina CT (Current Transformer) mide la corriente que circula por el cable de fase sin necesidad de cortarlo. Se engancha alrededor del cable y genera una senal proporcional en su salida.
+
+| Parametro | Valor tipico |
+|---|---|
+| Tipo | Dona encintada (toroidal) |
+| Relacion de vueltas | 1:1000 a 1:3000 (varia por modelo) |
+| Rango | 50A a 200A segun modelo |
+| Salida | Corriente AC proporcional |
+| Calibracion (EmonLib) | `CT_CALIBRATION = 30.0` (para 100A/50mA con burden 33 ohm) |
+
+**Para calibrar:** mira la etiqueta de la dona (deberia decir "100A:50mA" o "2000:1") y ajusta `CT_CALIBRATION` en el sketch.
+
+### Sketches Arduino
+
+El proyecto incluye **3 sketches** en la carpeta `arduino/`:
+
+#### 1. `esp8266_pzem_ct_monitor/` - Sketch de produccion
+
+Sketch principal que mide con PZEM + CT y envia datos al backend cada 10 segundos.
 
 ```cpp
-// 1. Tu red WiFi
-const char* WIFI_SSID = "TU_RED_WIFI";
-const char* WIFI_PASS = "TU_CLAVE_WIFI";
-
-// 2. URL del backend (la IP de la PC que corre el backend)
-const char* SERVER_URL = "http://192.168.1.50:3001";
-
-// 3. Token del sensor (se genera al crear el dispositivo en la web)
+// Configurar al inicio del sketch:
+const char* WIFI_SSID     = "TU_RED_WIFI";
+const char* WIFI_PASS     = "TU_CLAVE_WIFI";
+const char* SERVER_URL    = "http://192.168.1.50:3001";
 const String DEVICE_TOKEN = "PEGAR_TOKEN_DEL_SENSOR";
 ```
 
-**Como obtener el device_token:**
-1. Abrí la app web en `http://localhost:3000`
-2. Andá a **Mis Dispositivos** > **Registrar electrodoméstico**
-3. Creá el dispositivo
-4. Andá al **Detalle del dispositivo** (`/devices/:id`)
-5. Copiá el **Token del sensor** con el boton copiar
-6. Pegalo en el sketch como `DEVICE_TOKEN`
+#### 2. `test_diagnostico/` - Sketch de pruebas
 
-### Flujo del sensor
+Ejecuta **4 tests** al encender y muestra resultados en el Monitor Serial (115200 baudios):
 
-```
-Setup:
-  1. Conectar a WiFi
-  2. Configurar NTP (hora Argentina UTC-3)
-  3. Iniciar Serial2 (GPIO 16/17) para comunicarse con el PZEM
+| Test | Que verifica |
+|---|---|
+| **1. Wi-Fi** | Se conecta a tu red |
+| **2. PZEM-004T** | Lee voltaje, corriente, potencia, energia, Hz, PF |
+| **3. Bobina CT** | Detecta corriente RMS en A0 |
+| **4. Backend** | GET `/api/health` + POST `/api/sensor/readings` con datos simulados |
 
-Loop (cada 30 segundos):
-  1. Chequear si cambio el dia → si si, resetear energia acumulada del PZEM
-  2. Leer del PZEM: voltaje, corriente, potencia, energia, frecuencia, FP
-  3. Armar JSON con los valores
-  4. POST a /api/sensor/readings con Authorization: Bearer <DEVICE_TOKEN>
-  5. El backend guarda la lectura y emite Socket.IO al dashboard
-```
+Al final muestra un resumen tipo checklist. Si todo esta OK, pasa a modo monitoreo que envia datos reales cada 10 segundos.
+
+#### 3. `esp32_pzem_monitor/` - Sketch original ESP32 (legacy)
+
+Sketch original para ESP32 + PZEM-004T sin bobina CT. Se mantiene como referencia.
+
+### Como obtener el device_token
+
+1. Abrir la app web en `http://localhost:3000`
+2. Ir a **Mis Dispositivos** > **Registrar electrodomestico**
+3. Crear el dispositivo
+4. Ir al **Detalle del dispositivo** (`/devices/:id`)
+5. Copiar el **Token del sensor** con el boton copiar
+6. Pegar en el sketch como `DEVICE_TOKEN`
 
 ### Librerias necesarias (Arduino IDE)
 
-| Libreria | Proposite | Instalar desde |
+| Libreria | Proposito | Instalar desde |
 |---|---|---|
 | **PZEM004Tv30** (by oleh) | Comunicacion con el sensor PZEM-004T v3.0 | Arduino Library Manager |
 | **ArduinoJson** | Serializar el JSON que se envia al backend | Arduino Library Manager |
-| **WiFi.h** | Conexion WiFi (incluida en ESP32 core) | Ya viene |
-| **HTTPClient.h** | Requests HTTP POST (incluida en ESP32 core) | Ya viene |
+| **EmonLib** | Calcular corriente RMS desde la bobina CT | Arduino Library Manager |
+| **SoftwareSerial** | Comunicacion serial con PZEM (ESP8266) | Ya viene en ESP8266 core |
+| **ESP8266WiFi** | Conexion WiFi (incluida en ESP8266 core) | Ya viene |
+| **ESP8266HTTPClient** | Requests HTTP POST | Ya viene |
 
-### Material necesario en el Monitor Serial
+### Salida esperada en el Monitor Serial
 
 ```
 Conectando a WiFi.....
 Conectado. IP: 192.168.1.105
-Monitor PZEM-004T listo. Leyendo mediciones...
-V=227.1  A=5.500  W=1249.1  kWh=3.214  Hz=50.0  PF=0.98
-[OK 201] 1249.1 W | 3.214 kWh enviados
-V=226.8  A=5.480  W=1243.0  kWh=3.215  Hz=50.0  PF=0.97
-[OK 201] 1243.0 W | 3.215 kWh enviados
+Monitor PZEM-004T + CT listo. Leyendo mediciones...
+PZEM: V=227.1  A=5.500  W=1249.1  kWh=3.214  Hz=50.0  PF=0.98
+CT:   A=2.300  W=522.3
+Total: 1771.4 W | 3.214 kWh enviado
+[OK 201]
 ```
 
 ---
@@ -313,7 +309,7 @@ backend/
 │   │   ├── tariffController.js       # Tarifas por provincia
 │   │   ├── dashboardController.js    # KPIs del dashboard
 │   │   ├── aiController.js           # Asistente IA, recomendaciones, insights
-│   │   └── sensorController.js       # Ingesta de lecturas del ESP32
+│   │   └── sensorController.js       # Ingesta de lecturas del ESP8266
 │   ├── middleware/
 │   │   ├── auth.js              # JWT + authenticateSensor (token de dispositivo)
 │   │   ├── errorHandler.js      # Manejo centralizado de errores
@@ -379,19 +375,25 @@ backend/
 cron.schedule('0 * * * *', async () => {
   // 1. Buscar todos los usuarios activos
   // 2. Para cada uno: checkThreshold + checkPeakDetection
-  // 3. Si hay alerta nueva → emitir por Socket.IO
+  // 3. Si hay alerta nueva -> emitir por Socket.IO
 });
 ```
 
-### CORS configurado por IP
+### sensorController.js - Ingesta IoT
 
-El backend acepta conexiones desde cualquier IP de la red local:
-
+```javascript
+// POST /api/sensor/readings
+// Headers: Authorization: Bearer <device_token>
+// Body:
+{
+  "instant_watts": 1249.1,      // Potencia instantanea
+  "accumulated_kwh_day": 3.214, // Energia acumulada del dia
+  "voltage": 227.1,             // Tension (PZEM)
+  "current": 5.500,             // Corriente total (PZEM + CT)
+  "frequency": 50.0,            // Frecuencia de red
+  "power_factor": 0.98          // Factor de potencia
+}
 ```
-CORS_ORIGIN=http://localhost:3000,http://192.168.x.x:3000,http://192.168.x.x:3001
-```
-
-Los scripts de inicio (`start.bat`, `start.sh`) detectan la IP automaticamente y actualizan el `.env`.
 
 ---
 
@@ -419,7 +421,7 @@ Los scripts de inicio (`start.bat`, `start.sh`) detectan la IP automaticamente y
 | **RegisterPage** | `/register` | Registro de nuevo usuario |
 | **DashboardPage** | `/dashboard` | Panel principal con KPIs en tiempo real |
 | **DevicesPage** | `/devices` | Listado de dispositivos + asistente de 3 pasos |
-| **DeviceDetailPage** | `/devices/:id` | Detalle + token sensor + instrucciones ESP32 |
+| **DeviceDetailPage** | `/devices/:id` | Detalle + token sensor + instrucciones ESP8266 |
 | **ConsumptionPage** | `/consumption` | Graficos de consumo + historial de lecturas |
 | **InvoicesPage** | `/invoices` | Comparacion de facturas mes a mes |
 | **AlertsPage** | `/alerts` | Centro de alertas con filtros |
@@ -429,13 +431,23 @@ Los scripts de inicio (`start.bat`, `start.sh`) detectan la IP automaticamente y
 | **AssistantPage** | `/assistant` | Chat con asistente IA (Gemini o local) |
 | **RecommendationsPage** | `/recommendations` | Recomendaciones personalizadas de ahorro |
 
-### 3 Contextos
+### 4 Contextos
 
 | Contexto | Archivo | Funcion |
 |---|---|---|
 | **AuthContext** | `context/AuthContext.js` | Manejo de JWT, login/logout, usuario actual |
 | **ThemeContext** | `context/ThemeContext.js` | Toggle modo oscuro/claro, preferencia guardada |
 | **SocketContext** | `context/SocketContext.js` | Conexion Socket.IO, notificaciones en vivo |
+| **LanguageContext** | `context/LanguageContext.js` | Internacionalizacion ES/EN, toggle idioma |
+
+### Componentes compartidos
+
+| Componente | Archivo | Funcion |
+|---|---|---|
+| **Header** | `components/layout/Header.js` | Barra superior con toggle idioma (ES/EN), usuario, notificaciones |
+| **Sidebar** | `components/layout/Sidebar.js` | Navegacion lateral con etiquetas traducidas |
+| **LoadingSpinner** | `components/common/LoadingSpinner.js` | Indicador de carga traducido |
+| **DeviceFormModal** | `components/devices/DeviceFormModal.js` | Asistente de 3 pasos para registrar dispositivos |
 
 ### Tiempo real (Socket.IO)
 
@@ -443,7 +455,7 @@ Los scripts de inicio (`start.bat`, `start.sh`) detectan la IP automaticamente y
 Frontend (React)  <──── Socket.IO ────  Backend (Express)
      │                                        │
      │  on('reading:new')                     │  sensorController.addReading()
-     │  on('alert:new')                       │    → io.to(`user-${id}`).emit(...)
+     │  on('alert:new')                       │    -> io.to(`user-${id}`).emit(...)
      │  on('recommendation:new')              │
      │                                        │
      │  Actualiza dashboard                   │
@@ -490,7 +502,7 @@ device_categories 1────N appliances     (catalogo de electrodomesticos)
 
 - **6 provincias**: Buenos Aires (OCEBA), San Juan (EPRE), Cordoba, Santa Fe, Mendoza, Entre Rios
 - **7 categorias**: Aire acondicionado, Heladera, Lavarropas, Computadora, Televisor, Cocina, Otros
-- **107 electrodomesticos** del catalogo (Refrigeracion, Climatizacion, Iluminacion, Entretenimiento, Cocina, Lavado, Otros)
+- **107 electrodomesticos** del catalogo
 - **8 tarifas**: Rangos social/normal/alto para OCEBA y EPRE
 - **1 usuario demo**: demo@controlar.com / 123456
 - **6 dispositivos** con lecturas simuladas y token de sensor asignado
@@ -534,10 +546,12 @@ device_categories 1────N appliances     (catalogo de electrodomesticos)
 
 | Componente | Tecnologia |
 |---|---|
-| Microcontrolador | ESP32 (WROOM-32, DevKit V1) |
+| Microcontrolador | ESP8266MOD (ESP-12F) |
 | Sensor de energia | PZEM-004T v3.0 |
+| Sensor de corriente | Bobina CT / Transformador dona encintada |
 | IDE | Arduino IDE (o PlatformIO) |
 | Libreria sensor | PZEM004Tv30 (by oleh) |
+| Libreria CT | EmonLib |
 | Libreria JSON | ArduinoJson |
 
 ---
@@ -615,7 +629,10 @@ VolksWagem---Mentoria/
 │   │   ├── context/
 │   │   │   ├── AuthContext.js
 │   │   │   ├── ThemeContext.js
-│   │   │   └── SocketContext.js
+│   │   │   ├── SocketContext.js
+│   │   │   └── LanguageContext.js
+│   │   ├── i18n/
+│   │   │   └── translations.js
 │   │   ├── pages/ (14 paginas)
 │   │   ├── services/
 │   │   │   └── api.js
@@ -627,11 +644,16 @@ VolksWagem---Mentoria/
 │   ├── .env.example
 │   └── package.json
 ├── arduino/
+│   ├── esp8266_pzem_ct_monitor/
+│   │   └── esp8266_pzem_ct_monitor.ino   # Sketch produccion
+│   ├── test_diagnostico/
+│   │   └── test_diagnostico.ino           # Sketch diagnosticos
 │   └── esp32_pzem_monitor/
-│       └── esp32_pzem_monitor.ino
-├── start.bat                    # Windows: doble clic
-├── start.ps1                    # PowerShell: setup Windows
-├── start.sh                     # Linux/macOS/WSL
+│       └── esp32_pzem_monitor.ino         # Sketch legacy ESP32
+├── start.bat
+├── start.ps1
+├── start.sh
+├── fix_postgres.bat
 ├── README.md
 └── .gitignore
 ```
@@ -645,18 +667,14 @@ VolksWagem---Mentoria/
 | **Node.js** | >= 14 (recomendado 18 LTS) | `node -v` |
 | **npm** | >= 6.x | `npm -v` |
 | **Git** | Cualquier version | `git --version` |
+| **Arduino IDE** | 1.8+ o 2.x | Para flashear el ESP8266 |
 | **PostgreSQL** (solo forma sin internet) | >= 12 | `psql --version` |
 
 ---
 
 ## Instalacion y ejecucion
 
-> **IMPORTANTE:** Hay dos formas de correr el proyecto. Elegi la que se adapte a tu situacion.
-
 ### Forma 1: CON internet (Supabase en la nube)
-
-> Usa la base de datos en la nube de Supabase. No necesita PostgreSQL local.
-> Funciona desde cualquier PC con internet.
 
 #### Paso 1 - Clonar el repositorio
 
@@ -670,7 +688,7 @@ cd VolksWagem---Mentoria
 1. Ir a https://nodejs.org
 2. Descargar la version **LTS** (18 o superior)
 3. Instalar con las opciones por defecto
-4. Verificar en una terminal:
+4. Verificar:
 
 ```powershell
 node -v    # Deberia mostrar v18.x.x o superior
@@ -679,55 +697,21 @@ npm -v     # Deberia mostrar 9.x.x o superior
 
 #### Paso 3 - Configurar el backend
 
-Abrir una terminal (PowerShell o cmd) y ejecutar:
-
 ```powershell
 cd backend
-
-# Instalar todas las dependencias del proyecto
 npm install
-
-# Configurar las variables de entorno
-# Copiar el .env.example como .env
 copy .env.example .env
 ```
 
-Abrir el archivo `backend/.env` con un editor de texto y verificar que tenga esta configuracion:
-
-```env
-NODE_ENV=development
-PORT=3001
-DB_HOST=db.sjyzifasyshgcwaleovs.supabase.co
-DB_PORT=5432
-DB_NAME=postgres
-DB_USER=postgres
-DB_PASSWORD=W8hQo6SdtHkBKwfq
-JWT_SECRET=controlar_f54e219e79ea42232848b50b78a6b0dd
-JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:3000
-GEMINI_API_KEY=AQ.Ab8RN6KLhk9Ix5oafP5g9UniNMxRvyQCKKgy-yB7DvPCFdNQSg
-GEMINI_MODEL=gemini-3.6-flash
-```
-
-> Si queres que otros dispositivos de la red accedan, cambia CORS_ORIGIN:
-> `CORS_ORIGIN=http://localhost:3000,http://192.168.x.x:3000`
-> (reemplaza 192.168.x.x con la IP de tu PC)
+Editar `backend/.env` con la configuracion de la base de datos (ver [Variables de entorno](#variables-de-entorno)).
 
 #### Paso 4 - Crear la base de datos en Supabase
-
-Las tablas y datos iniciales se crean con un solo comando:
 
 ```powershell
 npm run db:reset
 ```
 
-Esto conecta a Supabase y crea:
-- 11 tablas (users, devices, consumption_readings, invoices, alerts, etc.)
-- 6 provincias con sus tarifas
-- 107 electrodomesticos del catalogo
-- 1 usuario demo con 6 dispositivos y 930 lecturas
-
-Si ves "Database synchronized" y "Seed completed successfully", todo esta bien.
+Esto crea 11 tablas y carga los datos iniciales (provincias, tarifas, catalogo, usuario demo).
 
 #### Paso 5 - Arrancar el backend
 
@@ -742,246 +726,80 @@ Database synchronized.
 Server running on port 3001 (0.0.0.0)
 ```
 
-**Dejar esta terminal abierta.** Abrir una **segunda terminal** para el frontend.
-
-#### Paso 6 - Configurar y arrancar el frontend
-
-En la **segunda terminal**:
+#### Paso 6 - Arrancar el frontend (segunda terminal)
 
 ```powershell
 cd frontend
-
-# Instalar dependencias
 npm install
-
-# Crear el archivo .env del frontend
 echo DISABLE_ESLINT_PLUGIN=true > .env
-
-# Arrancar el servidor de desarrollo
 npm start
 ```
 
-Despues de unos segundos se abrira automaticamente el navegador en:
-```
-http://localhost:3000
-```
+Se abrira el navegador en `http://localhost:3000`.
 
 #### Paso 7 - Iniciar sesion
 
 1. Ir a `http://localhost:3000/login`
-2. Usar las credenciales de demo:
-   - Email: `demo@controlar.com`
-   - Contrasena: `123456`
-3. Hacer clic en "Iniciar sesion"
-
-**Listo!** El proyecto esta funcionando con la base de datos de Supabase en la nube.
+2. Email: `demo@controlar.com` / Contrasena: `123456`
 
 ---
 
-### Forma 2: SIN internet (PostgreSQL local, en la escuela)
+### Forma 2: SIN internet (PostgreSQL local)
 
-> Usa una base de datos PostgreSQL instalada en la PC.
-> No necesita conexion a internet para la base de datos.
-> **Requisito:** Las carpetas `backend/node_modules` y `frontend/node_modules` deben existir
-> (se copian de una PC que ya tenga internet, o se instalan previamente).
+#### Paso 1 - Copiar el proyecto con node_modules
 
-#### Paso 1 - Copiar el proyecto a la PC
+Copiar la carpeta completa (con `node_modules` ya instalados) a la PC sin internet.
 
-Si no tenes internet, copia la carpeta completa del proyecto (con `node_modules` ya instalados) a la PC de la escuela. Podes usar un pendrive, disco externo o red local.
-
-La carpeta debe tener esta estructura:
-```
-VolksWagem---Mentoria/
-├── backend/
-│   ├── node_modules/    <-- DEBE EXISTIR
-│   ├── src/
-│   ├── seeds/
-│   ├── .env             <-- Lo creamos en el Paso 3
-│   └── package.json
-├── frontend/
-│   ├── node_modules/    <-- DEBE EXISTIR
-│   ├── src/
-│   ├── .env             <-- Lo creamos en el Paso 4
-│   └── package.json
-└── ...
-```
-
-> **Si no tenes `node_modules`:** Necesitas internet una sola vez para ejecutar
-> `npm install` en ambas carpetas (backend y frontend). Despues podes copiar
-> la carpeta completa a la PC sin internet.
-
-#### Paso 2 - Verificar que PostgreSQL este instalado y corriendo
-
-Abrir PowerShell y ejecutar:
+#### Paso 2 - Verificar PostgreSQL
 
 ```powershell
 psql --version
-```
-
-Si muestra algo como `psql (PostgreSQL) 18.6`, esta instalado.
-
-Verificar que el servicio este corriendo:
-
-```powershell
 Get-Service postgresql*
 ```
 
-Debe mostrar Status = "Running". Si no esta corriendo:
-
-```powershell
-Start-Service postgresql-x64-18
-```
-
-> Si no tenes PostgreSQL instalado, podes descargarlo de https://www.postgresql.org/download/windows/
-> Durante la instalacion usa la contrasena `postgres` para el usuario postgres.
-
-#### Paso 3 - Configurar el backend para PostgreSQL local
+#### Paso 3 - Configurar backend para PostgreSQL local
 
 ```powershell
 cd backend
 copy .env.example .env
 ```
 
-Abrir `backend/.env` y **cambiar** las lineas de base de datos para que apunte a PostgreSQL local:
-
+Editar `backend/.env`:
 ```env
-NODE_ENV=development
-PORT=3001
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=controlar_energia
 DB_USER=postgres
 DB_PASSWORD=postgres
-JWT_SECRET=controlar_f54e219e79ea42232848b50b78a6b0dd
-JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:3000
-GEMINI_API_KEY=AQ.Ab8RN6KLhk9Ix5oafP5g9UniNMxRvyQCKKgy-yB7DvPCFdNQSg
-GEMINI_MODEL=gemini-3.6-flash
 ```
 
-> **Cambio clave:** `DB_HOST=localhost` en vez de `db.sjyzifasyshgcwaleovs.supabase.co`
-> Esto hace que se conecte a PostgreSQL instalado en la misma PC.
-
-#### Paso 3b - Configurar autenticacion de PostgreSQL (solo primera vez)
-
-Si PostgreSQL no acepta contraseñas (error `password authentication failed`):
-
-1. Buscar el archivo `pg_hba.conf` (generalmente en `C:\Program Files\PostgreSQL\18\data\`)
-2. Abrirlo como administrador
-3. Cambiar las lineas `host ... peer` por `trust` para conexiones locales:
-
-```
-#TYPE  DATABASE  USER  ADDRESS       METHOD
-local   all       all                 trust
-host    all       all   127.0.0.1/32  trust
-host    all       all   ::1/128       trust
-```
-
-4. Reiniciar el servicio de PostgreSQL:
-
-```powershell
-Restart-Service postgresql-x64-18
-```
-
-> **Atajos:** El archivo `fix_postgres.bat` hace esto automaticamente (ejecutar como administrador).
-
-#### Paso 4 - Configurar el frontend
-
-En la **segunda terminal**:
-
-```powershell
-cd frontend
-echo DISABLE_ESLINT_PLUGIN=true > .env
-```
-
-#### Paso 5 - Crear la base de datos y cargar datos
-
-En la terminal del backend (que ya esta en la carpeta `backend/`):
+#### Paso 4 - Crear base de datos
 
 ```powershell
 npm run db:reset
 ```
 
-Esto:
-1. Crea la base de datos `controlar_energia` si no existe
-2. Crea todas las tablas (11 modelos)
-3. Carga los datos iniciales (provincias, tarifas, catalogo, usuario demo, etc.)
-
-Deberias ver al final:
-```
---- Seed completed successfully ---
-Provinces: 6
-Categories: 7
-Appliances: 107
-...
-User: demo@controlar.com / 123456
-```
-
-> Si ves "Database connected" y "Seed completed", todo esta funcionando.
-
-#### Paso 6 - Arrancar el backend
+#### Paso 5 - Arrancar backend y frontend
 
 ```powershell
-npm run dev
+# Terminal 1:
+cd backend && npm run dev
+
+# Terminal 2:
+cd frontend && npm start
 ```
-
-Deberias ver:
-```
-Database connected.
-Database synchronized.
-Server running on port 3001 (0.0.0.0)
-```
-
-**Dejar esta terminal abierta.**
-
-#### Paso 7 - Arrancar el frontend
-
-En la **segunda terminal** (que ya esta en `frontend/`):
-
-```powershell
-npm start
-```
-
-Despues de unos segundos se abrira el navegador en `http://localhost:3000`.
-
-#### Paso 8 - Iniciar sesion
-
-1. Ir a `http://localhost:3000/login`
-2. Email: `demo@controlar.com` / Contrasena: `123456`
-3. Hacer clic en "Iniciar sesion"
-
-**Listo!** El proyecto funciona con PostgreSQL local, sin necesidad de internet.
 
 ---
 
-### Forma 3: Inicio automatico (start.bat / start.sh)
-
-Los scripts de inicio hacen todo automaticamente. Detectan tu IP, configuran la base de datos y levantan todo.
-
-#### Windows
-
-Doble clic en `start.bat` (o ejecutar desde PowerShell):
+### Forma 3: Inicio automatico
 
 ```powershell
+# Windows:
 .\start.bat
+
+# Linux/macOS:
+chmod +x start.sh && ./start.sh
 ```
-
-El script:
-1. Detecta la IP de la red
-2. Verifica Node.js y npm
-3. Instala dependencias con `npm install`
-4. Configura PostgreSQL (local o Supabase segun el `.env`)
-5. Crea tablas y datos iniciales (solo la primera vez)
-6. Levanta backend (puerto 3001) y frontend (puerto 3000)
-
-#### Linux / macOS / WSL
-
-```bash
-chmod +x start.sh
-./start.sh
-```
-
-Hace lo mismo pero para sistemas Unix.
 
 ---
 
@@ -1000,7 +818,6 @@ Hace lo mismo pero para sistemas Unix.
 ```powershell
 # Health check del backend
 Invoke-WebRequest -Uri "http://localhost:3001/api/health"
-# Respuesta: {"status":"ok","timestamp":"2026-..."}
 
 # Abrir en el navegador
 start http://localhost:3000
@@ -1014,20 +831,6 @@ Desde otra PC o Notebook:
   Backend:  http://LA_IP_DE_ESTA_PC:3001
 ```
 
-Los scripts de inicio muestran la IP detectada al arrancar.
-
-### Que base de datos usa cada forma?
-
-| Forma | Base de datos | Host en .env | Necesita internet? |
-|---|---|---|---|
-| **Forma 1** (Supabase) | Supabase (nube) | `db.sjyzifasyshgcwaleovs.supabase.co` | Si |
-| **Forma 2** (Local) | PostgreSQL local | `localhost` | No |
-| **Forma 3** (start.bat) | Segun el `.env` configurado | Variable | Segun config |
-
-> **Tip para la escuela:** Si las PCs de la escuela no tienen internet pero si
-> tienen PostgreSQL instalado, usa la Forma 2. Si no tienen PostgreSQL ni internet,
-> copia la carpeta desde una PC que si tenga internet con `node_modules` ya instalados.
-
 ---
 
 ## Credenciales de demostracion
@@ -1038,10 +841,10 @@ Los scripts de inicio muestran la IP detectada al arrancar.
 | Contrasena | `123456` |
 
 El usuario demo viene con:
-- 6 dispositivos pre-cargados (aire acondicionado, heladera, lavarropas, computadora, heladera No Frost, televisor)
+- 6 dispositivos pre-cargados
 - 930 lecturas de consumo historicas (junio-julio 2026)
 - 2 facturas de energia
-- 3 alertas (pico de consumo, anomalia, umbral superado)
+- 3 alertas
 - Provincia: Buenos Aires (OCEBA)
 - 3 recomendaciones de ahorro
 
@@ -1065,18 +868,18 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 | Metodo | Ruta | Descripcion |
 |---|---|---|
 | GET | `/api/devices` | Listar dispositivos del usuario |
-| POST | `/api/devices` | Crear nuevo dispositivo (genera device_token automaticamente) |
+| POST | `/api/devices` | Crear nuevo dispositivo (genera device_token) |
 | PUT | `/api/devices/:id` | Actualizar dispositivo |
 | DELETE | `/api/devices/:id` | Eliminar dispositivo |
-| GET | `/api/devices/:id/readings` | Lecturas del dispositivo con estadisticas |
-| POST | `/api/devices/:id/regenerate-token` | Regenerar el token del sensor |
+| GET | `/api/devices/:id/readings` | Lecturas del dispositivo |
+| POST | `/api/devices/:id/regenerate-token` | Regenerar token del sensor |
 
 ### Catalogo de electrodomesticos
 
 | Metodo | Ruta | Descripcion |
 |---|---|---|
 | GET | `/api/appliances` | Listar todos los electrodomesticos |
-| GET | `/api/appliances/by-category` | Agrupados por categoria (para alta rapida) |
+| GET | `/api/appliances/by-category` | Agrupados por categoria |
 
 ### Consumo
 
@@ -1101,7 +904,7 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 | Metodo | Ruta | Descripcion |
 |---|---|---|
 | GET | `/api/alerts` | Listar alertas |
-| GET | `/api/alerts/unread-count` | Cantidad sin leer (badge del header) |
+| GET | `/api/alerts/unread-count` | Cantidad sin leer |
 | PUT | `/api/alerts/:id/read` | Marcar como leida |
 | PUT | `/api/alerts/read-all` | Marcar todas como leidas |
 | POST | `/api/alerts` | Crear alerta manual |
@@ -1113,7 +916,7 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 |---|---|---|
 | GET | `/api/predictions` | Obtener predicciones |
 | POST | `/api/predictions/generate` | Generar nueva prediccion |
-| GET | `/api/predictions/bill-forecast` | Pronostico de la boleta del proximo mes |
+| GET | `/api/predictions/bill-forecast` | Pronostico de la boleta |
 | GET | `/api/predictions/accuracy` | Precision del modelo |
 | GET | `/api/predictions/anomalies` | Deteccion de anomalias |
 
@@ -1139,7 +942,7 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 
 | Metodo | Ruta | Descripcion |
 |---|---|---|
-| GET | `/api/ai/status` | Estado del proveedor IA: gemini o local |
+| GET | `/api/ai/status` | Estado del proveedor IA |
 | POST | `/api/ai/chat` | Chat con el asistente |
 | GET | `/api/ai/insights` | Analisis del consumo |
 | GET | `/api/ai/recommendations` | Listar recomendaciones |
@@ -1147,11 +950,11 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 | PUT | `/api/ai/recommendations/:id` | Actualizar estado |
 | DELETE | `/api/ai/recommendations/:id` | Eliminar recomendacion |
 
-### Sensor IoT (ESP32)
+### Sensor IoT (ESP8266)
 
 | Metodo | Ruta | Descripcion |
 |---|---|---|
-| POST | `/api/sensor/readings` | Alta de lectura del sensor. Auth con **device_token** en header. Body: `{ instant_watts, accumulated_kwh_day, voltage, current, frequency, power_factor }` |
+| POST | `/api/sensor/readings` | Alta de lectura del sensor. Auth con **device_token** |
 
 ### Health Check
 
@@ -1175,10 +978,12 @@ DB_USER=postgres
 DB_PASSWORD=W8hQo6SdtHkBKwfq
 JWT_SECRET=controlar_f54e219e79ea42232848b50b78a6b0dd
 JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:3000,http://TU_IP:3000
-GEMINI_API_KEY=AQ.Ab8RN6KLhk9Ix5oafP5g9UniNMxRvyQCKKgy-yB7DvPCFdNQSg
+CORS_ORIGIN=http://localhost:3000
+GEMINI_API_KEY=tu_api_key_aqui
 GEMINI_MODEL=gemini-3.6-flash
 ```
+
+> Para PostgreSQL local, cambiar `DB_HOST=localhost` y ajustar credenciales.
 
 ### Frontend (`frontend/.env`)
 
@@ -1188,81 +993,119 @@ DISABLE_ESLINT_PLUGIN=true
 
 ---
 
+## Internacionalizacion (i18n)
+
+El sistema incluye soporte bilingue **Espanol (ES) / Ingles (EN)** con toggle en el header.
+
+### Archivos
+
+| Archivo | Funcion |
+|---|---|
+| `frontend/src/i18n/translations.js` | Todas las traducciones (~500+ claves en ES y EN) |
+| `frontend/src/context/LanguageContext.js` | Contexto + hook `useTranslation()` + `toggleLang()` |
+
+### Como usar en componentes
+
+```javascript
+import { useTranslation } from '../context/LanguageContext';
+
+function MiComponente() {
+  const { t } = useTranslation();
+  return <h1>{t('dashboard.title')}</h1>;
+}
+```
+
+### Alcance
+
+- **14 paginas** traducidas completamente
+- **Header** con toggle de idioma (boton globe)
+- **Sidebar** con etiquetas de navegacion traducidas
+- **Modales** (DeviceFormModal) y **LoadingSpinner** traducidos
+- Idioma persistido en `localStorage`
+- Correccion de tildes: "En linea" -> "En linea", "Sin conexion" -> "Sin conexion"
+
+---
+
 ## Cambios recientes
 
-### Catalogo de electrodomesticos
+### Hardware: ESP32 a ESP8266MOD
 
-Para facilitar el alta de dispositivos, el sistema incluye un **catalogo de 107 electrodomesticos** predefinidos, agrupados en 7 categorias.
+- El microcontrolador cambio de **ESP32** a **ESP8266MOD** (ESP-12F)
+- Comunicacion con PZEM via **SoftwareSerial** en D1/D2 (no mas Serial2)
+- Se agrego **bobina CT (dona encintada)** para medicion de corriente adicional
+- Nuevo sketch: `esp8266_pzem_ct_monitor.ino`
 
-**Como funciona:** en la pagina Mis Dispositivos, el boton "Registrar electrodomestico" abre un **asistente de 3 pasos**:
-1. El usuario elige la **categoria** en una grilla visual
-2. Busca y selecciona el **electrodomestico del catalogo** (se completan solos los watts y horas de uso)
-3. Confirma los datos antes de guardar
+### Bobina CT integrada
+
+- Transformador dona encintada para medicion de corriente sin cortar el cable
+- Usa **EmonLib** para calcular corriente RMS desde A0
+- Potencia total = PZEM + CT (correccion para cargas con multiples lineas)
+
+### Internacionalizacion (i18n)
+
+- Sistema de traducciones completo ES/EN (~500+ claves)
+- Toggle de idioma en el header (boton globe)
+- Persistencia del idioma en localStorage
+- Todas las 14 paginas traducidas
+
+### Sketch de diagnosticos
+
+- Nuevo sketch `test_diagnostico.ino` que verifica Wi-Fi, PZEM, CT y Backend por separado
+- Muestra resultados tipo checklist en el Monitor Serial
+- Modo monitoreo automatico si todos los tests pasan
+
+### Backend: Resolucion DNS
+
+- Modificado `database.js` para resolver IPv6-only de Supabase
+- Pendiente: aplicar Connection Pooler URL para IPv4
 
 ### Prediccion IA de la boleta
 
-El motor de predicciones estima **cuanto va a costar la boleta del proximo mes**:
-1. Toma lecturas de los ultimos 90 dias
-2. Aplica **regresion lineal** sobre los ultimos 30 dias
-3. Combina con **estacionalidad mensual** y **factor fin de semana**
-4. Genera pronostico dia a dia para todo el proximo mes
-5. Calcula el **costo** aplicando tarifas progresivas por rangos de la provincia
+- Motor de predicciones que estima el costo de la boleta del proximo mes
+- Regresion lineal + estacionalidad + factor fin de semana
+- Tarifas progresivas por rangos de la provincia
 
-### Sensor IoT
+### Catalogo de electrodomesticos
 
-- El ESP32 + PZEM-004T mide y envia datos cada 30 segundos
-- Usa **device_token** (no JWT) para autenticarse
-- El backend guarda la lectura y emite por Socket.IO
-- El dashboard se actualiza en vivo con los nuevos datos
-- La energia acumulada se reinicia a medianoche (hora Argentina)
-
-### Asistente IA
-
-- Chat conversacional que conoce tus datos reales
-- Con **Google Gemini** configurado usa el modelo real
-- Sin API key, un **motor local** responde con heuristicas
-- Recomendaciones personalizadas de ahorro con ahorro estimado en kWh y pesos
-
-### Modo oscuro
-
-Toggle en el header que guarda la preferencia en el navegador y respeta la preferencia del sistema.
+- 107 electrodomesticos predefinidos en 7 categorias
+- Asistente de 3 pasos para registro rapido de dispositivos
 
 ---
 
 ## Problemas encontrados y soluciones
 
-### 1. Error de autenticacion PostgreSQL (peer authentication)
+### 1. Supabase IPv6-only (activo)
 
-**Problema**: PostgreSQL usaba autenticacion `peer` por defecto.
+**Problema:** El hostname `db.sjyzifasyshgcwaleovs.supabase.co` solo tiene registros AAAA (IPv6) y la maquina no tiene IPv6 funcional.
 
-**Solucion**: Configurar `pg_hba.conf` para usar autenticacion por contraseña:
-```sql
-ALTER USER postgres WITH PASSWORD 'postgres';
+**Solucion pendiente:** Usar la **Connection Pooler** de Supabase (modo Transaction) que tiene IPv4:
+```
+postgresql://postgres.xxxxx:password@aws-0-XX-XXX-X.pooler.supabase.com:6543/postgres
 ```
 
-### 2. Incompatibilidad de Node.js 12 con dependencias modernas
+### 2. Autenticacion PostgreSQL (peer authentication)
 
-**Problema**: Node.js v12.22.12 incompatible con versiones recientes de npm packages.
+**Problema:** PostgreSQL usaba autenticacion `peer` por defecto.
 
-**Solucion**: Se fijaron versiones compatibles con Node 12 en `package.json`.
+**Solucion:** Configurar `pg_hba.conf` para usar autenticacion por contrasena.
 
-### 3. Error de Sequelize sync con enums PostgreSQL
+### 3. Incompatibilidad de Node.js 12
 
-**Problema**: `sequelize.sync({ alter: true })` intentaba recrear tipos enum que ya existian.
+**Problema:** Node.js v12 incompatible con dependencias modernas.
 
-**Solucion**: Cambiar a `sequelize.sync({ force: false })` en `server.js`.
+**Solucion:** Se fijaron versiones compatibles con Node 12 en `package.json`.
 
-### 4. Proxy ECONNREFUSED entre frontend y backend
+### 4. Sequelize sync con enums PostgreSQL
 
-**Problema**: El frontend no puede conectar al backend si este no esta corriendo.
+**Problema:** `sequelize.sync({ alter: true })` intentaba recrear tipos enum.
 
-**Solucion**: Asegurarse de que ambos servidores esten arrancados.
+**Solucion:** Cambiar a `sequelize.sync({ force: false })` en `server.js`.
 
-### 5. `start.sh` no funcionaba en Windows
+### 5. Proxy ECONNREFUSED
 
-**Problema**: Script de bash no funciona en Windows nativo.
+**Problema:** Frontend no conecta al backend si no esta corriendo.
 
-**Solucion**: Se creo `start.bat` y `start.ps1` para Windows.
+**Solucion:** Asegurarse de que ambos servidores esten arrancados.
 
 ---
 
@@ -1272,7 +1115,7 @@ ALTER USER postgres WITH PASSWORD 'postgres';
 - Exportacion de reportes en PDF y CSV
 - Alertas por email configurables
 - Comparacion entre usuarios (anonima) para benchmarks
-- Integracion con API de CAMMESA para datos de generacion nacional
+- Integracion con API de CAMMESA
 
 ### Tecnico
 - Tests automatizados: Jest + Supertest (backend), React Testing Library (frontend)
@@ -1282,52 +1125,8 @@ ALTER USER postgres WITH PASSWORD 'postgres';
 - Migracion a Node 18+
 
 ### UX/UI
-- Internacionalizacion (i18n) espanol/ingles
 - Responsive mobile completo
 - Onboarding wizard de primera vez
-
----
-
-## Como subir a GitHub
-
-### 1. Instalar Git
-
-```powershell
-winget install Git.Git
-```
-
-Cerrar y reabrir PowerShell.
-
-### 2. Crear repositorio en GitHub
-
-1. Ir a [github.com/new](https://github.com/new)
-2. Nombre: `VolksWagem---Mentoria`
-3. Public o Private (a eleccion)
-4. NO marcar "Add a README"
-5. Click en **Create repository**
-
-### 3. Subir desde esta PC
-
-```powershell
-cd C:\Users\alumno\Documents\VolksWagem---Mentoria
-
-git init
-git add .
-git commit -m "Primer commit: proyecto ControlAR Energia completo"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/VolksWagem---Mentoria.git
-git push -u origin main
-```
-
-> Reemplazar `TU_USUARIO` con el usuario de GitHub.
-
-### 4. Verificar que .gitignore funciona
-
-```powershell
-git status
-```
-
-`backend/.env` y `frontend/.env` **NO deben aparecer** (el `.gitignore` los bloquea). Solo deben aparecer los `.env.example`.
 
 ---
 

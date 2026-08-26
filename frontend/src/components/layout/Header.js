@@ -1,30 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, Moon, Sun, Wifi, WifiOff } from 'lucide-react';
+import { Bell, Moon, Sun, Wifi, Globe } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSocket } from '../../context/SocketContext';
+import { useTranslation } from '../../context/LanguageContext';
 import { api } from '../../services/api';
-
-const titles = {
-  '/dashboard': 'Dashboard',
-  '/devices': 'Dispositivos',
-  '/consumption': 'Consumo',
-  '/invoices': 'Facturas',
-  '/alerts': 'Alertas',
-  '/predictions': 'Predicciones',
-  '/tariffs': 'Tarifas',
-  '/profile': 'Perfil',
-  '/assistant': 'Asistente IA',
-  '/recommendations': 'Recomendaciones',
-};
 
 export default function Header() {
   const { user } = useAuth();
   const { dark, toggle } = useTheme();
   const { connected, on } = useSocket();
+  const { lang, toggleLang, t } = useTranslation();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const titles = {
+    '/dashboard': t('nav.dashboard'),
+    '/devices': t('nav.devices'),
+    '/consumption': t('nav.consumption'),
+    '/invoices': t('nav.invoices'),
+    '/alerts': t('nav.alerts'),
+    '/predictions': t('nav.predictions'),
+    '/tariffs': t('nav.tariffs'),
+    '/profile': t('nav.profile'),
+    '/assistant': t('nav.assistant'),
+    '/recommendations': t('nav.recommendations'),
+  };
   const title = titles[location.pathname] || 'ControlAR';
 
   const loadUnread = () => {
@@ -45,11 +47,15 @@ export default function Header() {
       <h1 className="header-title">{title}</h1>
       <div className="header-actions">
         {connected && (
-          <span className="header-realtime" title="Conexión en tiempo real activa">
+          <span className="header-realtime" title={t('header.realtime')}>
             <Wifi size={14} />
           </span>
         )}
-        <button className="header-theme" onClick={toggle} title={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>
+        <button className="header-theme" onClick={toggleLang} title={lang === 'es' ? 'Switch to English' : 'Cambiar a español'}>
+          <Globe size={20} />
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, marginLeft: 2 }}>{lang.toUpperCase()}</span>
+        </button>
+        <button className="header-theme" onClick={toggle} title={dark ? t('header.theme_light') : t('header.theme_dark')}>
           {dark ? <Sun size={20} /> : <Moon size={20} />}
         </button>
         <Link to="/alerts" className="header-notification">

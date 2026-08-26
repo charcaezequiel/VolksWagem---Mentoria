@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SocketProvider } from './context/SocketContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
@@ -23,11 +24,12 @@ import RecommendationsPage from './pages/RecommendationsPage';
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <SocketProvider>
-          <Toaster position="top-right" toastOptions={{ duration: 4000, style: { fontFamily: 'Inter, sans-serif' } }} />
-          <Routes>
+    <LanguageProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <SocketProvider>
+            <Toaster position="top-right" toastOptions={{ duration: 4000, style: { fontFamily: 'Inter, sans-serif' } }} />
+            <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
@@ -44,11 +46,12 @@ function App() {
               <Route path="/assistant" element={<AssistantPage />} />
               <Route path="/recommendations" element={<RecommendationsPage />} />
             </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </SocketProvider>
       </ThemeProvider>
     </AuthProvider>
+    </LanguageProvider>
   );
 }
 

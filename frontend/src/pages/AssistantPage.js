@@ -3,21 +3,23 @@ import { Bot, Send, Sparkles, User, Cpu, Wifi, WifiOff } from 'lucide-react';
 import { api } from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
-
-const suggestionChips = [
-  '¿Cuánto voy a pagar el mes que viene?',
-  '¿Cómo puedo ahorrar energía?',
-  '¿Qué dispositivo consume más?',
-  '¿Cuál es mi consumo del mes?',
-];
+import { useTranslation } from '../context/LanguageContext';
 
 export default function AssistantPage() {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [aiStatus, setAiStatus] = useState(null);
   const messagesEndRef = useRef(null);
+
+  const suggestionChips = [
+    t('assistant.chip1') || '¿Cuánto voy a pagar el mes que viene?',
+    t('assistant.chip2') || '¿Cómo puedo ahorrar energía?',
+    t('assistant.chip3') || '¿Qué dispositivo consume más?',
+    t('assistant.chip4') || '¿Cuál es mi consumo del mes?',
+  ];
 
   useEffect(() => {
     api.ai.getStatus()
@@ -44,7 +46,7 @@ export default function AssistantPage() {
       const res = await api.ai.chat({ message, history });
       setMessages((prev) => [...prev, { role: 'assistant', content: res.data.reply, provider: res.data.provider }]);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Error al comunicarse con el asistente');
+      toast.error(err.response?.data?.error || t('assistant.error'));
     }
     setSending(false);
   };
@@ -60,13 +62,13 @@ export default function AssistantPage() {
     <div className="assistant-page">
       <div className="page-header">
         <div className="page-header-text">
-          <h2><Bot size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />Asistente IA</h2>
-          <p className="page-header-subtitle">Preguntá sobre tu consumo, dispositivos y cómo ahorrar energía.</p>
+          <h2><Bot size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />{t('assistant.title')}</h2>
+          <p className="page-header-subtitle">{t('assistant.subtitle')}</p>
         </div>
         {aiStatus && (
           <span className={`badge ${aiStatus.configured ? 'badge-success' : 'badge-warning'}`}>
             {aiStatus.configured ? <Wifi size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} /> : <WifiOff size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />}
-            {aiStatus.configured ? `Gemini conectado (${aiStatus.model})` : 'Modo local — configurá tu API key de Gemini'}
+            {aiStatus.configured ? t('assistant.gemini_connected', { model: aiStatus.model }) : t('assistant.local_mode')}
           </span>
         )}
       </div>
@@ -76,10 +78,9 @@ export default function AssistantPage() {
           {messages.length === 0 && (
             <div className="chat-welcome">
               <div className="chat-welcome-icon"><Bot size={40} /></div>
-              <h3>¡Hola! Soy ControlAR, tu asistente energético</h3>
+              <h3>{t('assistant.welcome_title')}</h3>
               <p>
-                Conozco tus datos de consumo, tus dispositivos, facturas y el pronóstico del mes que viene.
-                Preguntame lo que quieras sobre tu energía.
+                {t('assistant.welcome_desc')}
               </p>
               <div className="chat-suggestions">
                 {suggestionChips.map((chip) => (
@@ -100,7 +101,7 @@ export default function AssistantPage() {
                 <div className="chat-bubble-text">{formatContent(m.content)}</div>
                 {m.provider && (
                   <div className="chat-provider">
-                    {m.provider === 'gemini' ? <Cpu size={12} /> : <Sparkles size={12} />} {m.provider === 'gemini' ? 'Gemini' : 'Motor local'}
+                    {m.provider === 'gemini' ? <Cpu size={12} /> : <Sparkles size={12} />} {m.provider === 'gemini' ? 'Gemini' : t('assistant.local_engine')}
                   </div>
                 )}
               </div>
@@ -121,13 +122,13 @@ export default function AssistantPage() {
         <form className="chat-input-bar" onSubmit={(e) => { e.preventDefault(); sendMessage(); }}>
           <input
             className="form-input"
-            placeholder="Escribí tu pregunta sobre energía..."
+            placeholder={t('assistant.placeholder')}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={sending}
           />
           <button className="btn btn-primary" type="submit" disabled={sending || !input.trim()}>
-            <Send size={16} /> Enviar
+            <Send size={16} /> {t('assistant.send')}
           </button>
         </form>
       </div>

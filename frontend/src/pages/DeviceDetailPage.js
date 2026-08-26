@@ -8,6 +8,7 @@ import PageSection from '../components/common/PageSection';
 import LineChart from '../components/charts/LineChart';
 import DataTable from '../components/common/DataTable';
 import toast from 'react-hot-toast';
+import { useTranslation } from '../context/LanguageContext';
 
 export default function DeviceDetailPage() {
   const { id } = useParams();
@@ -15,16 +16,22 @@ export default function DeviceDetailPage() {
   const [readings, setReadings] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await api.devices.getReadings(id, { limit: 100 });
-      setDevice(res.data.device);
-      setReadings(res.data.readings || []);
-      setStats(res.data.stats || null);
+      const [deviceRes, readingsRes] = await Promise.all([
+        api.devices.getById(id).catch(() => null),
+        api.devices.getReadings(id, { limit: 100 }),
+      ]);
+      const deviceData = deviceRes?.data?.device || deviceRes?.data || null;
+      const readingsData = readingsRes.data;
+      setDevice(deviceData || readingsData.device);
+      setReadings(readingsData.readings || []);
+      setStats(readingsData.stats || null);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Error al cargar el dispositivo');
+      toast.error(err.response?.data?.error || t('devices.error'));
     }
     setLoading(false);
   };
@@ -34,17 +41,17 @@ export default function DeviceDetailPage() {
   const copyToken = () => {
     if (!device?.device_token) return;
     navigator.clipboard.writeText(device.device_token);
-    toast.success('Token copiado');
+    toast.success(t('device.token_copied'));
   };
 
   const regenerateToken = async () => {
-    if (!window.confirm('¿Regenerar el token del sensor? El dispositivo actual dejará de funcionar hasta que cargues el nuevo token.')) return;
+    if (!window.confirm(t('device.token_confirm'))) return;
     try {
       const res = await api.devices.regenerateToken(id);
       setDevice(res.data.device);
-      toast.success('Token regenerado');
+      toast.success(t('device.token_regenerated'));
     } catch {
-      toast.error('Error al regenerar el token');
+      toast.error(t('device.token_error'));
     }
   };
 
@@ -58,20 +65,20 @@ export default function DeviceDetailPage() {
   }));
 
   const columns = [
-    { header: 'Fecha', key: 'reading_timestamp', render: (v) => new Date(v).toLocaleString('es-AR') },
-    { header: 'Potencia (W)', key: 'instant_watts' },
-    { header: 'kWh del día', key: 'accumulated_kwh_day', render: (v) => v ?? '—' },
-    { header: 'Tensión (V)', key: 'voltage', render: (v) => v ?? '—' },
-    { header: 'Corriente (A)', key: 'current', render: (v) => v ?? '—' },
-    { header: 'Frecuencia (Hz)', key: 'frequency', render: (v) => v ?? '—' },
-    { header: 'Factor de potencia', key: 'power_factor', render: (v) => v ?? '—' },
+    { header: t('device.col_date'), key: 'reading_timestamp', render: (v) => new Date(v).toLocaleString('es-AR') },
+    { header: t('device.col_power'), key: 'instant_watts' },
+    { header: t('device.col_kwh_day'), key: 'accumulated_kwh_day', render: (v) => v ?? '—' },
+    { header: t('device.col_voltage'), key: 'voltage', render: (v) => v ?? '—' },
+    { header: t('device.col_current'), key: 'current', render: (v) => v ?? '—' },
+    { header: t('device.col_frequency'), key: 'frequency', render: (v) => v ?? '—' },
+    { header: t('device.col_pf'), key: 'power_factor', render: (v) => v ?? '—' },
   ];
 
   return (
     <div>
       <div className="page-header">
         <div className="page-header-text" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link to="/devices" className="btn btn-sm btn-secondary"><ArrowLeft size={14} /> Volver</Link>
+          <Link to="/devices" className="btn btn-sm btn-secondary"><ArrowLeft size={14} /> {t('device.back')}</Link>
           <h2 style={{ margin: 0 }}><Cpu size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />{device.name}</h2>
         </div>
       </div>
@@ -80,56 +87,56 @@ export default function DeviceDetailPage() {
         <StatCard
           icon={<Zap size={20} />}
           value={stats?.last_watts != null ? `${stats.last_watts} W` : '—'}
-          label="Potencia actual"
+          label={t('device.power_current')}
           color="primary"
         />
         <StatCard
           icon={<Activity size={20} />}
           value={`${stats?.month_kwh ?? 0} kWh`}
-          label="Consumo del mes"
+          label={t('device.consumption_month')}
           color="warning"
         />
         <StatCard
           icon={<CalendarDays size={20} />}
-          value={stats?.last_reading_at ? new Date(stats.last_reading_at).toLocaleDateString('es-AR') : 'Sin datos'}
-          label="Última medición"
+          value={stats?.last_reading_at ? new Date(stats.last_reading_at).toLocaleDateString('es-AR') : t('device.no_data')}
+          label={t('device.last_measurement')}
           color="info"
         />
         <StatCard
           icon={stats?.is_online ? <Wifi size={20} /> : <WifiOff size={20} />}
-          value={!device.device_token ? 'Sin sensor' : stats?.is_online ? 'En linea' : 'Sin conexion'}
-          label={!device.device_token ? 'No hay sensor configurado' : 'Estado del sensor'}
+          value={!device.device_token ? t('device.sensor_no_device') : stats?.is_online ? t('device.sensor_online_label') : t('device.sensor_offline_label')}
+          label={!device.device_token ? t('device.sensor_no_config') : t('device.sensor_status')}
           color={!device.device_token ? 'warning' : stats?.is_online ? 'primary' : 'danger'}
         />
       </div>
 
       <PageSection
         icon={<KeyRound size={18} />}
-        title={!device.device_token ? "Sensor no conectado" : "Conectar tu sensor ESP32 + PZEM-004T"}
+        title={!device.device_token ? t('device.sensor_not_connected') : t('device.sensor_connected_title')}
         subtitle={!device.device_token
-          ? "Este dispositivo no tiene un sensor IoT configurado. Genera un token y cargalo en el sketch de Arduino para empezar a medir."
-          : "Copiá el token del dispositivo y pegálo en el sketch de Arduino. El sensor envía lecturas automáticamente a la base de datos."
+          ? t('device.sensor_not_connected_desc')
+          : t('device.sensor_connected_desc')
         }
         style={{ marginBottom: 24 }}
       >
         <div className="device-token-row">
-          <code className="device-token">{device.device_token || 'Sin token — regeneralo'}</code>
-          <button className="btn btn-sm btn-secondary" onClick={copyToken}><Copy size={14} /> Copiar</button>
-          <button className="btn btn-sm btn-danger" onClick={regenerateToken}><RefreshCw size={14} /> Regenerar</button>
+          <code className="device-token">{device.device_token || t('device.no_token')}</code>
+          <button className="btn btn-sm btn-secondary" onClick={copyToken}><Copy size={14} /> {t('device.copy')}</button>
+          <button className="btn btn-sm btn-danger" onClick={regenerateToken}><RefreshCw size={14} /> {t('device.regenerate')}</button>
         </div>
         <div className="device-token-help">
-          <strong>ID del dispositivo:</strong> <code>{device.id}</code>
+          <strong>{t('device.device_id')}</strong> <code>{device.id}</code>
         </div>
         <p className="device-token-help">
-          Endpoint: <code>POST /api/sensor/readings</code> con header <code>Authorization: Bearer &lt;token&gt;</code>.
+          {t('device.endpoint')} <code>POST /api/sensor/readings</code> con header <code>Authorization: Bearer &lt;token&gt;</code>.
         </p>
       </PageSection>
 
       {chartData.length > 0 && (
         <PageSection
           icon={<Activity size={18} />}
-          title={`Consumo de ${device.name} (W)`}
-          subtitle="Potencia instantánea registrada por el sensor"
+          title={t('device.chart_title', { name: device.name })}
+          subtitle={t('device.chart_subtitle')}
           style={{ marginBottom: 24 }}
         >
           <LineChart data={chartData} xKey="time" yKey="watts" color="#8b5cf6" title="" />
@@ -138,10 +145,10 @@ export default function DeviceDetailPage() {
 
       <PageSection
         icon={<Activity size={18} />}
-        title="Historial de lecturas"
-        subtitle="Últimas mediciones enviadas por el sensor"
+        title={t('device.readings_title')}
+        subtitle={t('device.readings_subtitle')}
       >
-        <DataTable columns={columns} data={readings} emptyMessage="Todavía no hay lecturas para este dispositivo" />
+        <DataTable columns={columns} data={readings} emptyMessage={t('device.readings_empty')} />
       </PageSection>
     </div>
   );

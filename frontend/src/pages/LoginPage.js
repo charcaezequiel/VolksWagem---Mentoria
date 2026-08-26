@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/LanguageContext';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -10,16 +11,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       await login(email, password);
-      toast.success('¡Bienvenido!');
+      toast.success(t('login.welcome'));
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Credenciales incorrectas');
+      toast.error(err.response?.data?.error || t('login.error'));
     } finally {
       setLoading(false);
     }
@@ -30,33 +32,33 @@ export default function LoginPage() {
       <div className="auth-card">
         <div className="auth-logo">
           <div className="auth-logo-icon"><Zap size={32} /></div>
-          <h1>ControlAR</h1>
-          <p>Monitoreá tu consumo energético</p>
+          <h1>{t('login.title')}</h1>
+          <p>{t('login.subtitle')}</p>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email</label>
+            <label className="form-label">{t('login.email')}</label>
             <div className="input-with-icon">
               <Mail size={16} />
               <input className="form-input" type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="tu@email.com" />
             </div>
           </div>
           <div className="form-group">
-            <label className="form-label">Contraseña</label>
+            <label className="form-label">{t('login.password')}</label>
             <div className="input-with-icon">
               <Lock size={16} />
               <input className="form-input" type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="••••••••" />
             </div>
           </div>
           <button className="btn btn-primary btn-lg" type="submit" style={{ width: '100%' }} disabled={loading}>
-            {loading ? 'Ingresando...' : 'Iniciar sesión'}
+            {loading ? t('login.submitting') : t('login.submit')}
           </button>
         </form>
         <div className="auth-demo-hint">
-          <strong>Demo:</strong> demo@controlar.com / 123456
+          <strong>{t('login.demo')}</strong> demo@controlar.com / 123456
         </div>
         <div className="auth-footer">
-          ¿No tenés cuenta? <Link to="/register">Registrate gratis</Link>
+          {t('login.no_account')} <Link to="/register">{t('login.register_link')}</Link>
         </div>
       </div>
     </div>

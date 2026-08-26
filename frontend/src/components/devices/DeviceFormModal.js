@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import Field from '../common/Field';
+import { useTranslation } from '../../context/LanguageContext';
 
 const categoryIcon = (name = '') => {
   const n = name.toLowerCase();
@@ -19,6 +20,7 @@ const categoryIcon = (name = '') => {
 };
 
 export default function DeviceFormModal({ categories, applianceGroups, initial, saving, onClose, onSave }) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(initial ? 3 : 1);
   const [categoryId, setCategoryId] = useState(initial?.category_id || '');
   const [form, setForm] = useState({
@@ -69,8 +71,8 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
 
   return (
     <Modal
-      title={initial ? 'Editar dispositivo' : 'Registrar electrodoméstico'}
-      subtitle={initial ? 'Actualizá los datos del dispositivo' : 'Elegí tu electrodoméstico en 3 pasos'}
+      title={initial ? t('device_form.title_edit') : t('device_form.title_new')}
+      subtitle={initial ? t('device_form.subtitle_edit') : t('device_form.subtitle_new')}
       icon={initial ? <SlidersHorizontal size={18} /> : <Cpu size={18} />}
       onClose={onClose}
       size="lg"
@@ -79,15 +81,15 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
         <div className="wizard-steps">
           <div className={`wizard-step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'done' : ''}`}>
             <span className="wizard-step-num">{step > 1 ? <Check size={14} /> : 1}</span>
-            <span className="wizard-step-label">Categoría</span>
+            <span className="wizard-step-label">{t('device_form.step_category')}</span>
           </div>
           <div className={`wizard-step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'done' : ''}`}>
             <span className="wizard-step-num">{step > 2 ? <Check size={14} /> : 2}</span>
-            <span className="wizard-step-label">Electrodoméstico</span>
+            <span className="wizard-step-label">{t('device_form.step_appliance')}</span>
           </div>
           <div className={`wizard-step ${step >= 3 ? 'active' : ''}`}>
             <span className="wizard-step-num">3</span>
-            <span className="wizard-step-label">Confirmar</span>
+            <span className="wizard-step-label">{t('device_form.step_confirm')}</span>
           </div>
         </div>
       )}
@@ -95,7 +97,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
       {step === 1 && (
         <>
           <p className="wizard-intro">
-            ¿Qué tipo de electrodoméstico querés registrar? Elegí la categoría para ver las opciones del catálogo.
+            {t('device_form.intro')}
           </p>
           <div className="category-grid">
             {categories.map((c) => {
@@ -104,7 +106,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
                 <button key={c.id || c._id} className="category-card" onClick={() => selectCategory(c.id || c._id)}>
                   <span className="category-card-icon">{categoryIcon(c.name)}</span>
                   <span className="category-card-name">{c.name}</span>
-                  <span className="category-card-count">{count} electrodomésticos</span>
+                  <span className="category-card-count">{t('device_form.appliances_count', { count })}</span>
                 </button>
               );
             })}
@@ -116,7 +118,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
         <>
           <div className="wizard-back-row">
             <button className="btn btn-sm btn-secondary" onClick={() => setStep(1)}>
-              <ChevronLeft size={14} /> Categorías
+              <ChevronLeft size={14} /> {t('device_form.categories')}
             </button>
             <span className="wizard-category-name">{category?.name}</span>
           </div>
@@ -124,7 +126,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
             <Search size={16} />
             <input
               className="form-input"
-              placeholder={`Buscar en ${category?.name}...`}
+              placeholder={t('device_form.search_placeholder', { category: category?.name })}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               autoFocus
@@ -132,7 +134,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
           </div>
           <div className="appliance-list">
             {filteredAppliances.length === 0 && (
-              <p className="appliance-empty">No se encontraron electrodomésticos con ese nombre.</p>
+              <p className="appliance-empty">{t('device_form.no_results')}</p>
             )}
             {filteredAppliances.map((a) => (
               <button key={a.id || a._id} className="appliance-card" onClick={() => selectAppliance(a)}>
@@ -148,7 +150,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
             ))}
           </div>
           <button className="btn btn-ghost btn-block" onClick={goCustom}>
-            <SlidersHorizontal size={16} /> Configurar manualmente
+            <SlidersHorizontal size={16} /> {t('device_form.manual_config')}
           </button>
         </>
       )}
@@ -158,27 +160,27 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
           {!initial && custom && (
             <div className="wizard-back-row">
               <button type="button" className="btn btn-sm btn-secondary" onClick={() => { setStep(2); setSearch(''); }}>
-                <ChevronLeft size={14} /> Volver al catálogo
+                <ChevronLeft size={14} /> {t('device_form.back_catalog')}
               </button>
               {category && <span className="wizard-category-name">{category.name}</span>}
             </div>
           )}
           <div className="form-row">
             <div className="form-group">
-              <Field label="Nombre del dispositivo" icon={<Cpu size={15} />} required>
-                <input className="form-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required placeholder="Ej.: Heladera Samsung" />
+              <Field label={t('device_form.name_label')} icon={<Cpu size={15} />} required>
+                <input className="form-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required placeholder={t('device_form.name_placeholder')} />
               </Field>
             </div>
           </div>
           <div className="form-row">
             <div className="form-group">
-              <Field label="Potencia (Watts)" icon={<Lightbulb size={15} />} required hint="Figura en la etiqueta de eficiencia del equipo">
-                <input className="form-input" type="number" min="0" step="1" value={form.nominal_watts} onChange={(e) => setForm({ ...form, nominal_watts: e.target.value })} required placeholder="Ej.: 120" />
+              <Field label={t('device_form.watts_label')} icon={<Lightbulb size={15} />} required hint={t('device_form.watts_hint')}>
+                <input className="form-input" type="number" min="0" step="1" value={form.nominal_watts} onChange={(e) => setForm({ ...form, nominal_watts: e.target.value })} required placeholder={t('device_form.watts_placeholder')} />
               </Field>
             </div>
             <div className="form-group">
-              <Field label="Horas de uso por día" icon={<Monitor size={15} />} hint="Estimación diaria de uso">
-                <input className="form-input" type="number" min="0" step="0.5" value={form.hours_daily_usage} onChange={(e) => setForm({ ...form, hours_daily_usage: e.target.value })} placeholder="Ej.: 4" />
+              <Field label={t('device_form.hours_label')} icon={<Monitor size={15} />} hint={t('device_form.hours_hint')}>
+                <input className="form-input" type="number" min="0" step="0.5" value={form.hours_daily_usage} onChange={(e) => setForm({ ...form, hours_daily_usage: e.target.value })} placeholder={t('device_form.hours_placeholder')} />
               </Field>
             </div>
           </div>
@@ -190,14 +192,14 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
                 <small>{category.name} · {form.nominal_watts} W{form.hours_daily_usage ? ` · ${form.hours_daily_usage} hs/día` : ''}</small>
               </div>
               <button type="button" className="btn btn-sm btn-secondary" onClick={() => setStep(2)}>
-                Cambiar
+                {t('device_form.change')}
               </button>
             </div>
           )}
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>{t('device_form.cancel')}</button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              <Check size={16} /> {saving ? 'Guardando...' : initial ? 'Guardar cambios' : 'Registrar dispositivo'}
+              <Check size={16} /> {saving ? t('device_form.saving') : initial ? t('device_form.save') : t('device_form.register')}
             </button>
           </div>
         </form>

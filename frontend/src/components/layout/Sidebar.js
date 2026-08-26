@@ -1,25 +1,28 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../context/LanguageContext';
 import { LayoutDashboard, Cpu, Zap, FileText, Bell, Brain, DollarSign, Bot, Lightbulb, User, LogOut, Menu, X } from 'lucide-react';
-
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/devices', label: 'Dispositivos', icon: Cpu },
-  { to: '/consumption', label: 'Consumo', icon: Zap },
-  { to: '/invoices', label: 'Facturas', icon: FileText },
-  { to: '/alerts', label: 'Alertas', icon: Bell },
-  { to: '/predictions', label: 'Predicciones', icon: Brain },
-  { to: '/tariffs', label: 'Tarifas', icon: DollarSign },
-];
-
-const aiItems = [
-  { to: '/assistant', label: 'Asistente IA', icon: Bot, highlight: true },
-  { to: '/recommendations', label: 'Recomendaciones', icon: Lightbulb },
-];
 
 export default function Sidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { to: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { to: '/devices', label: t('nav.devices'), icon: Cpu },
+    { to: '/consumption', label: t('nav.consumption'), icon: Zap },
+    { to: '/invoices', label: t('nav.invoices'), icon: FileText },
+    { to: '/alerts', label: t('nav.alerts'), icon: Bell },
+    { to: '/predictions', label: t('nav.predictions'), icon: Brain },
+    { to: '/tariffs', label: t('nav.tariffs'), icon: DollarSign },
+  ];
+
+  const aiItems = [
+    { to: '/assistant', label: t('nav.assistant'), icon: Bot, highlight: true },
+    { to: '/recommendations', label: t('nav.recommendations'), icon: Lightbulb },
+  ];
+
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
@@ -36,7 +39,7 @@ export default function Sidebar({ collapsed, onToggle }) {
           </NavLink>
         ))}
 
-        {!collapsed && <div className="sidebar-section-label">Inteligencia Artificial</div>}
+        {!collapsed && <div className="sidebar-section-label">{t('nav.ai_section')}</div>}
         {aiItems.map(({ to, label, icon: Icon, highlight }) => (
           <NavLink
             key={to}
@@ -50,7 +53,7 @@ export default function Sidebar({ collapsed, onToggle }) {
 
         <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
           <User size={20} />
-          {!collapsed && <span>Perfil</span>}
+          {!collapsed && <span>{t('nav.profile')}</span>}
         </NavLink>
       </nav>
       <div className="sidebar-footer">
@@ -63,9 +66,9 @@ export default function Sidebar({ collapsed, onToggle }) {
             </div>
           </div>
         )}
-        <button className="sidebar-logout" onClick={logout} title="Cerrar sesión">
+        <button className="sidebar-logout" onClick={logout} title={t('nav.logout_title')}>
           <LogOut size={20} />
-          {!collapsed && <span>Salir</span>}
+          {!collapsed && <span>{t('nav.logout')}</span>}
         </button>
       </div>
     </aside>
