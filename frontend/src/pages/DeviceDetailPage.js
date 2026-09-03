@@ -40,7 +40,16 @@ export default function DeviceDetailPage() {
 
   const copyToken = () => {
     if (!device?.device_token) return;
-    navigator.clipboard.writeText(device.device_token);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(device.device_token);
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = device.device_token;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
     toast.success(t('device.token_copied'));
   };
 

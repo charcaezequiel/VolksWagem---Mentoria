@@ -28,9 +28,9 @@
 
 // ═══════════════ CONFIGURACIÓN ═══════════════
 
-const char* WIFI_SSID     = "TU_RED_WIFI";
-const char* WIFI_PASS     = "TU_CLAVE_WIFI";
-const char* SERVER_URL    = "http://192.168.1.50:3001";
+const char* WIFI_SSID     = "BA Escuela";
+const char* WIFI_PASS     = "";
+const char* SERVER_URL    = "http://192.168.56.1:3001";
 const String API_PATH     = "/api/sensor/readings";
 const String DEVICE_TOKEN = "PEGAR_TOKEN_DEL_SENSOR";
 

@@ -68,7 +68,14 @@ router.get('/accuracy', authenticateToken, async (req, res, next) => {
 router.get('/anomalies', authenticateToken, async (req, res, next) => {
   try {
     const anomalies = await detectAnomalies(req.user.id);
-    res.json({ anomalies });
+    const mapped = anomalies.map((a) => ({
+      ...a,
+      description: a.title || a.message,
+      value: a.metadata?.today_total,
+      expected: a.metadata?.average,
+      date: new Date().toISOString().slice(0, 10),
+    }));
+    res.json({ anomalies: mapped, data: mapped });
   } catch (error) {
     next(error);
   }

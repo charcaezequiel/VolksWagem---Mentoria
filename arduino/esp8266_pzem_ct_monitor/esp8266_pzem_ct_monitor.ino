@@ -34,17 +34,17 @@
 #include <EmonLib.h>
 
 // ─────────────── Configuración Wi-Fi ───────────────
-const char* WIFI_SSID = "TU_RED_WIFI";
-const char* WIFI_PASS = "TU_CLAVE_WIFI";
+const char* WIFI_SSID = "BA Escuela";
+const char* WIFI_PASS = "";
 
 // ─────────────── Configuración del Backend ───────────────
 // En la misma red Wi-Fi usá la IP local de la PC:
 //   ej. "http://192.168.1.50:3001"
-const char* SERVER_URL = "http://192.168.1.50:3001";
+const char* SERVER_URL = "http://192.168.56.1:3001";
 const String API_PATH  = "/api/sensor/readings";
 
 // Token del sensor (se genera en el backend al crear el dispositivo)
-const String DEVICE_TOKEN = "PEGAR_TOKEN_DEL_SENSOR";
+const String DEVICE_TOKEN = "28f1259f48226dbca67d4e8526d6ab0d9f28b5733e7b9b36";
 
 // ─────────────── Intervalo de envío ───────────────
 // 30 segundos = 30000 ms

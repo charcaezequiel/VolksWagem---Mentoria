@@ -35,14 +35,16 @@ router.post('/readings', authenticateToken, validate(addReading), async (req, re
 
 router.get('/readings', authenticateToken, async (req, res, next) => {
   try {
-    const { start_date, end_date, device_id, limit = 100 } = req.query;
+    const { startDate, endDate, start_date, end_date, device_id, limit = 100 } = req.query;
+    const sd = startDate || start_date;
+    const ed = endDate || end_date;
 
     const where = { user_id: req.user.id };
     if (device_id) where.device_id = device_id;
-    if (start_date || end_date) {
+    if (sd || ed) {
       where.reading_timestamp = {};
-      if (start_date) where.reading_timestamp[Op.gte] = new Date(start_date);
-      if (end_date) where.reading_timestamp[Op.lte] = new Date(end_date);
+      if (sd) where.reading_timestamp[Op.gte] = new Date(sd);
+      if (ed) where.reading_timestamp[Op.lte] = new Date(ed);
     }
 
     const readings = await ConsumptionReading.findAll({
@@ -75,6 +77,7 @@ router.get('/realtime', authenticateToken, async (req, res, next) => {
     const totalWatts = readings.reduce((sum, r) => sum + r.instant_watts, 0);
 
     res.json({
+      instant_watts: totalWatts,
       current_watts: totalWatts,
       readings,
       timestamp: new Date(),
@@ -88,35 +91,32 @@ router.get('/summary', authenticateToken, async (req, res, next) => {
   try {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - 7);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const todayReadings = await ConsumptionReading.findAll({
-      where: {
-        user_id: req.user.id,
-        reading_timestamp: { [Op.gte]: todayStart },
-      },
+      where: { user_id: req.user.id, reading_timestamp: { [Op.gte]: todayStart } },
+    });
+
+    const weekReadings = await ConsumptionReading.findAll({
+      where: { user_id: req.user.id, reading_timestamp: { [Op.gte]: weekStart } },
     });
 
     const monthReadings = await ConsumptionReading.findAll({
-      where: {
-        user_id: req.user.id,
-        reading_timestamp: { [Op.gte]: monthStart },
-      },
+      where: { user_id: req.user.id, reading_timestamp: { [Op.gte]: monthStart } },
     });
 
     const todayKwh = todayReadings.reduce((sum, r) => sum + (r.accumulated_kwh_day || r.instant_watts / 1000), 0);
+    const weekKwh = weekReadings.reduce((sum, r) => sum + (r.accumulated_kwh_day || r.instant_watts / 1000), 0);
     const monthKwh = monthReadings.reduce((sum, r) => sum + (r.accumulated_kwh_day || r.instant_watts / 1000), 0);
 
-    const avgWatts = todayReadings.length > 0
-      ? todayReadings.reduce((sum, r) => sum + r.instant_watts, 0) / todayReadings.length
-      : 0;
-
     res.json({
+      daily: Math.round(todayKwh * 1000) / 1000,
+      weekly: Math.round(weekKwh * 1000) / 1000,
+      monthly: Math.round(monthKwh * 1000) / 1000,
       today_kwh: Math.round(todayKwh * 1000) / 1000,
       month_kwh: Math.round(monthKwh * 1000) / 1000,
-      current_watts: todayReadings.length > 0 ? todayReadings[0].instant_watts : 0,
-      avg_watts: Math.round(avgWatts * 100) / 100,
-      readings_count_today: todayReadings.length,
     });
   } catch (error) {
     next(error);
@@ -129,10 +129,7 @@ router.get('/by-device', authenticateToken, async (req, res, next) => {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const readings = await ConsumptionReading.findAll({
-      where: {
-        user_id: req.user.id,
-        reading_timestamp: { [Op.gte]: monthStart },
-      },
+      where: { user_id: req.user.id, reading_timestamp: { [Op.gte]: monthStart } },
       include: [{ model: Device, as: 'device', attributes: ['id', 'name'] }],
     });
 
@@ -147,7 +144,13 @@ router.get('/by-device', authenticateToken, async (req, res, next) => {
       deviceTotals[deviceId].readings_count += 1;
     }
 
-    res.json({ by_device: Object.values(deviceTotals) });
+    const result = Object.values(deviceTotals).map(d => ({
+      ...d,
+      name: d.device_name,
+      consumption: Math.round(d.total_kwh * 1000) / 1000,
+    }));
+
+    res.json({ by_device: result });
   } catch (error) {
     next(error);
   }

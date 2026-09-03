@@ -5,9 +5,11 @@ const { authenticateToken } = require('../middleware/auth');
 
 router.get('/', authenticateToken, async (req, res, next) => {
   try {
-    const { is_read, alert_type } = req.query;
+    const { is_read, alert_type, severity, unread_only } = req.query;
     const where = { user_id: req.user.id };
     if (is_read !== undefined) where.is_read = is_read === 'true';
+    if (severity) where.severity = severity;
+    if (unread_only === 'true' || unread_only === true) where.is_read = false;
     if (alert_type) where.alert_type = alert_type;
 
     const alerts = await Alert.findAll({

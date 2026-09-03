@@ -55,20 +55,24 @@ router.get('/comparison', authenticateToken, async (req, res, next) => {
     const thisYear = invoices.filter((inv) => inv.period_year === currentYear);
     const lastYear = invoices.filter((inv) => inv.period_year === currentYear - 1);
 
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     const monthlyComparison = [];
     for (let m = 1; m <= 12; m++) {
       const current = thisYear.find((inv) => inv.period_month === m);
       const previous = lastYear.find((inv) => inv.period_month === m);
       monthlyComparison.push({
         month: m,
+        period: monthNames[m - 1],
         current_kwh: current ? current.kwh_consumed : null,
         previous_kwh: previous ? previous.kwh_consumed : null,
         current_amount: current ? current.amount_paid : null,
         previous_amount: previous ? previous.amount_paid : null,
+        amount: current ? current.amount_paid : 0,
       });
     }
 
     res.json({
+      data: monthlyComparison,
       current_year: currentYear,
       comparison: monthlyComparison,
     });
