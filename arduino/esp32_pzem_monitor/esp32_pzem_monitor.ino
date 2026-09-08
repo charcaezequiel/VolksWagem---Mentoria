@@ -10,8 +10,9 @@ const char* WIFI_PASS = "TU_CLAVE_WIFI";
 
 // URL del backend. En la misma red Wi-Fi usá la IP local de la PC:
 //   ej. "http://192.168.1.50:3001"
-// Si el backend corre en la misma PC con USB, probá con tu IP local.
-const char* SERVER_URL = "http://192.168.1.50:3001";
+// IMPORTANTE: usá la IP de la PC en la MISMA red del ESP (ver "ipconfig").
+// No uses la IP del adaptador VPN (ej. CloudflareWARP, 172.16.0.2).
+const char* SERVER_URL = "http://10.120.2.224:3001";
 const String API_PATH = "/api/sensor/readings";
 
 // Token del sensor del dispositivo (se genera en el backend al crear el
@@ -82,6 +83,7 @@ void sendReading(float voltage, float current, float power,
 
   HTTPClient http;
   http.begin(String(SERVER_URL) + API_PATH);
+  http.setTimeout(5000);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("Authorization", "Bearer " + DEVICE_TOKEN);
 

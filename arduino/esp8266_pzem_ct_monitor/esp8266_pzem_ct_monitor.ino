@@ -38,13 +38,14 @@ const char* WIFI_SSID = "BA Escuela";
 const char* WIFI_PASS = "";
 
 // ─────────────── Configuración del Backend ───────────────
-// En la misma red Wi-Fi usá la IP local de la PC:
-//   ej. "http://192.168.1.50:3001"
-const char* SERVER_URL = "http://192.168.56.1:3001";
+// IMPORTANTE: usá la IP de la PC en la MISMA red del ESP.
+// NO uses la IP de CloudflareWARP (172.x) ni de VirtualBox (192.168.56.x).
+// Ver la IP real con "ipconfig" en la PC (ej. 10.120.2.224 / 192.168.x.x).
+const char* SERVER_URL = "http://10.120.2.224:3001";
 const String API_PATH  = "/api/sensor/readings";
 
 // Token del sensor (se genera en el backend al crear el dispositivo)
-const String DEVICE_TOKEN = "28f1259f48226dbca67d4e8526d6ab0d9f28b5733e7b9b36";
+const String DEVICE_TOKEN = "a1cb641062e4f6622c3933d5433aac4c4f11928e6b665681";
 
 // ─────────────── Intervalo de envío ───────────────
 // 30 segundos = 30000 ms
@@ -93,11 +94,20 @@ EnergyMonitor emon;
 unsigned long lastSend = 0;
 int lastDay = -1;
 
+// Variables de estado
+unsigned long bootTime = 0;        // millis() de arranque del dispositivo
+unsigned long lastSuccessAt = 0;   // millis() del último envío exitoso
+int lastHttpCode = 0;              // último código HTTP devuelto por el backend
+bool backendReachable = false;     // si el último envío fue exitoso
+char lastHttpError[32] = "-";      // texto breve del último error de red
+
 // ─────────────── Funciones auxiliares ───────────────
 
 void connectWiFi() {
   Serial.print("Conectando a Wi-Fi");
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  WiFi.setSleep(false);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   int attempts = 0;
@@ -115,6 +125,54 @@ void connectWiFi() {
     Serial.println();
     Serial.println("No se pudo conectar a Wi-Fi. Reintentando en el próximo ciclo...");
   }
+}
+
+// Formatea millis() como "D días HH:MM:SS"
+String formatMillis(unsigned long ms) {
+  unsigned long totalSec = ms / 1000;
+  char buf[40];
+  sprintf(buf, "%lud %02lu:%02lu:%02lu",
+          totalSec / 86400, (totalSec % 86400) / 3600,
+          (totalSec % 3600) / 60, totalSec % 60);
+  return String(buf);
+}
+
+// Realiza el POST al backend y devuelve el código HTTP
+int postReading(const String& payload) {
+  HTTPClient http;
+  WiFiClient client;
+  http.begin(client, String(SERVER_URL) + API_PATH);
+  http.setTimeout(5000);
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader("Authorization", "Bearer " + DEVICE_TOKEN);
+  int code = http.POST(payload);
+  http.end();
+  return code;
+}
+
+// Muestra el panel de estado en el Monitor Serial
+void printStatus(float voltage, float current, float power, float energy) {
+  Serial.println("== ESTADO ==");
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.printf("  Wi-Fi  : CONECTADO   IP: %s\n", WiFi.localIP().toString().c_str());
+  } else {
+    Serial.println("  Wi-Fi  : DESCONECTADO");
+  }
+  Serial.printf("  Backend: %s   (HTTP %d)\n",
+                backendReachable ? "OK" : "FALLO", lastHttpCode);
+  if (!backendReachable) {
+    Serial.printf("  Motivo : %s\n", lastHttpError);
+  }
+  Serial.printf("  Tiempo conectado: %s\n", formatMillis(millis() - bootTime).c_str());
+  if (lastSuccessAt > 0) {
+    Serial.printf("  Ultimo envio OK  : hace %s\n", formatMillis(millis() - lastSuccessAt).c_str());
+  } else {
+    Serial.println("  Ultimo envio OK  : ninguna");
+  }
+  Serial.printf("  Carga actual: %.1f W\n", power);
+  Serial.printf("  Tension: %.1f V   Corriente: %.3f A   Energia: %.3f kWh\n",
+                voltage, current, energy);
+  Serial.println("================");
 }
 
 // Resetea la energía acumulada del PZEM al cambiar de día
@@ -142,15 +200,10 @@ void sendReading(float voltage, float currentPzem, float powerPzem,
 
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Sin conexion Wi-Fi. Reintentando...");
+    backendReachable = false;
     connectWiFi();
     return;
   }
-
-  HTTPClient http;
-  WiFiClient client;
-  http.begin(client, String(SERVER_URL) + API_PATH);
-  http.addHeader("Content-Type", "application/json");
-  http.addHeader("Authorization", "Bearer " + DEVICE_TOKEN);
 
   // Potencia combinada: PZEM (línea principal) + CT (rama adicional)
   float totalPower = powerPzem + powerCT;
@@ -167,16 +220,33 @@ void sendReading(float voltage, float currentPzem, float powerPzem,
   String payload;
   serializeJson(doc, payload);
 
-  int code = http.POST(payload);
+  int code = postReading(payload);
+
+  // Si no se pudo conectar (HTTP -1 = red/backend inalcanzable), reintentar una vez
+  if (code < 0) {
+    delay(1500);
+    code = postReading(payload);
+  }
 
   if (code == 200 || code == 201) {
+    backendReachable = true;
+    lastHttpCode = code;
+    lastSuccessAt = millis();
+    snprintf(lastHttpError, sizeof(lastHttpError), "-");
     Serial.printf("[OK %d] PZEM: %.1fW | CT: %.2fA | Total: %.1fW | %.3f kWh\n",
                   code, powerPzem, currentCT, totalPower, energy);
   } else {
-    Serial.printf("[ERROR HTTP %d] %s\n", code, payload.c_str());
+    backendReachable = false;
+    lastHttpCode = code;
+    if (code < 0) {
+      snprintf(lastHttpError, sizeof(lastHttpError), "red inalcanzable");
+      Serial.printf("[ERROR HTTP %d] No se pudo contactar %s%s (revisa la IP desde el ESP)\n",
+                    code, SERVER_URL, API_PATH.c_str());
+    } else {
+      snprintf(lastHttpError, sizeof(lastHttpError), "HTTP %d", code);
+      Serial.printf("[ERROR HTTP %d] %s\n", code, payload.c_str());
+    }
   }
-
-  http.end();
 }
 
 // ─────────────── Setup ───────────────
@@ -188,8 +258,10 @@ void setup() {
   Serial.println("  ControlAR – ESP8266 + PZEM + CT");
   Serial.println("========================================");
 
+  bootTime = millis();
+
   // Inicializar SoftwareSerial para el PZEM
-  pzemSerial.begin(9600);
+  // (el constructor de PZEM004Tv30 ya arranca el puerto a 9600)
 
   // Inicializar EmonLib para la bobina CT
   // (pin analógico, factor de calibración)
@@ -211,23 +283,40 @@ void loop() {
   // Reset de energía acumulada al cambiar de día
   resetEnergyAtMidnight();
 
+  // Monitorear Wi-Fi: si se pierde, reconectar
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("[ESTADO] Wi-Fi perdido. Reconectando...");
+    backendReachable = false;
+    connectWiFi();
+  }
+
   // Solo enviar cada SEND_INTERVAL_MS
   unsigned long now = millis();
   if (now - lastSend < SEND_INTERVAL_MS) return;
   lastSend = now;
 
-  // ── Lectura del PZEM-004T ──
-  float voltage    = pzem.voltage();
-  float currentP   = pzem.current();
-  float powerP     = pzem.power();
-  float energy     = pzem.energy();       // kWh desde el último reset
-  float frequency  = pzem.frequency();
-  float pf         = pzem.pf();
+  // ── Lectura del PZEM-004T (con reintentos) ──
+  // La primera lectura suele fallar al encender; se reintenta hasta 3 veces.
+  float voltage = NAN, currentP = NAN, powerP = NAN, energy = NAN, frequency = NAN, pf = NAN;
+  bool pzemOk = false;
 
-  bool pzemOk = !isnan(powerP);
+  for (int attempt = 0; attempt < 3; attempt++) {
+    voltage    = pzem.voltage();
+    currentP   = pzem.current();
+    powerP     = pzem.power();
+    energy     = pzem.energy();
+    frequency  = pzem.frequency();
+    pf         = pzem.pf();
+
+    if (!isnan(powerP) && !isnan(voltage)) {
+      pzemOk = true;
+      break;
+    }
+    delay(500);
+  }
 
   if (!pzemOk) {
-    Serial.println("PZEM sin respuesta (revisar cableado TX/RX y 5V).");
+    Serial.println("PZEM sin respuesta (revisar cableado TX/RX, GND y 5V).");
   }
 
   // ── Lectura de la Bobina CT ──
@@ -255,6 +344,12 @@ void loop() {
     Serial.println("PZEM no disponible. Enviando solo datos del CT...");
     sendReading(0, 0, 0, 0, 0, 0, currentCT, powerCT);
   }
+
+  // ── Panel de estado ──
+  float totalCurrent = (pzemOk ? currentP : 0) + currentCT;
+  float totalPower = (pzemOk ? powerP : 0) + powerCT;
+  float refVoltage = pzemOk ? voltage : (currentCT > 0.01 ? 220.0 : 0);
+  printStatus(refVoltage, totalCurrent, totalPower, pzemOk ? energy : 0);
 
   Serial.println();
 }
