@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, password, provinceId) => {
-    const res = await api.auth.register({ name, email, password, provinceId });
+    const res = await api.auth.register({ name, email, password, province_id: provinceId });
     const { token: newToken, user: userData } = res.data;
     setToken(newToken);
     setUser(userData);

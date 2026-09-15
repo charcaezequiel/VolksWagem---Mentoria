@@ -66,7 +66,7 @@ export default function HomePage() {
   ];
 
   const stats = [
-    { value: '107', label: t('home.stat.appliances') },
+    { value: '116', label: t('home.stat.appliances') },
     { value: '6', label: t('home.stat.provinces') },
     { value: '3', label: t('home.stat.ranges') },
     { value: 'IA', label: t('home.stat.prediction') },

@@ -8,6 +8,7 @@ const cron = require('node-cron');
 
 const { sequelize, User } = require('./models');
 const errorHandler = require('./middleware/errorHandler');
+const securityHeaders = require('./middleware/security');
 
 const authRoutes = require('./routes/auth');
 const deviceRoutes = require('./routes/devices');
@@ -25,6 +26,13 @@ const { checkThreshold, checkPeakDetection } = require('./services/alertService'
 const app = express();
 const server = http.createServer(app);
 
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)) {
+  console.error('JWT_SECRET must be set and at least 32 characters in production.');
+  process.exit(1);
+}
+
+app.disable('x-powered-by');
+
 const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
   : '*';
@@ -37,7 +45,8 @@ const io = new Server(server, {
 });
 
 app.use(cors({ origin: corsOrigins }));
-app.use(express.json());
+app.use(securityHeaders);
+app.use(express.json({ limit: '1mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', deviceRoutes);

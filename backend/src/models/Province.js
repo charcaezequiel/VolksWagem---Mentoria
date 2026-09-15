@@ -21,14 +21,8 @@ const Province = sequelize.define('Province', {
     allowNull: true,
   },
   regulator_name: {
-    type: DataTypes.STRING(100),
+    type: DataTypes.STRING(150),
     allowNull: true,
-    validate: {
-      isIn: {
-        args: [['OCEBA', 'EPRE', 'ENRE', 'ERE', 'ERSE', 'OTHER']],
-        msg: 'Invalid regulator name',
-      },
-    },
   },
   is_active: {
     type: DataTypes.BOOLEAN,

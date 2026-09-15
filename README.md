@@ -312,6 +312,8 @@ backend/
 │   │   └── sensorController.js       # Ingesta de lecturas del ESP8266
 │   ├── middleware/
 │   │   ├── auth.js              # JWT + authenticateSensor (token de dispositivo)
+│   │   ├── rateLimit.js         # Limite de intentos: 5 en register / 15 en login por IP cada 15 min
+│   │   ├── security.js          # Headers de seguridad HTTP (nosniff, DENY, Permissions-Policy, etc.)
 │   │   ├── errorHandler.js      # Manejo centralizado de errores
 │   │   └── validate.js          # Wrapper de express-validator
 │   ├── models/                  # 11 modelos Sequelize
@@ -489,21 +491,21 @@ device_categories 1────N appliances     (catalogo de electrodomesticos)
 | **User** | Usuarios del sistema | name, email, password_hash, user_type, province_id, alert_threshold_kwh |
 | **Province** | Provincias argentinas | name, distributor_name, regulator_name (OCEBA, EPRE, etc.) |
 | **DeviceCategory** | Categorias de dispositivos | name, icon, default_power, avg_daily_hours |
-| **Appliance** | Catalogo de 107 electrodomesticos | category_id, name, nominal_watts, min_watts, max_watts, hours_daily_usage |
+| **Appliance** | Catalogo de 116 electrodomesticos | category_id, name, nominal_watts, min_watts, max_watts, hours_daily_usage |
 | **Device** | Dispositivos del usuario | name, model, category_id, user_id, is_active, **device_token**, **last_seen_at** |
 | **ConsumptionReading** | Lecturas de consumo | instant_watts, accumulated_kwh_day, voltage, current, frequency, power_factor, source (manual/sensor/simulated) |
 | **Invoice** | Facturas de energia | period_month, period_year, kwh_consumed, amount_paid, tariff_applied |
 | **Alert** | Alertas del sistema | alert_type, title, message, severity (info/warning/critical), is_read |
-| **Tariff** | Tarifas por provincia | range_name (social/normal/alto), price_per_kwh, min_kwh, max_kwh |
+| **Tariff** | Tarifas por provincia | category (R1-R9), tier_from/tier_to en kWh, fixed_charge, price_per_kwh (N1), price_per_kwh_n2, price_per_kwh_n3, estimados por nivel |
 | **Prediction** | Predicciones IA | predicted_kwh, predicted_cost, confidence, target_month, target_year |
 | **Recommendation** | Recomendaciones de ahorro | title, description, category, priority, potential_savings_kwh, potential_savings_cost, status, source (ai/local) |
 
 ### Datos semilla
 
-- **6 provincias**: Buenos Aires (OCEBA), San Juan (EPRE), Cordoba, Santa Fe, Mendoza, Entre Rios
-- **7 categorias**: Aire acondicionado, Heladera, Lavarropas, Computadora, Televisor, Cocina, Otros
-- **107 electrodomesticos** del catalogo
-- **8 tarifas**: Rangos social/normal/alto para OCEBA y EPRE
+- **24 jurisdicciones** (22 provincias + CABA + Buenos Aires Interior): cada una con su distribuidora y regulador (ENRE, OCEBA, EPRE, SECHEEP, DPEC, ERSEP, EPE, etc.)
+- **7 categorias**: Refrigeracion, Climatizacion, Iluminacion, Entretenimiento, Cocina, Lavado, Otros
+- **116 electrodomesticos** del catalogo
+- **112 tarifas**: Categorias R1-R9 con cargo fijo mensual, cargos variables por nivel de subsidio (N1/N2/N3) y total estimado por rango
 - **1 usuario demo**: demo@controlar.com / 123456
 - **6 dispositivos** con lecturas simuladas y token de sensor asignado
 - **930 lecturas de consumo** (junio-julio 2026)
@@ -580,6 +582,8 @@ VolksWagem---Mentoria/
 │   │   │   └── sensorController.js
 │   │   ├── middleware/
 │   │   │   ├── auth.js
+│   │   │   ├── rateLimit.js
+│   │   │   ├── security.js
 │   │   │   ├── errorHandler.js
 │   │   │   └── validate.js
 │   │   ├── models/
@@ -840,6 +844,8 @@ Desde otra PC o Notebook:
 | Email | `demo@controlar.com` |
 | Contrasena | `123456` |
 
+> **Nota:** la contrasena del usuario demo `123456` no cumple la nueva politica de registro (8+ caracteres, mayus/minus/num/simbolo) pero fue cargada directamente por el seed. Los nuevos registros deben seguir la politica.
+
 El usuario demo viene con:
 - 6 dispositivos pre-cargados
 - 930 lecturas de consumo historicas (junio-julio 2026)
@@ -858,7 +864,7 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 
 | Metodo | Ruta | Descripcion |
 |---|---|---|
-| POST | `/api/auth/register` | Registrar nuevo usuario |
+| POST | `/api/auth/register` | Registrar usuario. Body: `name`, `email`, `password`, `confirmPassword` (obligatorio y debe coincidir), `province_id` opcional. Requiere contrasena segura (8+ chars, mayus, minus, numero y simbolo). Limitado a 5 intentos por IP cada 15 min |
 | POST | `/api/auth/login` | Iniciar sesion |
 | GET | `/api/auth/profile` | Obtener perfil del usuario |
 | PUT | `/api/auth/profile` | Actualizar perfil |
@@ -928,6 +934,7 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 | POST | `/api/tariffs` | Crear tarifa |
 | GET | `/api/tariffs/province/:id` | Tarifas por provincia |
 | GET | `/api/tariffs/provinces` | Listar provincias |
+| GET | `/api/tariffs/estimate?province_id=&kwh=&subsidy=` | Estimar costo por consumo, cargo fijo y nivel de subsidio (N1/N2/N3) |
 
 ### Dashboard
 
@@ -971,18 +978,24 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 ```env
 NODE_ENV=development
 PORT=3001
-DB_HOST=db.sjyzifasyshgcwaleovs.supabase.co
+DB_HOST=DB_HOST_SUPABASE.supabase.co
 DB_PORT=5432
 DB_NAME=postgres
 DB_USER=postgres
-DB_PASSWORD=W8hQo6SdtHkBKwfq
-JWT_SECRET=controlar_f54e219e79ea42232848b50b78a6b0dd
+DB_PASSWORD=TU_PASSWORD_SUPABASE
+DB_SSL_REJECT_UNAUTHORIZED=true
+# DB_SSL_CA=backend/certs/supabase-ca.pem   # opcional, solo si el hosting pide un CA custom
+JWT_SECRET=random_string_de_minimo_32_caracteres
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=http://localhost:3000
 GEMINI_API_KEY=tu_api_key_aqui
 GEMINI_MODEL=gemini-3.6-flash
 ```
 
+> Los valores reales estan en `backend/.env` (NO se sube a git). No compartas el `.env` ni credenciales en el README.
+>
+> **Seguridad del certificado TLS:** por defecto el backend verifica el certificado de Supabase (`rejectUnauthorized: true`). Si tu proveedor usa un certificado con CA propio, guarda el cert en un archivo y apunta `DB_SSL_CA`. Solo si la conexion falla por certificado autofirmado y no podes agregar el CA, seteá `DB_SSL_REJECT_UNAUTHORIZED=false`.
+>
 > Para PostgreSQL local, cambiar `DB_HOST=localhost` y ajustar credenciales.
 
 ### Frontend (`frontend/.env`)
@@ -1028,6 +1041,38 @@ function MiComponente() {
 
 ## Cambios recientes
 
+### Seguridad base de datos / Supabase
+
+- **TLS verificado por defecto**: la conexion a la BD ahora valida el certificado (`rejectUnauthorized: true`). Soporte de CA propio via `DB_SSL_CA` y escape hatch `DB_SSL_REJECT_UNAUTHORIZED=false`.
+- Pool endurecido: `connectionTimeoutMillis: 10000` y `keepAlive: true` en el pool de Sequelize.
+- Se elimino el `NODE_TLS_REJECT_UNAUTHORIZED=0` global (deshabilitaba el chequeo SSL de todo Node).
+
+> **Pendiente manual en el panel de Supabase (recomendado):**
+> - [ ] Habilitar **SSL Enforcement** (y restringir por IP solo a la de produccion).
+> - [ ] Activar **RLS (Row Level Security)** en las tablas y crear policies por `user_id`.
+> - [ ] Activar **2FA / MFA** en la cuenta owner de Supabase.
+> - [ ] Rotar el `DB_PASSWORD` y `JWT_SECRET` periodicamente.
+
+### Seguridad backend
+
+- **Rate limiting** (`middleware/rateLimit.js`, sin dependencias): max **5 intentos** en `/register` y **15** en `/login` por IP cada 15 min (HTTP 429 con `Retry-After`).
+- **Headers de seguridad** (`middleware/security.js`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Permissions-Policy` y `Cross-Origin-Resource-Policy`.
+- `app.disable('x-powered-by')` y limite de body JSON de `1mb`.
+- En produccion el server **no arranca** sin `JWT_SECRET` de al menos 32 caracteres.
+- Emails normalizados a minusculas al registrar/login.
+
+### Registro con contrasena segura
+
+- **Politica de contrasena** (valida en backend y frontend): min 8 caracteres, 1 mayuscula, 1 minuscula, 1 numero y 1 simbolo. Max 128.
+- **Campo "Confirmar contrasena"**: el backend exige `confirmPassword` y valida que coincida; el frontend muestra error si no.
+- **Checklist en vivo**: al tipear la contrasena se listan los requisitos con tildes verdes o cruces rojas; el boton de registro se **deshabilita** hasta cumplir todos y que las contrasenas coincidan.
+- Se corrigio el bug que no guardaba la provincia del usuario en el registro (`province_id`).
+
+### Modo manual de medicion (Consumo)
+
+- Cronometro start/stop en la pagina de Consumo para estimar kWh de una sesion y proyectar el costo mensual con la tarifa provincial y nivel de subsidio (N1/N2/N3).
+- las lecturas manuales se guardan con `source: 'manual'`.
+
 ### Hardware: ESP32 a ESP8266MOD
 
 - El microcontrolador cambio de **ESP32** a **ESP8266MOD** (ESP-12F)
@@ -1067,21 +1112,30 @@ function MiComponente() {
 
 ### Catalogo de electrodomesticos
 
-- 107 electrodomesticos predefinidos en 7 categorias
+- 116 electrodomesticos predefinidos en 7 categorias
 - Asistente de 3 pasos para registro rapido de dispositivos
 
 ---
 
 ## Problemas encontrados y soluciones
 
-### 1. Supabase IPv6-only (activo)
+### 1. Supabase IPv6-only -> Connection Pooler (resuelto)
 
-**Problema:** El hostname `db.sjyzifasyshgcwaleovs.supabase.co` solo tiene registros AAAA (IPv6) y la maquina no tiene IPv6 funcional.
+**Problema:** `db.sjyzifasyshgcwaleovs.supabase.co` solo tiene registro AAAA (IPv6) y la PC no tiene IPv6 global -> `getaddrinfo ENOTFOUND`.
 
-**Solucion pendiente:** Usar la **Connection Pooler** de Supabase (modo Transaction) que tiene IPv4:
+**Solucion aplicada:** usar el **Session Pooler** de Supabase (IPv4) en `backend/.env`:
+
+```env
+DB_HOST=aws-0-us-west-2.pooler.supabase.com
+DB_PORT=5432
+DB_USER=postgres.sjyzifasyshgcwaleovs
+DB_SSL_REJECT_UNAUTHORIZED=false
 ```
-postgresql://postgres.xxxxx:password@aws-0-XX-XXX-X.pooler.supabase.com:6543/postgres
-```
+
+> Notas:
+> - `DB_USER` es `postgres.<project-ref>` (el pooler no usa `postgres` a secas).
+> - El pooler usa **certificado autofirmado**, por eso `DB_SSL_REJECT_UNAUTHORIZED=false`.
+> - Puerto `5432` = modo **session** (recomendado para ORM/Sequelize); `6543` = modo transaction (requiere desactivar prepared statements).
 
 ### 2. Autenticacion PostgreSQL (peer authentication)
 
@@ -1106,6 +1160,14 @@ postgresql://postgres.xxxxx:password@aws-0-XX-XXX-X.pooler.supabase.com:6543/pos
 **Problema:** Frontend no conecta al backend si no esta corriendo.
 
 **Solucion:** Asegurarse de que ambos servidores esten arrancados.
+
+### 6. Certificado TLS al conectar con Supabase
+
+**Problema:** El backend verifica el certificado SSL de la BD por defecto (`rejectUnauthorized: true`). Si el hosting usa un certificado autofirmado o con CA no estandar, la conexion falla con `UNABLE_TO_VERIFY_LEAF_SIGNATURE` o `DEPTH_ZERO_SELF_SIGNED_CERT`.
+
+**Soluciones (por orden de preferencia):**
+1. **Recomendado:** Exportar el CA cert del hosting y guardarlo, y configurar `DB_SSL_CA=ruta/al/cert.pem` en `.env`.
+2. **Alternativa insegura** (solo si no hay otra): setear `DB_SSL_REJECT_UNAUTHORIZED=false` en `.env`. Esto desactiva la verificacion del certificado, similar al comportamiento anterior.
 
 ---
 

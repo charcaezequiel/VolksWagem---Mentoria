@@ -5,6 +5,7 @@ const { User } = require('../models');
 const { authenticateToken } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { register, login } = require('../validators/authValidators');
+const { authRateLimiter, authStrictLimiter } = require('../middleware/rateLimit');
 
 const generateToken = (user) => {
   return jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
@@ -12,7 +13,7 @@ const generateToken = (user) => {
   });
 };
 
-router.post('/register', validate(register), async (req, res, next) => {
+router.post('/register', authStrictLimiter, validate(register), async (req, res, next) => {
   try {
     const { name, email, password, province_id, user_type } = req.body;
 
@@ -46,7 +47,7 @@ router.post('/register', validate(register), async (req, res, next) => {
   }
 });
 
-router.post('/login', validate(login), async (req, res, next) => {
+router.post('/login', authRateLimiter, validate(login), async (req, res, next) => {
   try {
     const { email, password } = req.body;
 

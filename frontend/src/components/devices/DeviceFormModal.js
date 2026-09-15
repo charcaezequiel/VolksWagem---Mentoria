@@ -132,6 +132,10 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
               autoFocus
             />
           </div>
+          <div className="appliance-list-head">
+            <span className="appliance-list-title">{t('device_form.appliances_count', { count: filteredAppliances.length })}</span>
+            <span className="appliance-list-hint">{category?.name}</span>
+          </div>
           <div className="appliance-list">
             {filteredAppliances.length === 0 && (
               <p className="appliance-empty">{t('device_form.no_results')}</p>
@@ -141,10 +145,9 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
                 <span className="appliance-card-icon">{categoryIcon(a.name || category?.name)}</span>
                 <span className="appliance-card-info">
                   <strong>{a.name}</strong>
-                  <small>
-                    {a.nominal_watts} W {a.hours_daily_usage ? `· ${a.hours_daily_usage} hs/día` : ''}
-                  </small>
+                  <small>{a.hours_daily_usage ? `${a.hours_daily_usage} ${t('device_form.per_day')}` : ''}</small>
                 </span>
+                <span className="appliance-card-watts">{a.nominal_watts} W</span>
                 <ChevronRight size={18} className="appliance-card-arrow" />
               </button>
             ))}
@@ -165,37 +168,49 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
               {category && <span className="wizard-category-name">{category.name}</span>}
             </div>
           )}
-          <div className="form-row">
-            <div className="form-group">
-              <Field label={t('device_form.name_label')} icon={<Cpu size={15} />} required>
-                <input className="form-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required placeholder={t('device_form.name_placeholder')} />
-              </Field>
-            </div>
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <Field label={t('device_form.watts_label')} icon={<Lightbulb size={15} />} required hint={t('device_form.watts_hint')}>
-                <input className="form-input" type="number" min="0" step="1" value={form.nominal_watts} onChange={(e) => setForm({ ...form, nominal_watts: e.target.value })} required placeholder={t('device_form.watts_placeholder')} />
-              </Field>
-            </div>
-            <div className="form-group">
-              <Field label={t('device_form.hours_label')} icon={<Monitor size={15} />} hint={t('device_form.hours_hint')}>
-                <input className="form-input" type="number" min="0" step="0.5" value={form.hours_daily_usage} onChange={(e) => setForm({ ...form, hours_daily_usage: e.target.value })} placeholder={t('device_form.hours_placeholder')} />
-              </Field>
-            </div>
-          </div>
-          {!custom && !initial && category && (
+          {!initial && !custom && category && (
             <div className="wizard-summary">
-              <span className="wizard-summary-icon">{categoryIcon(category.name)}</span>
-              <div>
-                <strong>{form.name}</strong>
-                <small>{category.name} · {form.nominal_watts} W{form.hours_daily_usage ? ` · ${form.hours_daily_usage} hs/día` : ''}</small>
+              <div className="wizard-summary-top">
+                <span className="wizard-summary-icon">{categoryIcon(category.name)}</span>
+                <span className="wizard-summary-label">{t('device_form.summary_title')}</span>
+                <button type="button" className="btn btn-sm btn-secondary" onClick={() => setStep(2)}>
+                  {t('device_form.change')}
+                </button>
               </div>
-              <button type="button" className="btn btn-sm btn-secondary" onClick={() => setStep(2)}>
-                {t('device_form.change')}
-              </button>
+              <div className="wizard-summary-body">
+                <div className="wizard-summary-info">
+                  <strong>{form.name}</strong>
+                  <small>{category.name}</small>
+                </div>
+                <div className="wizard-summary-meta">
+                  <span className="wizard-summary-pill wizard-summary-pill-watts">{form.nominal_watts} W</span>
+                  {form.hours_daily_usage && <span className="wizard-summary-pill">{form.hours_daily_usage} {t('device_form.per_day')}</span>}
+                </div>
+              </div>
             </div>
           )}
+          <div className="wizard-fields">
+            <span className="wizard-fields-title">{t(initial ? 'device_form.fields_edit_title' : 'device_form.fields_title')}</span>
+            <div className="form-row">
+              <div className="form-group">
+                <Field label={t('device_form.name_label')} icon={<Cpu size={15} />} required>
+                  <input className="form-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required placeholder={t('device_form.name_placeholder')} />
+                </Field>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <Field label={t('device_form.watts_label')} icon={<Lightbulb size={15} />} required hint={t('device_form.watts_hint')}>
+                  <input className="form-input" type="number" min="0" step="1" value={form.nominal_watts} onChange={(e) => setForm({ ...form, nominal_watts: e.target.value })} required placeholder={t('device_form.watts_placeholder')} />
+                </Field>
+              </div>
+              <div className="form-group">
+                <Field label={t('device_form.hours_label')} icon={<Monitor size={15} />} hint={t('device_form.hours_hint')}>
+                  <input className="form-input" type="number" min="0" step="0.5" value={form.hours_daily_usage} onChange={(e) => setForm({ ...form, hours_daily_usage: e.target.value })} placeholder={t('device_form.hours_placeholder')} />
+                </Field>
+              </div>
+            </div>
+          </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>{t('device_form.cancel')}</button>
             <button type="submit" className="btn btn-primary" disabled={saving}>

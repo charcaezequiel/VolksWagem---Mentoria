@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Activity, Plus, Cpu, CalendarRange } from 'lucide-react';
+import { Zap, Activity, Plus, Cpu, CalendarRange, Play, Square, Timer as TimerIcon, DollarSign, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
 import DataTable from '../components/common/DataTable';
 import StatCard from '../components/common/StatCard';
@@ -23,6 +23,14 @@ export default function ConsumptionPage() {
   const [form, setForm] = useState({ device_id: '', instant_watts: '', accumulated_kwh_day: '', reading_timestamp: '', source: 'manual' });
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [manualDevice, setManualDevice] = useState('');
+  const [manualSubsidy, setManualSubsidy] = useState('N1');
+  const [manualTimes, setManualTimes] = useState('1');
+  const [timer, setTimer] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
+  const [session, setSession] = useState(null);
+  const [manualLoading, setManualLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -30,18 +38,20 @@ export default function ConsumptionPage() {
       const params = {};
       if (dateRange.start) params.startDate = dateRange.start;
       if (dateRange.end) params.endDate = dateRange.end;
-      const [rRes, sRes, rtRes, bdRes, dRes] = await Promise.all([
+      const [rRes, sRes, rtRes, bdRes, dRes, pRes] = await Promise.all([
         api.consumption.getReadings(params),
         api.consumption.getSummary(params),
         api.consumption.getRealtime().catch(() => ({ data: null })),
         api.consumption.getByDevice(params),
         api.devices.getAll(),
+        api.auth.getProfile().catch(() => ({ data: { user: null } })),
       ]);
       setReadings(rRes.data.readings || rRes.data || []);
       setSummary(sRes.data);
       setRealtime(rtRes.data);
       setByDevice(bdRes.data.by_device || bdRes.data.data || bdRes.data || []);
       setDevices(dRes.data.devices || dRes.data || []);
+      setProfile(pRes.data?.user || null);
     } catch { toast.error(t('consumption.error')); }
     setLoading(false);
   };
@@ -61,6 +71,69 @@ export default function ConsumptionPage() {
       toast.error(err.response?.data?.error || t('consumption.form_error'));
     }
     setSaving(false);
+  };
+
+  const fmtARS = (v) => (v == null ? t('consumption.manual_no_cost') : `$${Number(v).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`);
+
+  const fmtElapsed = (sec) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(Math.floor(sec / 3600))}:${pad(Math.floor((sec % 3600) / 60))}:${pad(sec % 60)}`;
+  };
+
+  useEffect(() => {
+    if (!timer) return undefined;
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - timer.startAt) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [timer]);
+
+  const startTimer = () => {
+    if (!manualDevice) return toast.error(t('consumption.manual_pick_device'));
+    const dev = devices.find((d) => (d.id || d._id) === manualDevice);
+    if (!dev) return;
+    setSession(null);
+    setElapsed(0);
+    setTimer({ device_id: dev.id || dev._id, device_name: dev.name, watts: dev.nominal_watts, startAt: Date.now() });
+    toast.success(t('consumption.manual_started'));
+  };
+
+  const resetTimer = () => {
+    setTimer(null);
+    setElapsed(0);
+    setSession(null);
+  };
+
+  const stopTimer = async () => {
+    if (!timer) return;
+    const hours = elapsed / 3600;
+    const kwh = (timer.watts * hours) / 1000;
+    const times = parseInt(manualTimes, 10) || 1;
+    const monthlyKwh = kwh * times * 30;
+    setManualLoading(true);
+    try {
+      await api.consumption.addReading({
+        device_id: timer.device_id,
+        instant_watts: timer.watts,
+        accumulated_kwh_day: Math.round(kwh * 1000) / 1000,
+        source: 'manual',
+      });
+    } catch { /* the session result is still shown below */ }
+    let monthlyCost = null;
+    let category = null;
+    if (profile?.province_id) {
+      try {
+        const res = await api.tariffs.estimate(profile.province_id, Math.round(monthlyKwh * 100) / 100, manualSubsidy);
+        monthlyCost = res.data.result?.estimated_total ?? null;
+        category = res.data.result?.category?.category || null;
+      } catch { /* province may have no tariffs */ }
+    }
+    setSession({ hours, kwh, monthlyKwh, monthlyCost, category });
+    setTimer(null);
+    setElapsed(0);
+    setManualLoading(false);
+    toast.success(t('consumption.manual_saved'));
+    load();
   };
 
   const columns = [
@@ -105,6 +178,81 @@ export default function ConsumptionPage() {
           </>
         )}
       </div>
+
+      <PageSection
+        icon={<TimerIcon size={18} />}
+        title={t('consumption.manual_title')}
+        subtitle={t('consumption.manual_subtitle')}
+        style={{ marginBottom: 24 }}
+      >
+        <div className="form-group">
+          <Field label={t('consumption.manual_device')} icon={<Cpu size={15} />} hint={t('consumption.manual_device_hint')}>
+            <select className="form-select" value={manualDevice} onChange={(e) => setManualDevice(e.target.value)} disabled={!!timer}>
+              <option value="">{t('consumption.manual_select_device')}</option>
+              {devices.map((d) => <option key={d.id || d._id} value={d.id || d._id}>{d.name} · {d.nominal_watts} W</option>)}
+            </select>
+          </Field>
+          <Field label={t('consumption.manual_subsidy')} icon={<DollarSign size={15} />} hint={t('consumption.manual_subsidy_hint')}>
+            <select className="form-select" value={manualSubsidy} onChange={(e) => setManualSubsidy(e.target.value)} disabled={!!timer}>
+              <option value="N1">N1 — {t('tariffs.subsidy_n1')}</option>
+              <option value="N2">N2 — {t('tariffs.subsidy_n2')}</option>
+              <option value="N3">N3 — {t('tariffs.subsidy_n3')}</option>
+            </select>
+          </Field>
+          <Field label={t('consumption.manual_times')} icon={<RefreshCw size={15} />} hint={t('consumption.manual_times_hint')}>
+            <input className="form-input" type="number" min="1" step="1" value={manualTimes} onChange={(e) => setManualTimes(e.target.value)} disabled={!!timer} />
+          </Field>
+        </div>
+
+        <div className="manual-timer">
+          {timer ? (
+            <>
+              <div className="manual-timer-info">
+                <strong>{timer.device_name}</strong>
+                <span>{t('consumption.manual_running')}</span>
+              </div>
+              <div className="timer-display">{fmtElapsed(elapsed)}</div>
+              <div className="timer-live">
+                {t('consumption.manual_current_kwh')}: <strong>{((timer.watts * (elapsed / 3600)) / 1000).toFixed(3)} kWh</strong>
+              </div>
+              <div className="manual-timer-actions">
+                <button className="btn btn-danger" onClick={stopTimer} disabled={manualLoading}>
+                  <Square size={16} /> {manualLoading ? t('consumption.form_saving') : t('consumption.manual_stop')}
+                </button>
+                <button className="btn btn-secondary" onClick={resetTimer}><RefreshCw size={16} /> {t('consumption.manual_reset')}</button>
+              </div>
+            </>
+          ) : session ? (
+            <>
+              <div className="calc-result" style={{ marginTop: 0 }}>
+                <div className="calc-result-label">
+                  {session.category ? <span className="calc-result-cat">{session.category}</span> : <span>{t('consumption.manual_session_kwh')}</span>}
+                </div>
+                <div className="calc-result-grid">
+                  <span>{t('consumption.manual_elapsed')}</span><strong>{fmtElapsed(Math.round(session.hours * 3600))}</strong>
+                  <span>{t('consumption.manual_session_kwh')}</span><strong>{session.kwh.toFixed(3)} kWh</strong>
+                  <span>{t('consumption.manual_monthly_kwh')}</span><strong>{session.monthlyKwh.toFixed(2)} kWh</strong>
+                  <span className="calc-total-label">{t('consumption.manual_monthly_cost')}</span>
+                  <strong className="calc-total-value">{session.monthlyCost != null ? fmtARS(session.monthlyCost) : t('consumption.manual_no_cost')}</strong>
+                </div>
+                <div className="calc-result-hint">{session.monthlyCost != null ? t('consumption.manual_result_hint') : t('consumption.manual_no_province')}</div>
+              </div>
+              <button className="btn btn-primary" onClick={() => { setSession(null); setManualDevice(''); }}>
+                <Play size={16} /> {t('consumption.manual_new_session')}
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="form-hint">{devices.length === 0 ? t('consumption.manual_no_devices') : t('consumption.manual_pick_device')}</p>
+              <div className="manual-timer-actions">
+                <button className="btn btn-primary" onClick={startTimer} disabled={!manualDevice || devices.length === 0}>
+                  <Play size={16} /> {t('consumption.manual_start')}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </PageSection>
 
       {byDevice.length > 0 && (
         <PageSection

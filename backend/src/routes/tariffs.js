@@ -2,6 +2,24 @@ const express = require('express');
 const router = express.Router();
 const { Tariff, Province } = require('../models');
 const { authenticateToken } = require('../middleware/auth');
+const { calculateCost } = require('../services/tariffService');
+
+router.get('/estimate', authenticateToken, async (req, res, next) => {
+  try {
+    const { province_id, kwh, subsidy } = req.query;
+    const provinceId = Number(province_id);
+    const consumption = Number(kwh);
+
+    if (!provinceId || isNaN(consumption) || consumption < 0) {
+      return res.status(400).json({ error: 'province_id y kwh son requeridos' });
+    }
+
+    const result = await calculateCost(consumption, provinceId, subsidy || 'N1');
+    res.json({ province_id: provinceId, kwh: consumption, subsidy: subsidy || 'N1', result });
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.get('/province/:provinceId', authenticateToken, async (req, res, next) => {
   try {

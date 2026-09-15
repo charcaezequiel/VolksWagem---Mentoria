@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Zap } from 'lucide-react';
+import { Mail, Lock, Zap, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import toast from 'react-hot-toast';
@@ -29,6 +29,10 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      <Link to="/" className="auth-back" title={t('nav.back_home')} aria-label={t('nav.back_home')}>
+        <ArrowLeft size={16} />
+        {t('nav.back_home')}
+      </Link>
       <div className="auth-card">
         <div className="auth-logo">
           <div className="auth-logo-icon"><Zap size={32} /></div>

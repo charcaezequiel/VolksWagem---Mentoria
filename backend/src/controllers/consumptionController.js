@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
 const { ConsumptionReading, Device, Tariff, sequelize } = require('../models');
+const { computeCostFromTariffs } = require('../services/tariffService');
 
 exports.addReading = async (req, res) => {
   try {
@@ -114,14 +115,7 @@ exports.getSummary = async (req, res) => {
         order: [['tier_from', 'ASC']],
       });
 
-      let remainingKwh = totalKwh;
-      for (const tariff of tariffs) {
-        if (remainingKwh <= 0) break;
-        const tierLimit = tariff.tier_to !== null ? tariff.tier_to - tariff.tier_from : remainingKwh;
-        const taxable = Math.min(remainingKwh, tierLimit);
-        totalCost += taxable * tariff.price_per_kwh;
-        remainingKwh -= taxable;
-      }
+      totalCost = computeCostFromTariffs(tariffs, totalKwh).total_cost;
     }
 
     res.json({

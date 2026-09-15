@@ -65,6 +65,7 @@ export const api = {
     getAll: (params) => instance.get('/tariffs', { params }),
     create: (data) => instance.post('/tariffs', data),
     getProvinces: () => instance.get('/tariffs/provinces'),
+    estimate: (provinceId, kwh, subsidy = 'N1') => instance.get('/tariffs/estimate', { params: { province_id: provinceId, kwh, subsidy } }),
   },
   predictions: {
     getAll: (params) => instance.get('/predictions', { params }),
