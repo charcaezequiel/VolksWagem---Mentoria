@@ -10,16 +10,17 @@ import PageSection from '../components/common/PageSection';
 import toast from 'react-hot-toast';
 import { useTranslation } from '../context/LanguageContext';
 
-const formatARS = (value) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2 }).format(value || 0);
-
 export default function PredictionsPage() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [forecast, setForecast] = useState(null);
   const [accuracy, setAccuracy] = useState(null);
   const [anomalies, setAnomalies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
+  const locale = lang === 'en' ? 'en-US' : 'es-AR';
+
+  const fmtForecast = (v) =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency: 'ARS', minimumFractionDigits: 2 }).format(v || 0);
 
   const load = async () => {
     setLoading(true);
@@ -71,14 +72,14 @@ export default function PredictionsPage() {
   const breakdownColumns = [
     { header: t('predictions.col_range'), key: 'tier', render: (_, r) => `${r.tier_from} - ${r.tier_to != null ? r.tier_to : '+'} kWh` },
     { header: t('predictions.col_kwh_tier'), key: 'kwh_in_tier' },
-    { header: t('predictions.col_price'), key: 'price', render: (v) => formatARS(v) },
-    { header: t('predictions.col_subtotal'), key: 'subtotal', render: (v) => formatARS(v) },
+    { header: t('predictions.col_price'), key: 'price', render: (v) => fmtForecast(v) },
+    { header: t('predictions.col_subtotal'), key: 'subtotal', render: (v) => fmtForecast(v) },
   ];
 
   const monthColumns = [
     { header: t('predictions.col_month'), key: 'label' },
     { header: t('predictions.col_kwh'), key: 'total_kwh', render: (v) => `${v} kWh` },
-    { header: t('predictions.col_cost'), key: 'cost', render: (v) => formatARS(v) },
+    { header: t('predictions.col_cost'), key: 'cost', render: (v) => fmtForecast(v) },
   ];
 
   return (
@@ -105,7 +106,7 @@ export default function PredictionsPage() {
           <div className="dashboard-grid">
             <StatCard
               icon={<Wallet size={20} />}
-              value={formatARS(forecast.predicted_cost)}
+              value={fmtForecast(forecast.predicted_cost)}
               label={t('predictions.bill_estimated', { month: forecast.month_name, year: forecast.year })}
               change={costChange}
               color="primary"
@@ -148,10 +149,10 @@ export default function PredictionsPage() {
               <DataTable columns={breakdownColumns} data={forecast.cost_breakdown || []} emptyMessage={t('predictions.empty_breakdown')} />
               <div className="forecast-total">
                 <span>{t('predictions.total_estimated')}</span>
-                <span>{formatARS(forecast.predicted_cost)}</span>
+                <span>{fmtForecast(forecast.predicted_cost)}</span>
               </div>
               <p className="forecast-meta">
-                {t('predictions.avg_price')} {formatARS(forecast.price_per_kwh_avg)}/kWh — {t('predictions.peak_day')} {forecast.peak_day_kwh} kWh ({forecast.peak_day_date})
+                {t('predictions.avg_price')} {fmtForecast(forecast.price_per_kwh_avg)}/kWh — {t('predictions.peak_day')} {forecast.peak_day_kwh} kWh ({forecast.peak_day_date})
               </p>
             </PageSection>
             <PageSection icon={<Target size={18} />} title={t('predictions.months_vs_forecast')} subtitle={t('predictions.months_vs_sub')} style={{ marginBottom: 0 }}>
@@ -192,8 +193,8 @@ export default function PredictionsPage() {
                   <div className="alert-dot warning"></div>
                   <div className="alert-content">
                     <div className="alert-title">{a.description || a.message || t('predictions.anomaly_default')}</div>
-                    <div className="alert-message">Valor: {a.value || a.kwh || 'N/A'} — Esperado: {a.expected || 'N/A'}</div>
-                    <div className="alert-time">{a.date || a.timestamp ? new Date(a.date || a.timestamp).toLocaleDateString('es-AR') : ''}</div>
+                    <div className="alert-message">{t('predictions.anomaly_value', { value: a.value || a.kwh || 'N/A', expected: a.expected || 'N/A' })}</div>
+                    <div className="alert-time">{a.date || a.timestamp ? new Date(a.date || a.timestamp).toLocaleDateString(locale) : ''}</div>
                   </div>
                 </div>
               ))}

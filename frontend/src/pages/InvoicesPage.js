@@ -107,25 +107,25 @@ export default function InvoicesPage() {
               </div>
               <div className="form-group">
                 <Field label={t('invoices.form_field_year')} icon={<CalendarRange size={15} />} required>
-                  <input className="form-input" type="number" min="2020" max="2100" value={form.period_year} onChange={(e) => setForm({ ...form, period_year: e.target.value })} required placeholder="Ej.: 2026" />
+                  <input className="form-input" type="number" min="2020" max="2100" value={form.period_year} onChange={(e) => setForm({ ...form, period_year: e.target.value })} required placeholder={t('invoices.form_year_placeholder')} />
                 </Field>
               </div>
             </div>
             <div className="form-row">
               <div className="form-group">
                 <Field label={t('invoices.form_field_kwh')} icon={<Zap size={15} />} required hint={t('invoices.form_field_kwh_hint')}>
-                  <input className="form-input" type="number" step="0.01" min="0" value={form.kwh_consumed} onChange={(e) => setForm({ ...form, kwh_consumed: e.target.value })} required placeholder="Ej.: 180" />
+                  <input className="form-input" type="number" step="0.01" min="0" value={form.kwh_consumed} onChange={(e) => setForm({ ...form, kwh_consumed: e.target.value })} required placeholder={t('invoices.form_kwh_placeholder')} />
                 </Field>
               </div>
               <div className="form-group">
                 <Field label={t('invoices.form_field_amount')} icon={<DollarSign size={15} />} required hint={t('invoices.form_field_amount_hint')}>
-                  <input className="form-input" type="number" step="0.01" min="0" value={form.amount_paid} onChange={(e) => setForm({ ...form, amount_paid: e.target.value })} required placeholder="Ej.: 15000" />
+                  <input className="form-input" type="number" step="0.01" min="0" value={form.amount_paid} onChange={(e) => setForm({ ...form, amount_paid: e.target.value })} required placeholder={t('invoices.form_amount_placeholder')} />
                 </Field>
               </div>
             </div>
             <div className="form-group">
               <Field label={t('invoices.form_field_tariff')} icon={<Zap size={15} />} hint={t('invoices.form_field_tariff_hint')}>
-                <input className="form-input" type="number" step="0.001" min="0" value={form.tariff_applied} onChange={(e) => setForm({ ...form, tariff_applied: e.target.value })} placeholder="Ej.: 82.5" />
+                <input className="form-input" type="number" step="0.001" min="0" value={form.tariff_applied} onChange={(e) => setForm({ ...form, tariff_applied: e.target.value })} placeholder={t('invoices.form_tariff_placeholder')} />
               </Field>
             </div>
             <div className="modal-footer">

@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart as RePie, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const COLORS = ['#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5'];
+const COLORS = ['#059669', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
 
 export default function PieChart({ data, nameKey = 'name', valueKey = 'value', title }) {
   return (
@@ -13,18 +13,19 @@ export default function PieChart({ data, nameKey = 'name', valueKey = 'value', t
             data={data}
             cx="50%"
             cy="50%"
-            outerRadius={100}
+            outerRadius={95}
             dataKey={valueKey}
             nameKey={nameKey}
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-            labelLine={true}
+            minAngle={2}
+            label={({ percent }) => (percent > 0.04 ? `${(percent * 100).toFixed(0)}%` : '')}
+            labelLine={false}
           >
             {data.map((_, i) => (
               <Cell key={i} fill={COLORS[i % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(v) => `${v}`} />
-          <Legend />
+          <Tooltip formatter={(v) => `${v} kWh`} />
+          <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12 }} />
         </RePie>
       </ResponsiveContainer>
     </div>

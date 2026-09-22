@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from '../context/LanguageContext';
 
 export default function ConsumptionPage() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [readings, setReadings] = useState([]);
   const [summary, setSummary] = useState(null);
   const [realtime, setRealtime] = useState(null);
@@ -73,7 +73,7 @@ export default function ConsumptionPage() {
     setSaving(false);
   };
 
-  const fmtARS = (v) => (v == null ? t('consumption.manual_no_cost') : `$${Number(v).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`);
+  const fmtARS = (v) => (v == null ? t('consumption.manual_no_cost') : `$${Number(v).toLocaleString(lang === 'en' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`);
 
   const fmtElapsed = (sec) => {
     const pad = (n) => String(n).padStart(2, '0');
@@ -138,7 +138,7 @@ export default function ConsumptionPage() {
 
   const columns = [
     { header: t('consumption.col_date'), key: 'reading_timestamp', render: (v) => (
-      <span className="table-mono">{new Date(v).toLocaleString('es-AR')}</span>
+      <span className="table-mono">{new Date(v).toLocaleString(lang === 'en' ? 'en-US' : 'es-AR')}</span>
     ) },
     { header: t('consumption.col_device'), key: 'device', render: (_, r) => r.device?.name || (r.device_id ? <code className="table-code">{r.device_id}</code> : '—') },
     { header: t('consumption.col_watts'), key: 'instant_watts', render: (v) => <span className="table-mono"><strong>{v ?? '—'}</strong> W</span> },
@@ -298,12 +298,12 @@ export default function ConsumptionPage() {
             </div>
             <div className="form-group">
               <Field label={t('consumption.form_field_watts')} icon={<Zap size={15} />} required hint={t('consumption.form_field_watts_hint')}>
-                <input className="form-input" type="number" step="0.01" min="0" value={form.instant_watts} onChange={(e) => setForm({ ...form, instant_watts: e.target.value })} required placeholder="Ej.: 1500" />
+                <input className="form-input" type="number" step="0.01" min="0" value={form.instant_watts} onChange={(e) => setForm({ ...form, instant_watts: e.target.value })} required placeholder={t('consumption.form_watts_placeholder')} />
               </Field>
             </div>
             <div className="form-group">
               <Field label={t('consumption.form_field_kwh')} icon={<Activity size={15} />} hint={t('consumption.form_field_kwh_hint')}>
-                <input className="form-input" type="number" step="0.01" min="0" value={form.accumulated_kwh_day} onChange={(e) => setForm({ ...form, accumulated_kwh_day: e.target.value })} placeholder="Ej.: 4.5" />
+                <input className="form-input" type="number" step="0.01" min="0" value={form.accumulated_kwh_day} onChange={(e) => setForm({ ...form, accumulated_kwh_day: e.target.value })} placeholder={t('consumption.form_kwh_placeholder')} />
               </Field>
             </div>
             <div className="form-group">

@@ -1,0 +1,152 @@
+// Diccionario ES -> EN para datos que provienen del backend/seed:
+// categorías de dispositivos y los 116 electrodomésticos del catálogo.
+// En español se devuelve el nombre original (la BD ya está en español).
+
+const CATEGORY_EN = {
+  'Refrigeración': 'Refrigeration',
+  'Climatización': 'Climate Control',
+  'Iluminación': 'Lighting',
+  'Entretenimiento': 'Entertainment',
+  'Cocina': 'Kitchen',
+  'Lavado': 'Laundry',
+  'Otros': 'Others',
+};
+
+const APPLIANCE_EN = {
+  // Refrigeración
+  'Heladera No Frost 250L': 'No Frost Fridge 250L',
+  'Heladera No Frost 350L': 'No Frost Fridge 350L',
+  'Heladera con freezer 200L': 'Fridge with Freezer 200L',
+  'Heladera con freezer 300L': 'Fridge with Freezer 300L',
+  'Heladera con dispenser de agua': 'Fridge with Water Dispenser',
+  'Heladera minibar': 'Mini Fridge',
+  'Freezer horizontal': 'Chest Freezer',
+  'Freezer vertical': 'Upright Freezer',
+  // Climatización
+  'Aire acondicionado Split 2200 frig': 'Split Air Conditioner 2200 frig',
+  'Aire acondicionado Split 3000 frig': 'Split Air Conditioner 3000 frig',
+  'Aire acondicionado Split 3500 frig': 'Split Air Conditioner 3500 frig',
+  'Aire acondicionado Split 4500 frig': 'Split Air Conditioner 4500 frig',
+  'Aire acondicionado Inverter 2500 frig': 'Inverter Air Conditioner 2500 frig',
+  'Calefactor eléctrico': 'Electric Heater',
+  'Panel calefactor': 'Heating Panel',
+  'Caloventor': 'Fan Heater',
+  'Radiador eléctrico': 'Electric Radiator',
+  'Estufa halógena': 'Halogen Heater',
+  'Termofan eléctrico': 'Electric Fan Heater',
+  'Ventilador de pie': 'Standing Fan',
+  'Ventilador de techo': 'Ceiling Fan',
+  'Ventilador de pared': 'Wall Fan',
+  'Purificador de aire': 'Air Purifier',
+  'Deshumidificador': 'Dehumidifier',
+  'Humidificador': 'Humidifier',
+  // Iluminación
+  'Lámpara LED 6W': 'LED Bulb 6W',
+  'Spot LED empotrable 7W': 'Recessed LED Spot 7W',
+  'Lámpara LED 9W': 'LED Bulb 9W',
+  'Luz de jardín exterior': 'Outdoor Garden Light',
+  'Lámpara LED 12W': 'LED Bulb 12W',
+  'Aplique de pared LED 12W': 'LED Wall Sconce 12W',
+  'Lámpara LED 15W': 'LED Bulb 15W',
+  'Velador': 'Bedside Lamp',
+  'Lámpara LED 18W': 'LED Bulb 18W',
+  'Tubo LED 18W': 'LED Tube 18W',
+  'Lámpara de bajo consumo 20W': 'CFL Bulb 20W',
+  'Lámpara de mesa': 'Table Lamp',
+  'Luz de seguridad con sensor 20W': 'Sensor Security Light 20W',
+  'Tira LED': 'LED Strip',
+  'Plafón LED 24W': 'LED Ceiling Light 24W',
+  'Lámpara de pie': 'Floor Lamp',
+  'Foco reflector LED 30W': 'LED Floodlight 30W',
+  'Lámpara colgante LED 30W': 'LED Pendant Light 30W',
+  'Panel LED empotrable 36W': 'Recessed LED Panel 36W',
+  'Lámpara incandescente 60W': 'Incandescent Bulb 60W',
+  'Reflector halógeno 150W': 'Halogen Floodlight 150W',
+  // Entretenimiento
+  'TV LED 32"': 'LED TV 32"',
+  'TV LED 40"': 'LED TV 40"',
+  'TV Smart 43"': 'Smart TV 43"',
+  'TV LED 50"': 'LED TV 50"',
+  'TV LED 55"': 'LED TV 55"',
+  'TV OLED 55"': 'OLED TV 55"',
+  'Consola de videojuegos': 'Video Game Console',
+  'Consola retro': 'Retro Console',
+  'Home theater / Soundbar': 'Home Theater / Soundbar',
+  'Parlante Bluetooth': 'Bluetooth Speaker',
+  'Computadora de escritorio': 'Desktop Computer',
+  'Notebook': 'Laptop',
+  'Tablet': 'Tablet',
+  'Monitor LCD 24"': 'LCD Monitor 24"',
+  'Impresora': 'Printer',
+  'Router / Modem': 'Router / Modem',
+  'Decodificador de TV': 'TV Set-Top Box',
+  'Proyector': 'Projector',
+  'Consola de streaming': 'Streaming Device',
+  'Teléfono inalámbrico': 'Cordless Phone',
+  'Cargador de celular': 'Phone Charger',
+  // Cocina
+  'Microondas 20L': 'Microwave 20L',
+  'Microondas 30L': 'Microwave 30L',
+  'Horno eléctrico': 'Electric Oven',
+  'Horno combinado microondas': 'Microwave Combi Oven',
+  'Anafe eléctrico 2 hornallas': 'Electric Cooktop 2 Burners',
+  'Anafe eléctrico 4 hornallas': 'Electric Cooktop 4 Burners',
+  'Anafe a inducción': 'Induction Cooktop',
+  'Cocina eléctrica': 'Electric Stove',
+  'Freidora de aire (Air Fryer)': 'Air Fryer',
+  'Pava eléctrica': 'Electric Kettle',
+  'Cafetera eléctrica': 'Electric Coffee Maker',
+  'Cafetera espresso': 'Espresso Machine',
+  'Tostadora': 'Toaster',
+  'Sandwichera': 'Sandwich Maker',
+  'Grill eléctrico': 'Electric Grill',
+  'Licuadora': 'Blender',
+  'Batidora': 'Mixer',
+  'Procesadora de alimentos': 'Food Processor',
+  'Olla de cocción lenta': 'Slow Cooker',
+  'Olla a presión eléctrica': 'Electric Pressure Cooker',
+  'Arrocera eléctrica': 'Rice Cooker',
+  'Panificadora': 'Bread Maker',
+  'Exprimidor de jugos': 'Juice Squeezer',
+  'Extractora de jugos': 'Juicer',
+  'Molinillo de café': 'Coffee Grinder',
+  // Lavado
+  'Lavarropas automático 6kg': 'Automatic Washing Machine 6kg',
+  'Lavarropas automático 8kg': 'Automatic Washing Machine 8kg',
+  'Lavarropas automático 10kg': 'Automatic Washing Machine 10kg',
+  'Lavarropas automático 12kg': 'Automatic Washing Machine 12kg',
+  'Lavarropas carga frontal': 'Front-Load Washing Machine',
+  'Lavarropas carga superior': 'Top-Load Washing Machine',
+  'Lavarropas semiautomático': 'Semi-Automatic Washing Machine',
+  'Secarropas': 'Clothes Dryer',
+  'Lavavajillas': 'Dishwasher',
+  'Plancha de vapor': 'Steam Iron',
+  'Centro de planchado': 'Ironing System',
+  'Enjuagadora de ropa': 'Spin Dryer',
+  // Otros
+  'Aspiradora': 'Vacuum Cleaner',
+  'Aspiradora robot': 'Robot Vacuum',
+  'Aspiradora de mano': 'Hand Vacuum',
+  'Secador de pelo': 'Hair Dryer',
+  'Plancha de pelo': 'Hair Straightener',
+  'Termotanque eléctrico 50L': 'Electric Water Heater 50L',
+  'Termotanque eléctrico 80L': 'Electric Water Heater 80L',
+  'Calefón eléctrico': 'Electric Instant Water Heater',
+  'Bomba de agua': 'Water Pump',
+  'Cargador de auto eléctrico': 'EV Charger',
+  'Campana extractora': 'Range Hood',
+  'Ventilador de extracción': 'Exhaust Fan',
+};
+
+// Devuelve el nombre traducido según el idioma activo.
+// lang === 'en' → busca el equivalente en inglés; si no existe, devuelve el original.
+// lang !== 'en' → devuelve el nombre original (ES).
+export function localized(lang, esName) {
+  if (!esName) return esName;
+  if (lang === 'en') {
+    return APPLIANCE_EN[esName] || CATEGORY_EN[esName] || esName;
+  }
+  return esName;
+}
+
+export { CATEGORY_EN, APPLIANCE_EN };

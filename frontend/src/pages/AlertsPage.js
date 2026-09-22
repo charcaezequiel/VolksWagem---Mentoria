@@ -4,10 +4,10 @@ import { api } from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageSection from '../components/common/PageSection';
 import toast from 'react-hot-toast';
-import { useTranslation } from '../context/LanguageContext';
+import { useTranslation, alertText } from '../context/LanguageContext';
 
 export default function AlertsPage() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ severity: '', unread_only: '' });
@@ -31,7 +31,7 @@ export default function AlertsPage() {
       await api.alerts.markAsRead(id);
       setAlerts(prev => prev.map(a => (a.id || a._id) === id ? { ...a, is_read: true } : a));
       toast.success(t('alerts.mark_read_success'));
-    } catch { toast.error('Error'); }
+    } catch { toast.error(t('common.error')); }
   };
 
   const markAll = async () => {
@@ -39,7 +39,7 @@ export default function AlertsPage() {
       await api.alerts.markAllAsRead();
       setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
       toast.success(t('alerts.mark_all_success'));
-    } catch { toast.error('Error'); }
+    } catch { toast.error(t('common.error')); }
   };
 
   const removeAlert = async (id) => {
@@ -47,7 +47,7 @@ export default function AlertsPage() {
       await api.alerts.delete(id);
       setAlerts(prev => prev.filter(a => (a.id || a._id) !== id));
       toast.success(t('alerts.delete_success'));
-    } catch { toast.error('Error'); }
+    } catch { toast.error(t('common.error')); }
   };
 
   const unreadCount = alerts.filter(a => !a.is_read).length;
@@ -70,7 +70,7 @@ export default function AlertsPage() {
           <div className="filter-bar" style={{ marginBottom: 0 }}>
             <select className="form-select form-select-sm" value={filter.severity} onChange={e => setFilter({ ...filter, severity: e.target.value })}>
               <option value="">{t('alerts.filter_all_severity')}</option>
-              <option value="info">Info</option>
+              <option value="info">{t('alerts.filter_info')}</option>
               <option value="warning">{t('alerts.filter_warning')}</option>
               <option value="critical">{t('alerts.filter_critical')}</option>
             </select>
@@ -87,24 +87,27 @@ export default function AlertsPage() {
             <p>{t('alerts.empty')}</p>
           </div>
         ) : (
-          alerts.map(a => (
-            <div key={a.id || a._id} className={`alert-item ${a.is_read ? 'read' : 'unread'}`}>
-              <div className={`alert-dot ${a.severity || 'info'}`}></div>
-              <div className="alert-content">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div className="alert-title">{a.title}</div>
-                    <div className="alert-message">{a.message}</div>
-                    <div className="alert-time">{new Date(a.created_at || a.createdAt).toLocaleString('es-AR')}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {!a.is_read && <button className="btn btn-sm btn-secondary" onClick={() => markRead(a.id || a._id)}>{t('alerts.mark_read')}</button>}
-                    <button className="btn btn-sm btn-danger" onClick={() => removeAlert(a.id || a._id)}>×</button>
+          alerts.map(a => {
+            const atext = alertText(t, a);
+            return (
+              <div key={a.id || a._id} className={`alert-item ${a.is_read ? 'read' : 'unread'}`}>
+                <div className={`alert-dot ${a.severity || 'info'}`}></div>
+                <div className="alert-content">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div className="alert-title">{atext.title}</div>
+                      <div className="alert-message">{atext.message}</div>
+                      <div className="alert-time">{new Date(a.created_at || a.createdAt).toLocaleString(lang === 'en' ? 'en-US' : 'es-AR')}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {!a.is_read && <button className="btn btn-sm btn-secondary" onClick={() => markRead(a.id || a._id)}>{t('alerts.mark_read')}</button>}
+                      <button className="btn btn-sm btn-danger" onClick={() => removeAlert(a.id || a._id)}>×</button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </PageSection>
     </div>

@@ -51,7 +51,7 @@ export default function Header() {
             <Wifi size={14} />
           </span>
         )}
-        <button className="header-theme" onClick={toggleLang} title={lang === 'es' ? 'Switch to English' : 'Cambiar a español'}>
+        <button className="header-theme" onClick={toggleLang} title={t('header.toggle_lang')}>
           <Globe size={20} />
           <span style={{ fontSize: '0.7rem', fontWeight: 700, marginLeft: 2 }}>{lang.toUpperCase()}</span>
         </button>

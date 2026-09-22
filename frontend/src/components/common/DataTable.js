@@ -1,10 +1,13 @@
 import React from 'react';
+import { useTranslation } from '../../context/LanguageContext';
 
-export default function DataTable({ columns, data, onRowClick, emptyMessage = 'No hay datos disponibles' }) {
+export default function DataTable({ columns, data, onRowClick, emptyMessage }) {
+  const { t } = useTranslation();
+  const empty = emptyMessage ?? t('common.no_data');
   if (!data || data.length === 0) {
     return (
       <div className="data-table-empty">
-        <p>{emptyMessage}</p>
+        <p>{empty}</p>
       </div>
     );
   }

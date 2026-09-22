@@ -20,7 +20,7 @@ const categoryIcon = (name = '') => {
 };
 
 export default function DeviceFormModal({ categories, applianceGroups, initial, saving, onClose, onSave }) {
-  const { t } = useTranslation();
+  const { t, localized } = useTranslation();
   const [step, setStep] = useState(initial ? 3 : 1);
   const [categoryId, setCategoryId] = useState(initial?.category_id || '');
   const [form, setForm] = useState({
@@ -40,8 +40,8 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
   const filteredAppliances = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return appliances;
-    return appliances.filter((a) => (a.name || '').toLowerCase().includes(q));
-  }, [appliances, search]);
+    return appliances.filter((a) => localized(a.name).toLowerCase().includes(q));
+  }, [appliances, search, localized]);
 
   const selectCategory = (id) => {
     setCategoryId(id);
@@ -52,7 +52,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
 
   const selectAppliance = (appliance) => {
     setForm({
-      name: appliance.name,
+      name: localized(appliance.name),
       nominal_watts: appliance.nominal_watts,
       hours_daily_usage: appliance.hours_daily_usage,
     });
@@ -105,7 +105,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
               return (
                 <button key={c.id || c._id} className="category-card" onClick={() => selectCategory(c.id || c._id)}>
                   <span className="category-card-icon">{categoryIcon(c.name)}</span>
-                  <span className="category-card-name">{c.name}</span>
+                  <span className="category-card-name">{localized(c.name)}</span>
                   <span className="category-card-count">{t('device_form.appliances_count', { count })}</span>
                 </button>
               );
@@ -120,13 +120,13 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
             <button className="btn btn-sm btn-secondary" onClick={() => setStep(1)}>
               <ChevronLeft size={14} /> {t('device_form.categories')}
             </button>
-            <span className="wizard-category-name">{category?.name}</span>
+            <span className="wizard-category-name">{localized(category?.name)}</span>
           </div>
           <div className="search-box">
             <Search size={16} />
             <input
               className="form-input"
-              placeholder={t('device_form.search_placeholder', { category: category?.name })}
+              placeholder={t('device_form.search_placeholder', { category: localized(category?.name) })}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               autoFocus
@@ -134,7 +134,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
           </div>
           <div className="appliance-list-head">
             <span className="appliance-list-title">{t('device_form.appliances_count', { count: filteredAppliances.length })}</span>
-            <span className="appliance-list-hint">{category?.name}</span>
+            <span className="appliance-list-hint">{localized(category?.name)}</span>
           </div>
           <div className="appliance-list">
             {filteredAppliances.length === 0 && (
@@ -144,7 +144,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
               <button key={a.id || a._id} className="appliance-card" onClick={() => selectAppliance(a)}>
                 <span className="appliance-card-icon">{categoryIcon(a.name || category?.name)}</span>
                 <span className="appliance-card-info">
-                  <strong>{a.name}</strong>
+                  <strong>{localized(a.name)}</strong>
                   <small>{a.hours_daily_usage ? `${a.hours_daily_usage} ${t('device_form.per_day')}` : ''}</small>
                 </span>
                 <span className="appliance-card-watts">{a.nominal_watts} W</span>
@@ -165,7 +165,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
               <button type="button" className="btn btn-sm btn-secondary" onClick={() => { setStep(2); setSearch(''); }}>
                 <ChevronLeft size={14} /> {t('device_form.back_catalog')}
               </button>
-              {category && <span className="wizard-category-name">{category.name}</span>}
+              {category && <span className="wizard-category-name">{localized(category.name)}</span>}
             </div>
           )}
           {!initial && !custom && category && (
@@ -180,7 +180,7 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
               <div className="wizard-summary-body">
                 <div className="wizard-summary-info">
                   <strong>{form.name}</strong>
-                  <small>{category.name}</small>
+                  <small>{localized(category.name)}</small>
                 </div>
                 <div className="wizard-summary-meta">
                   <span className="wizard-summary-pill wizard-summary-pill-watts">{form.nominal_watts} W</span>

@@ -1,8 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
+import translations from '../i18n/translations';
 
 const AuthContext = createContext(null);
+
+const tr = (key) => {
+  const lang = localStorage.getItem('lang') || 'es';
+  return translations[lang]?.[key] || translations.es?.[key] || key;
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -51,7 +57,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
-    toast.success('Sesión cerrada');
+    toast.success(tr('auth.logout_success'));
   };
 
   const updateProfile = async (data) => {

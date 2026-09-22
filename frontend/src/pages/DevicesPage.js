@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 
 export default function DevicesPage() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, localized } = useTranslation();
   const [devices, setDevices] = useState([]);
   const [categories, setCategories] = useState([]);
   const [applianceGroups, setApplianceGroups] = useState([]);
@@ -78,7 +78,7 @@ export default function DevicesPage() {
       <span className="table-name" style={{ fontWeight: 600 }}>{r.name}</span>
     ) },
     { header: t('devices.col_category'), key: 'category', render: (_, r) => (
-      <span className="badge badge-primary"><Layers size={12} style={{ marginRight: 4 }} />{r.category?.name || t('devices.no_category')}</span>
+      <span className="badge badge-primary"><Layers size={12} style={{ marginRight: 4 }} />{localized(r.category?.name) || t('devices.no_category')}</span>
     ) },
     { header: t('devices.col_watts'), key: 'nominal_watts', render: (v) => <span className="table-mono">{v ?? '—'}</span> },
     { header: t('devices.col_kwh'), key: 'daily_kwh', render: (v) => <span className="table-mono">{v ?? '—'}</span> },
@@ -162,7 +162,7 @@ export default function DevicesPage() {
         actions={
           <select className="form-select form-select-sm" value={filter} onChange={(e) => setFilter(e.target.value)}>
             <option value="">{t('devices.filter_all')}</option>
-            {categories.map((c) => <option key={c.id || c._id} value={c.id || c._id}>{c.name}</option>)}
+            {categories.map((c) => <option key={c.id || c._id} value={c.id || c._id}>{localized(c.name)}</option>)}
           </select>
         }
       >

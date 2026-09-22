@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from '../context/LanguageContext';
 
 export default function RecommendationsPage() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -78,9 +78,9 @@ export default function RecommendationsPage() {
           <p className="rec-description">{rec.description}</p>
           <div className="rec-meta">
             <span className="badge badge-primary">{meta.label}</span>
-            {rec.source === 'ai' && <span className="badge badge-success">IA Gemini</span>}
+            {rec.source === 'ai' && <span className="badge badge-success">{t('recommendations.gemini_badge')}</span>}
             {rec.potential_savings_kwh != null && (
-              <span className="rec-savings">💡 Ahorro estimado: {rec.potential_savings_kwh} kWh ({rec.potential_savings_cost != null ? `$${rec.potential_savings_cost.toLocaleString('es-AR')}` : '—'})</span>
+              <span className="rec-savings">💡 {t('recommendations.savings', { kwh: rec.potential_savings_kwh })}{rec.potential_savings_cost != null ? ` ($${rec.potential_savings_cost.toLocaleString(lang === 'en' ? 'en-US' : 'es-AR')})` : ''}</span>
             )}
           </div>
         </div>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Zap, DollarSign, Cpu, Bell, LayoutDashboard, Activity, Bot, Lightbulb, TrendingUp } from 'lucide-react';
 import { api } from '../services/api';
 import { useSocket } from '../context/SocketContext';
-import { useTranslation } from '../context/LanguageContext';
+import { useTranslation, alertText } from '../context/LanguageContext';
 import StatCard from '../components/common/StatCard';
 import LineChart from '../components/charts/LineChart';
 import BarChart from '../components/charts/BarChart';
@@ -20,7 +20,8 @@ export default function DashboardPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { connected, on } = useSocket();
-  const { t } = useTranslation();
+  const { t, localized, lang } = useTranslation();
+  const locale = lang === 'en' ? 'en-US' : 'es-AR';
 
   const load = useCallback(() => {
     Promise.all([
@@ -35,7 +36,7 @@ export default function DashboardPage() {
       }),
       api.dashboard.getDeviceBreakdown().then(r => {
         const b = r.data.device_breakdown || r.data.data || r.data || [];
-        setBreakdown(b.map(item => ({ name: item.category_name, value: parseFloat(item.total_kwh) || 0 })));
+        setBreakdown(b.map(item => ({ name: localized(item.category_name), value: parseFloat(item.total_kwh) || 0 })));
       }),
       api.alerts.getAll({ limit: 5 }).then(r => setAlerts(r.data.alerts || r.data || [])),
     ]).catch(() => toast.error(t('dashboard.error'))).finally(() => setLoading(false));
@@ -96,16 +97,19 @@ export default function DashboardPage() {
           actions={alerts.length > 0 && <Link to="/alerts" className="btn btn-sm btn-secondary">{t('dashboard.alerts_view_all')}</Link>}
         >
           {alerts.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: 40 }}>{`${t('dashboard.no_alerts')} 🎉`}</p>}
-          {alerts.map(a => (
-            <div key={a.id || a._id} className={`alert-item ${a.is_read ? 'read' : 'unread'}`}>
-              <div className={`alert-dot ${a.severity || 'info'}`}></div>
-              <div className="alert-content">
-                <div className="alert-title">{a.title}</div>
-                <div className="alert-message">{a.message}</div>
-                <div className="alert-time">{new Date(a.created_at || a.createdAt).toLocaleString('es-AR')}</div>
+          {alerts.map(a => {
+            const atext = alertText(t, a);
+            return (
+              <div key={a.id || a._id} className={`alert-item ${a.is_read ? 'read' : 'unread'}`}>
+                <div className={`alert-dot ${a.severity || 'info'}`}></div>
+                <div className="alert-content">
+                  <div className="alert-title">{atext.title}</div>
+                  <div className="alert-message">{atext.message}</div>
+                  <div className="alert-time">{new Date(a.created_at || a.createdAt).toLocaleString(locale)}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </PageSection>
       </div>
     </div>

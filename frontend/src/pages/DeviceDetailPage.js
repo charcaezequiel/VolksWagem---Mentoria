@@ -16,7 +16,8 @@ export default function DeviceDetailPage() {
   const [readings, setReadings] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
+  const locale = lang === 'en' ? 'en-US' : 'es-AR';
 
   const load = async () => {
     setLoading(true);
@@ -68,13 +69,13 @@ export default function DeviceDetailPage() {
   if (!device) return null;
 
   const chartData = [...readings].reverse().map((r) => ({
-    time: new Date(r.reading_timestamp).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
+    time: new Date(r.reading_timestamp).toLocaleString(locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
     watts: r.instant_watts,
     kwh: r.accumulated_kwh_day || 0,
   }));
 
   const columns = [
-    { header: t('device.col_date'), key: 'reading_timestamp', render: (v) => new Date(v).toLocaleString('es-AR') },
+    { header: t('device.col_date'), key: 'reading_timestamp', render: (v) => new Date(v).toLocaleString(locale) },
     { header: t('device.col_power'), key: 'instant_watts' },
     { header: t('device.col_kwh_day'), key: 'accumulated_kwh_day', render: (v) => v ?? '—' },
     { header: t('device.col_voltage'), key: 'voltage', render: (v) => v ?? '—' },
@@ -107,7 +108,7 @@ export default function DeviceDetailPage() {
         />
         <StatCard
           icon={<CalendarDays size={20} />}
-          value={stats?.last_reading_at ? new Date(stats.last_reading_at).toLocaleDateString('es-AR') : t('device.no_data')}
+          value={stats?.last_reading_at ? new Date(stats.last_reading_at).toLocaleDateString(locale) : t('device.no_data')}
           label={t('device.last_measurement')}
           color="info"
         />
@@ -137,7 +138,7 @@ export default function DeviceDetailPage() {
           <strong>{t('device.device_id')}</strong> <code>{device.id}</code>
         </div>
         <p className="device-token-help">
-          {t('device.endpoint')} <code>POST /api/sensor/readings</code> con header <code>Authorization: Bearer &lt;token&gt;</code>.
+          {t('device.endpoint_hint')}
         </p>
       </PageSection>
 

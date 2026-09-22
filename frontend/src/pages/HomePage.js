@@ -98,7 +98,7 @@ export default function HomePage() {
         </p>
         <div className="home-hero-actions">
           {user ? (
-            <Link to="/dashboard" className="btn btn-primary btn-lg">Ver mi Dashboard</Link>
+            <Link to="/dashboard" className="btn btn-primary btn-lg">{t('home.goto_dashboard')}</Link>
           ) : (
             <>
               <Link to="/register" className="btn btn-primary btn-lg">{t('home.start_free')}</Link>

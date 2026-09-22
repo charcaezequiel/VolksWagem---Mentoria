@@ -19,6 +19,7 @@ const translations = {
     'header.dashboard': 'Panel de Control',
     'header.theme_light': 'Cambiar a modo claro',
     'header.theme_dark': 'Cambiar a modo oscuro',
+    'header.toggle_lang': 'Cambiar a inglés',
     'header.realtime': 'Conexión en tiempo real activa',
 
     // Home
@@ -72,6 +73,7 @@ const translations = {
     'login.register_link': 'Registrate gratis',
     'login.welcome': '¡Bienvenido!',
     'login.error': 'Credenciales incorrectas',
+    'auth.logout_success': 'Sesión cerrada',
     'nav.back_home': 'Inicio',
 
     // Register
@@ -179,6 +181,7 @@ const translations = {
     'device.token_error': 'Error al regenerar el token',
     'device.device_id': 'ID del dispositivo:',
     'device.endpoint': 'Endpoint:',
+    'device.endpoint_hint': 'POST /api/sensor/readings con header Authorization: Bearer <token>.',
     'device.chart_title': 'Consumo de {name} (W)',
     'device.chart_subtitle': 'Potencia instantánea registrada por el sensor',
     'device.readings_title': 'Historial de lecturas',
@@ -319,6 +322,10 @@ const translations = {
     'alerts.mark_all_success': 'Todas las alertas marcadas como leídas',
     'alerts.delete_success': 'Alerta eliminada',
     'alerts.error': 'Error al cargar alertas',
+    'alerts.type.threshold_exceeded.title': 'Umbral mensual superado',
+    'alerts.type.threshold_exceeded.message': 'Tu consumo mensual ({kwh} kWh) superó tu umbral de {threshold} kWh.',
+    'alerts.type.peak_consumption.title': 'Pico de consumo detectado',
+    'alerts.type.peak_consumption.message': 'Se detectó un pico de {kwh} kWh en la última hora, superando 2x el promedio diario ({avg} kWh).',
 
     // Predictions
     'predictions.title': 'Predicción de Boleta — IA',
@@ -349,6 +356,7 @@ const translations = {
     'predictions.anomalies_title': 'Anomalías detectadas',
     'predictions.anomalies_sub': 'Días con consumo fuera de lo esperado',
     'predictions.anomaly_default': 'Anomalía detectada',
+    'predictions.anomaly_value': 'Valor: {value} — Esperado: {expected}',
     'predictions.col_range': 'Rango',
     'predictions.col_kwh_tier': 'kWh en rango',
     'predictions.col_price': '$/kWh',
@@ -447,10 +455,6 @@ const translations = {
     'assistant.chip3': '¿Qué dispositivo consume más?',
     'assistant.chip4': '¿Cuál es mi consumo del mes?',
     'assistant.error': 'Error al comunicarse con el asistente',
-    'assistant.chip1': '¿Cuánto voy a pagar el mes que viene?',
-    'assistant.chip2': '¿Cómo puedo ahorrar energía?',
-    'assistant.chip3': '¿Qué dispositivo consume más?',
-    'assistant.chip4': '¿Cuál es mi consumo del mes?',
     'device.no_token': 'Sin token — regeneralo',
     // Device Form Modal
     'device_form.title_new': 'Registrar electrodoméstico',
@@ -518,6 +522,7 @@ const translations = {
     'recommendations.priority_high': 'Alta',
     'recommendations.priority_medium': 'Media',
     'recommendations.priority_low': 'Baja',
+    'recommendations.gemini_badge': 'IA Gemini',
 
     // Common
     'common.loading': 'Cargando...',
@@ -553,6 +558,7 @@ const translations = {
     'header.dashboard': 'Dashboard',
     'header.theme_light': 'Switch to light mode',
     'header.theme_dark': 'Switch to dark mode',
+    'header.toggle_lang': 'Switch to Spanish',
     'header.realtime': 'Real-time connection active',
 
     // Home
@@ -606,6 +612,7 @@ const translations = {
     'login.register_link': 'Sign up for free',
     'login.welcome': 'Welcome!',
     'login.error': 'Incorrect credentials',
+    'auth.logout_success': 'Session closed',
     'nav.back_home': 'Home',
 
     // Register
@@ -713,6 +720,7 @@ const translations = {
     'device.token_error': 'Error regenerating token',
     'device.device_id': 'Device ID:',
     'device.endpoint': 'Endpoint:',
+    'device.endpoint_hint': 'POST /api/sensor/readings with header Authorization: Bearer <token>.',
     'device.chart_title': '{name} consumption (W)',
     'device.chart_subtitle': 'Instantaneous power recorded by sensor',
     'device.readings_title': 'Readings history',
@@ -853,6 +861,10 @@ const translations = {
     'alerts.mark_all_success': 'All alerts marked as read',
     'alerts.delete_success': 'Alert deleted',
     'alerts.error': 'Error loading alerts',
+    'alerts.type.threshold_exceeded.title': 'Monthly Threshold Exceeded',
+    'alerts.type.threshold_exceeded.message': 'Your monthly consumption ({kwh} kWh) exceeded your threshold of {threshold} kWh.',
+    'alerts.type.peak_consumption.title': 'Peak Consumption Detected',
+    'alerts.type.peak_consumption.message': 'A consumption peak of {kwh} kWh was detected in the last hour, exceeding 2x the daily average ({avg} kWh).',
 
     // Predictions
     'predictions.title': 'Bill Prediction — AI',
@@ -883,6 +895,7 @@ const translations = {
     'predictions.anomalies_title': 'Detected anomalies',
     'predictions.anomalies_sub': 'Days with consumption outside expected range',
     'predictions.anomaly_default': 'Detected anomaly',
+    'predictions.anomaly_value': 'Value: {value} — Expected: {expected}',
     'predictions.col_range': 'Range',
     'predictions.col_kwh_tier': 'kWh in tier',
     'predictions.col_price': '$/kWh',
@@ -976,10 +989,6 @@ const translations = {
     'assistant.placeholder': 'Type your energy question...',
     'assistant.send': 'Send',
     'assistant.local_engine': 'Local engine',
-    'assistant.chip1': '¿Cuánto voy a pagar el mes que viene?',
-    'assistant.chip2': '¿Cómo puedo ahorrar energía?',
-    'assistant.chip3': '¿Qué dispositivo consume más?',
-    'assistant.chip4': '¿Cuál es mi consumo del mes?',
     'assistant.error': 'Error communicating with assistant',
     'assistant.chip1': 'How much will I pay next month?',
     'assistant.chip2': 'How can I save energy?',
@@ -996,7 +1005,7 @@ const translations = {
     'device_form.step_confirm': 'Confirm',
     'device_form.intro': 'What type of appliance do you want to register? Choose the category to see catalog options.',
     'device_form.appliances_count': '{count} appliances',
-    'device_form.per_day': 'hs/day',
+    'device_form.per_day': 'h/day',
     'device_form.categories': 'Categories',
     'device_form.search_placeholder': 'Search in {category}...',
     'device_form.no_results': 'No appliances found with that name.',
@@ -1052,6 +1061,7 @@ const translations = {
     'recommendations.priority_high': 'High',
     'recommendations.priority_medium': 'Medium',
     'recommendations.priority_low': 'Low',
+    'recommendations.gemini_badge': 'Gemini AI',
 
     // Common
     'common.loading': 'Loading...',

@@ -8,24 +8,25 @@ import Field from '../components/common/Field';
 import toast from 'react-hot-toast';
 import { useTranslation } from '../context/LanguageContext';
 
-const fmtARS = (value) => {
+const fmtARS = (value, locale = 'es-AR') => {
   if (value == null) return '-';
-  return `$${Number(value).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`;
+  return `$${Number(value).toLocaleString(locale, { maximumFractionDigits: 0 })}`;
 };
 
-const fmtRate = (value) => {
+const fmtRate = (value, locale = 'es-AR') => {
   if (value == null) return '-';
-  return `$${Number(value).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `$${Number(value).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
-const estRange = (min, max) => {
+const estRange = (min, max, locale = 'es-AR') => {
   if (min == null) return '-';
-  if (max == null) return `${fmtARS(min)}+`;
-  return `${fmtARS(min)} – ${fmtARS(max)}`;
+  if (max == null) return `${fmtARS(min, locale)}+`;
+  return `${fmtARS(min, locale)} – ${fmtARS(max, locale)}`;
 };
 
 export default function TariffsPage() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
+  const locale = lang === 'en' ? 'en-US' : 'es-AR';
   const [provinces, setProvinces] = useState([]);
   const [selectedProvince, setSelectedProvince] = useState('');
   const [tariffs, setTariffs] = useState([]);
@@ -64,14 +65,14 @@ export default function TariffsPage() {
   const columns = useMemo(() => [
     { header: t('tariffs.col_category'), key: 'category', render: (_, r) => <span className="tariff-badge">{r.category || '—'}</span> },
     { header: t('tariffs.col_range'), key: 'range', render: (_, r) => <span className="table-mono">{r.tier_from || 0} - {r.tier_to || t('tariffs.up_to')}</span> },
-    { header: t('tariffs.col_fixed'), key: 'fixed', render: (_, r) => <span className="table-mono"><strong>{fmtARS(r.fixed_charge)}</strong></span> },
+    { header: t('tariffs.col_fixed'), key: 'fixed', render: (_, r) => <span className="table-mono"><strong>{fmtARS(r.fixed_charge, locale)}</strong></span> },
     {
       header: t('tariffs.col_n1'),
       key: 'n1',
       render: (_, r) => (
         <div className="tariff-rate-cell">
-          <span className="table-mono">{fmtRate(r.price_per_kwh)}</span>
-          <small>{estRange(r.estimated_min_n1, r.estimated_max_n1)}</small>
+          <span className="table-mono">{fmtRate(r.price_per_kwh, locale)}</span>
+          <small>{estRange(r.estimated_min_n1, r.estimated_max_n1, locale)}</small>
         </div>
       ),
     },
@@ -80,8 +81,8 @@ export default function TariffsPage() {
       key: 'n2',
       render: (_, r) => (
         <div className="tariff-rate-cell">
-          <span className="table-mono">{fmtRate(r.price_per_kwh_n2)}</span>
-          <small>{estRange(r.estimated_min_n2, r.estimated_max_n2)}</small>
+          <span className="table-mono">{fmtRate(r.price_per_kwh_n2, locale)}</span>
+          <small>{estRange(r.estimated_min_n2, r.estimated_max_n2, locale)}</small>
         </div>
       ),
     },
@@ -90,8 +91,8 @@ export default function TariffsPage() {
       key: 'n3',
       render: (_, r) => (
         <div className="tariff-rate-cell">
-          <span className="table-mono">{fmtRate(r.price_per_kwh_n3)}</span>
-          <small>{estRange(r.estimated_min_n3, r.estimated_max_n3)}</small>
+          <span className="table-mono">{fmtRate(r.price_per_kwh_n3, locale)}</span>
+          <small>{estRange(r.estimated_min_n3, r.estimated_max_n3, locale)}</small>
         </div>
       ),
     },
@@ -165,11 +166,11 @@ export default function TariffsPage() {
                   {calcResult.category?.category && <span className="calc-result-cat">{calcResult.category.category}</span>}
                 </div>
                 <div className="calc-result-grid">
-                  <span>{t('tariffs.breakdown_fixed')}</span><strong>{fmtARS(calcResult.fixed_charge)}</strong>
-                  <span>{t('tariffs.breakdown_variable')}</span><strong>{fmtARS(calcResult.variable_cost)}</strong>
-                  <span>{t('tariffs.breakdown_base')}</span><strong>{fmtARS(calcResult.total_cost)}</strong>
+                  <span>{t('tariffs.breakdown_fixed')}</span><strong>{fmtARS(calcResult.fixed_charge, locale)}</strong>
+                  <span>{t('tariffs.breakdown_variable')}</span><strong>{fmtARS(calcResult.variable_cost, locale)}</strong>
+                  <span>{t('tariffs.breakdown_base')}</span><strong>{fmtARS(calcResult.total_cost, locale)}</strong>
                   <span className="calc-total-label">{t('tariffs.breakdown_estimated')}</span>
-                  <strong className="calc-total-value">{fmtARS(calcResult.estimated_total)}</strong>
+                  <strong className="calc-total-value">{fmtARS(calcResult.estimated_total, locale)}</strong>
                 </div>
                 <div className="calc-result-hint">{t('tariffs.calc_estimate_hint')}</div>
               </div>

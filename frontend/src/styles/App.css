@@ -243,6 +243,27 @@ body {
 }
 .chart-title { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: var(--text); }
 
+/* Recharts: leyenda, tooltip y labels legibles en claro y oscuro */
+.chart-container .recharts-wrapper text { fill: var(--text-secondary); font-size: 12px; }
+.chart-container .recharts-legend-item-text { color: var(--text-secondary) !important; font-size: 0.85rem; }
+.chart-container .recharts-legend-item { margin-bottom: 4px; }
+.chart-container .recharts-default-tooltip {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+.chart-container .recharts-tooltip-item-value { color: var(--text); font-weight: 600; }
+.chart-container .recharts-tooltip-label { color: var(--text); }
+.chart-container .recharts-cartesian-axis-line,
+.chart-container .recharts-cartesian-axis-tick-line { stroke: var(--border); }
+.chart-container .recharts-bar-rectangle { opacity: 0.9; }
+.chart-container .recharts-bar-rectangle:hover { opacity: 1; }
+
+/* Gráfico de torta: pie labels solo porcentaje, leyenda como wrap */
+.chart-container .recharts-pie-label-text { font-size: 11px; font-weight: 600; fill: var(--text); }
+.chart-container .recharts-legend-wrapper { margin-top: 12px; }
+
 /* Tables */
 .data-table-wrapper { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
