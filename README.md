@@ -433,7 +433,7 @@ cron.schedule('0 * * * *', async () => {
 | **AssistantPage** | `/assistant` | Chat con asistente IA (Gemini o local) |
 | **RecommendationsPage** | `/recommendations` | Recomendaciones personalizadas de ahorro |
 
-### 5 Contextos
+### 6 Contextos
 
 | Contexto | Archivo | Funcion |
 |---|---|---|
@@ -442,6 +442,7 @@ cron.schedule('0 * * * *', async () => {
 | **SocketContext** | `context/SocketContext.js` | Conexion Socket.IO, notificaciones en vivo |
 | **LanguageContext** | `context/LanguageContext.js` | Internacionalizacion ES/EN, toggle idioma |
 | **ManualTimerContext** | `context/ManualTimerContext.js` | Cronometros manuales persistentes (localStorage) y multi-dispositivo |
+| **NotificationContext** | `context/NotificationContext.js` | Contador global de alertas no leidas (badge Sidebar + campana Header) |
 
 ### Componentes compartidos
 
@@ -1043,6 +1044,12 @@ function MiComponente() {
 ---
 
 ## Cambios recientes
+
+### 24/09/2026 - Circulo rojo de notificaciones no leidas en la barra de navegacion
+
+- **NotificationContext** (fuente unica de verdad): carga `GET /alerts/unread-count`, se actualiza por socket `alert:new` y al marcar/eliminar alertas.
+- **Sidebar**: circulo rojo con la cantidad de no leidos sobre el item "Alertas" (funciona colapsado, tope "99+").
+- **Header** refactorizado para usar el mismo contexto (sin logica duplicada); `AlertsPage` refresca el contador al marcar leida/leidas/eliminar.
 
 ### 24/09/2026 - Consumo por dispositivo en tiempo real (sensor IoT + socket)
 
