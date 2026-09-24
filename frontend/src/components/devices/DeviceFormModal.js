@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   Snowflake, Refrigerator, Shirt, Monitor, Tv, Flame, Cpu,
-  Lightbulb, Fan, Search, ChevronLeft, ChevronRight, Check, SlidersHorizontal,
+  Lightbulb, Fan, Search, ChevronLeft, ChevronRight, Check, SlidersHorizontal, Clock,
 } from 'lucide-react';
 import Modal from '../common/Modal';
 import Field from '../common/Field';
@@ -145,9 +145,18 @@ export default function DeviceFormModal({ categories, applianceGroups, initial, 
                 <span className="appliance-card-icon">{categoryIcon(a.name || category?.name)}</span>
                 <span className="appliance-card-info">
                   <strong>{localized(a.name)}</strong>
-                  <small>{a.hours_daily_usage ? `${a.hours_daily_usage} ${t('device_form.per_day')}` : ''}</small>
+                  {a.hours_daily_usage ? (
+                    <span className="appliance-card-meta">
+                      <Clock size={12} /> {a.hours_daily_usage} {t('device_form.per_day')}
+                    </span>
+                  ) : (
+                    <span className="appliance-card-meta appliance-card-meta-empty">—</span>
+                  )}
                 </span>
-                <span className="appliance-card-watts">{a.nominal_watts} W</span>
+                <span className="appliance-card-watts">
+                  <strong>{a.nominal_watts} W</strong>
+                  <small>{t('device_form.power_label')}</small>
+                </span>
                 <ChevronRight size={18} className="appliance-card-arrow" />
               </button>
             ))}

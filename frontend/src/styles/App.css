@@ -1215,44 +1215,52 @@ body {
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .appliance-list-title { font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); }
 .appliance-list-hint { font-size: 0.72rem; color: var(--text-muted); }
 .appliance-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 300px;
+  gap: 10px;
+  max-height: 340px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px;
   background: var(--bg);
 }
+.appliance-list::-webkit-scrollbar { width: 8px; }
+.appliance-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 .appliance-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  min-height: 0;
-  height: auto;
-  border: 1px solid transparent;
+  gap: 14px;
+  padding: 12px 14px;
+  min-height: 56px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  background: var(--card-bg);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
   overflow: visible;
   cursor: pointer;
   transition: var(--transition);
   text-align: left;
   width: 100%;
 }
-.appliance-card:hover { border-color: var(--primary); background: var(--surface); }
-.appliance-card:hover .appliance-card-watts { background: var(--primary); color: #fff; }
+.appliance-card:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+.appliance-card:hover .appliance-card-watts { background: var(--primary); border-color: var(--primary); }
+.appliance-card:hover .appliance-card-watts strong { color: #fff; }
+.appliance-card:hover .appliance-card-watts small { color: rgba(255, 255, 255, 0.85); }
 .appliance-card-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 9px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   background: var(--primary-bg);
   color: var(--primary);
   display: flex;
@@ -1261,24 +1269,52 @@ body {
   flex-shrink: 0;
   align-self: flex-start;
 }
-.appliance-card-info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.appliance-card-info { flex: 1; display: flex; flex-direction: column; min-width: 0; gap: 3px; }
 .appliance-card-info strong {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--text);
-  line-height: 1.4;
+  line-height: 1.35;
   word-break: break-word;
 }
 .appliance-card-info small { font-size: 0.76rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.appliance-card-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+.appliance-card-meta svg { flex-shrink: 0; color: var(--primary); }
+.appliance-card-meta-empty { color: var(--text-muted); }
 .appliance-card-watts {
   flex-shrink: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 62px;
+  padding: 6px 10px;
   background: var(--primary-bg);
-  padding: 4px 10px;
-  border-radius: 999px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
   transition: var(--transition);
+}
+.appliance-card-watts strong {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--primary);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.2;
+}
+.appliance-card-watts small {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  line-height: 1.2;
 }
 .appliance-card-arrow { color: var(--text-muted); flex-shrink: 0; }
 .appliance-empty { text-align: center; padding: 24px; color: var(--text-muted); }
@@ -1344,6 +1380,109 @@ body {
 .timer-live strong { font-family: 'JetBrains Mono', monospace; color: var(--primary); }
 .manual-timer-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .manual-timer .calc-result { text-align: left; }
+
+/* Cronómetros múltiples persistentes */
+.manual-start-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.manual-start-row .form-hint { margin: 0; }
+.manual-timer-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+.manual-timer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+  background: var(--card-bg);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.manual-timer-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.manual-timer-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--danger);
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+.manual-timer-card .appliance-card-watts { min-width: 70px; }
+.manual-timer-name { font-size: 1rem; font-weight: 600; color: var(--text); }
+.manual-timer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.manual-timer-meta b { color: var(--text-secondary); }
+.manual-timer-card .timer-display { font-size: 2.2rem; margin: 2px 0 4px; }
+.manual-timer-card .timer-live { margin-bottom: 4px; }
+
+.manual-results { margin-top: 18px; }
+.manual-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.manual-results-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.manual-results-title svg { flex-shrink: 0; color: var(--primary); }
+.manual-result-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.manual-result-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.manual-result-card-head strong { font-size: 0.95rem; }
+.manual-result-card-meta { display: flex; align-items: center; gap: 8px; }
+.manual-result-card .calc-result { margin-top: 10px; }
 .tariff-badge {
   display: inline-block;
   padding: 3px 9px;
@@ -1722,7 +1861,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
 .category-card:hover::after, .appliance-card:hover::after { opacity: 1; }
 .appliance-card:hover::after { opacity: 0; }
 .category-card:hover { transform: translateY(-2px); }
-.appliance-list::-webkit-scrollbar { width: 8px; }
 
 /* ---------- Landing stat band ---------- */
 .home-stats-band { z-index: 5; }
@@ -1751,6 +1889,8 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
   .auth-card { padding: 28px 22px; }
   .wizard-summary-body { flex-direction: column; align-items: flex-start; }
   .wizard-summary-meta { justify-content: flex-start; }
+  .manual-timer-list { grid-template-columns: 1fr; }
+  .manual-start-row { flex-direction: column; align-items: flex-start; }
 }
 
 /* Checklist de requisitos de contraseña (registro) */

@@ -268,6 +268,13 @@ const translations = {
     'consumption.manual_no_devices': 'No tenés dispositivos registrados. Creá uno en la sección Dispositivos.',
     'consumption.manual_saved': 'Sesión registrada en el historial',
     'consumption.manual_new_session': 'Nueva medición',
+    'consumption.manual_multi_hint': 'Podés cronometrar varios dispositivos a la vez: cada uno se mide por separado y sigue contando aunque navegues por el sitio.',
+    'consumption.manual_per_day_short': 'usos/día',
+    'consumption.manual_results_title': 'Últimas mediciones',
+    'consumption.manual_results_empty': 'Todavía no finalizaste ninguna medición. Cronometrá un dispositivo y presioná Detener para ver el resultado.',
+    'consumption.manual_clear_all': 'Vaciar lista',
+    'consumption.manual_dismiss': 'Descartar',
+    'consumption.manual_record_failed': 'No se pudo guardar la sesión en el historial',
 
     // Invoices
     'invoices.title': 'Facturas de Energía',
@@ -472,6 +479,7 @@ const translations = {
     'device_form.intro': '¿Qué tipo de electrodoméstico querés registrar? Elegí la categoría para ver las opciones del catálogo.',
     'device_form.appliances_count': '{count} electrodomésticos',
     'device_form.per_day': 'hs/día',
+    'device_form.power_label': 'Potencia',
     'device_form.categories': 'Categorías',
     'device_form.search_placeholder': 'Buscar en {category}...',
     'device_form.no_results': 'No se encontraron electrodomésticos con ese nombre.',
@@ -812,6 +820,13 @@ const translations = {
     'consumption.manual_no_devices': 'You have no registered devices. Create one in the Devices section.',
     'consumption.manual_saved': 'Session recorded in history',
     'consumption.manual_new_session': 'New measurement',
+    'consumption.manual_multi_hint': 'You can time several devices at once: each one is measured separately and keeps counting while you browse the site.',
+    'consumption.manual_per_day_short': 'uses/day',
+    'consumption.manual_results_title': 'Recent measurements',
+    'consumption.manual_results_empty': 'You have not finished any measurement yet. Time a device and press Stop to see the result.',
+    'consumption.manual_clear_all': 'Clear list',
+    'consumption.manual_dismiss': 'Dismiss',
+    'consumption.manual_record_failed': 'Could not save the session to history',
 
     // Invoices
     'invoices.title': 'Energy Invoices',
@@ -1016,6 +1031,7 @@ const translations = {
     'device_form.intro': 'What type of appliance do you want to register? Choose the category to see catalog options.',
     'device_form.appliances_count': '{count} appliances',
     'device_form.per_day': 'h/day',
+    'device_form.power_label': 'Power',
     'device_form.categories': 'Categories',
     'device_form.search_placeholder': 'Search in {category}...',
     'device_form.no_results': 'No appliances found with that name.',
