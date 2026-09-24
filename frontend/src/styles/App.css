@@ -1565,6 +1565,57 @@ body {
 }
 .live-device-meta b { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
 .live-device-time { font-size: 0.72rem; }
+.live-device-status.idle { color: var(--warning); }
+.live-device-status.idle .pulse-dot { background: var(--warning); }
+.live-device-card.idle { border-color: rgba(245, 158, 11, 0.55); }
+.live-device-idle-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--warning);
+}
+.stat-idle-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--warning);
+  vertical-align: middle;
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+.device-state-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+.device-state-chip.online {
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.08);
+}
+.device-state-chip.online .pulse-dot { background: var(--success); }
+.device-state-chip.idle {
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.08);
+}
+.device-state-chip.idle .pulse-dot { background: var(--warning); }
+.device-state-chip.offline {
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.device-state-chip.offline .pulse-dot-off { background: var(--text-muted); }
 .tariff-badge {
   display: inline-block;
   padding: 3px 9px;

@@ -89,6 +89,13 @@ export default function DeviceDetailPage() {
   if (loading) return <LoadingSpinner />;
   if (!device) return null;
 
+  // Estado del sensor: en línea / en suspenso (conectado pero 0 W) / sin conexión.
+  const lastWatts = liveReading?.instant_watts != null
+    ? Number(liveReading.instant_watts)
+    : (stats?.last_watts != null ? Number(stats.last_watts) : null);
+  const sensorOnline = !device.device_token ? false : !!(stats?.is_online || liveReading);
+  const isSuspended = sensorOnline && lastWatts !== null && lastWatts <= 0.5;
+
   const chartData = [...readings].reverse().map((r) => ({
     time: new Date(r.reading_timestamp).toLocaleString(locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
     watts: r.instant_watts,
@@ -110,16 +117,29 @@ export default function DeviceDetailPage() {
       <div className="page-header">
         <div className="page-header-text" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link to="/devices" className="btn btn-sm btn-secondary"><ArrowLeft size={14} /> {t('device.back')}</Link>
-          <h2 style={{ margin: 0 }}><Cpu size={22} style={{ marginRight: 8, verticalAlign: 'middle' }} />{device.name}</h2>
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}><Cpu size={22} />{device.name}
+            {device.device_token && (
+              <span className={`device-state-chip ${isSuspended ? 'idle' : sensorOnline ? 'online' : 'offline'}`}>
+                {isSuspended || sensorOnline ? <span className="pulse-dot" /> : <span className="pulse-dot-off" />}
+                {isSuspended
+                  ? t('device.sensor_idle_label')
+                  : sensorOnline
+                    ? t('device.sensor_online_label')
+                    : t('device.sensor_offline_label')}
+              </span>
+            )}
+          </h2>
         </div>
       </div>
 
       <div className="dashboard-grid" style={{ marginBottom: 24 }}>
         <StatCard
           icon={<Zap size={20} />}
-          value={liveReading?.instant_watts != null ? `${Math.round(Number(liveReading.instant_watts))} W` : (stats?.last_watts != null ? `${stats.last_watts} W` : '—')}
-          label={<span className="stat-card-label-with-dot">{t('device.power_current')}{connected && <span className="stat-live-dot" title={t('consumption.live')} />}</span>}
-          color="primary"
+          value={lastWatts != null ? `${Math.round(lastWatts)} W` : '—'}
+          label={isSuspended
+            ? <span className="stat-card-label-with-dot">{t('device.power_idle_label')}<span className="stat-idle-dot" title={t('device.power_idle_hint')} /></span>
+            : <span className="stat-card-label-with-dot">{t('device.power_current')}{connected && <span className="stat-live-dot" title={t('consumption.live')} />}</span>}
+          color={isSuspended ? 'warning' : 'primary'}
         />
         <StatCard
           icon={<Activity size={20} />}
@@ -134,10 +154,10 @@ export default function DeviceDetailPage() {
           color="info"
         />
         <StatCard
-          icon={stats?.is_online ? <Wifi size={20} /> : <WifiOff size={20} />}
-          value={!device.device_token ? t('device.sensor_no_device') : stats?.is_online ? t('device.sensor_online_label') : t('device.sensor_offline_label')}
+          icon={sensorOnline ? <Wifi size={20} /> : <WifiOff size={20} />}
+          value={!device.device_token ? t('device.sensor_no_device') : isSuspended ? t('device.sensor_idle_label') : sensorOnline ? t('device.sensor_online_label') : t('device.sensor_offline_label')}
           label={!device.device_token ? t('device.sensor_no_config') : t('device.sensor_status')}
-          color={!device.device_token ? 'warning' : stats?.is_online ? 'primary' : 'danger'}
+          color={!device.device_token ? 'warning' : isSuspended ? 'warning' : sensorOnline ? 'primary' : 'danger'}
         />
       </div>
 

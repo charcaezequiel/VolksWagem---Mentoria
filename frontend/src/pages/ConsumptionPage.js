@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, Activity, Plus, Cpu, CalendarRange, Play, Square, Timer as TimerIcon, DollarSign, RefreshCw, History, X } from 'lucide-react';
+import { Zap, Activity, Plus, Cpu, CalendarRange, Play, Square, Timer as TimerIcon, DollarSign, RefreshCw, History, X, Moon } from 'lucide-react';
 import { api } from '../services/api';
 import DataTable from '../components/common/DataTable';
 import StatCard from '../components/common/StatCard';
@@ -341,12 +341,13 @@ export default function ConsumptionPage() {
           )}
           {liveDevices.map((d) => {
             const fresh = (now - new Date(d.reading_timestamp).getTime()) < LIVE_WINDOW_MS;
+            const idle = fresh && (Number(d.instant_watts) || 0) <= 0.5;
             return (
-              <div key={d.device_id} className={`live-device-card ${fresh ? 'live' : 'stale'}`}>
+              <div key={d.device_id} className={`live-device-card ${idle ? 'idle' : fresh ? 'live' : 'stale'}`}>
                 <div className="live-device-card-top">
-                  <span className={`live-device-status ${fresh ? 'online' : 'offline'}`}>
+                  <span className={`live-device-status ${idle ? 'idle' : fresh ? 'online' : 'offline'}`}>
                     <span className={fresh ? 'pulse-dot' : 'pulse-dot-off'} />
-                    {fresh ? t('consumption.live') : t('consumption.live_offline')}
+                    {idle ? t('consumption.live_idle') : fresh ? t('consumption.live') : t('consumption.live_offline')}
                   </span>
                   <span className="appliance-card-watts">
                     <strong>{Math.round(Number(d.instant_watts) || 0)} W</strong>
@@ -356,6 +357,9 @@ export default function ConsumptionPage() {
                 <strong className="live-device-name">{d.device_name || '—'}</strong>
                 <div className="live-device-meta">
                   <span>{t('consumption.live_kwh_day')}: <b>{Number(d.accumulated_kwh_day || 0).toFixed(3)} kWh</b></span>
+                  {idle && (
+                    <span className="live-device-idle-hint"><Moon size={12} /> {t('consumption.live_idle_hint')}</span>
+                  )}
                   <span className="live-device-time">{t('consumption.last_update')}: {new Date(d.reading_timestamp).toLocaleTimeString(locale)}</span>
                 </div>
               </div>
