@@ -6,6 +6,7 @@ const { authenticateToken } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { createInvoice } = require('../validators/invoiceValidators');
 const { calculateCost } = require('../services/tariffService');
+const { MONTHS } = require('../utils/i18n');
 
 router.get('/', authenticateToken, async (req, res, next) => {
   try {
@@ -55,7 +56,8 @@ router.get('/comparison', authenticateToken, async (req, res, next) => {
     const thisYear = invoices.filter((inv) => inv.period_year === currentYear);
     const lastYear = invoices.filter((inv) => inv.period_year === currentYear - 1);
 
-    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const lang = req.lang || 'es';
+    const monthNames = MONTHS[lang].map((m) => m.slice(0, 3));
     const monthlyComparison = [];
     for (let m = 1; m <= 12; m++) {
       const current = thisYear.find((inv) => inv.period_month === m);

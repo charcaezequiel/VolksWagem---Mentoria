@@ -1,5 +1,6 @@
 const { Recommendation } = require('../models');
 const aiService = require('../services/aiService');
+const { localizeRecommendation } = require('../utils/i18n');
 
 exports.getRecommendations = async (req, res, next) => {
   try {
@@ -11,7 +12,10 @@ exports.getRecommendations = async (req, res, next) => {
         ['created_at', 'DESC'],
       ],
     });
-    res.json({ recommendations });
+    // Las recomendaciones guardadas pueden haberse generado en español: las
+    // retraduce a inglés on-the-fly si el usuario está viendo la app en inglés.
+    const localized = recommendations.map((rec) => localizeRecommendation(rec.toJSON ? rec.toJSON() : rec, req.lang));
+    res.json({ recommendations: localized });
   } catch (error) {
     next(error);
   }
@@ -20,7 +24,7 @@ exports.getRecommendations = async (req, res, next) => {
 exports.generateRecommendations = async (req, res, next) => {
   try {
     const force = req.query.force === 'true';
-    const recommendations = await aiService.generateRecommendations(req.user.id, force);
+    const recommendations = await aiService.generateRecommendations(req.user.id, force, req.lang);
     res.json({ recommendations, provider: aiService.isConfigured() ? 'gemini' : 'local' });
   } catch (error) {
     next(error);
@@ -70,7 +74,7 @@ exports.chat = async (req, res, next) => {
     if (!message || !message.trim()) {
       return res.status(400).json({ error: 'Message is required' });
     }
-    const result = await aiService.chat(req.user.id, message, history);
+    const result = await aiService.chat(req.user.id, message, history, req.lang);
     res.json(result);
   } catch (error) {
     next(error);
@@ -79,7 +83,7 @@ exports.chat = async (req, res, next) => {
 
 exports.insights = async (req, res, next) => {
   try {
-    const result = await aiService.generateInsights(req.user.id);
+    const result = await aiService.generateInsights(req.user.id, req.lang);
     res.json(result);
   } catch (error) {
     next(error);

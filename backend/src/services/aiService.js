@@ -11,6 +11,7 @@ const {
   Province,
 } = require('../models');
 const { generateBillForecast } = require('./predictionService');
+const { t, localizeAlert } = require('../utils/i18n');
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
@@ -54,7 +55,7 @@ const localDateKey = (date) =>
 
 const pad2 = (n) => String(n).padStart(2, '0');
 
-const buildUserContext = async (userId) => {
+const buildUserContext = async (userId, lang) => {
   const user = await User.findByPk(userId, {
     include: [{ model: Province, as: 'province' }],
     attributes: { exclude: ['password_hash'] },
@@ -104,7 +105,7 @@ const buildUserContext = async (userId) => {
 
   let forecast = null;
   try {
-    forecast = await generateBillForecast(userId);
+    forecast = await generateBillForecast(userId, lang);
   } catch (e) {
     forecast = null;
   }
@@ -131,7 +132,10 @@ const buildUserContext = async (userId) => {
       kwh: i.kwh_consumed,
       amount: i.amount_paid,
     })),
-    unread_alerts: alerts.map((a) => ({ title: a.title, message: a.message, severity: a.severity })),
+    unread_alerts: alerts.map((a) => {
+      const loc = localizeAlert(a.toJSON ? a.toJSON() : a, lang);
+      return { title: loc.title, message: loc.message, severity: loc.severity || a.severity };
+    }),
     forecast: forecast
       ? {
           month: forecast.month_name,
@@ -146,7 +150,7 @@ const buildUserContext = async (userId) => {
 
 /* ----------------------- RECOMENDACIONES ----------------------- */
 
-const fallbackRecommendations = async (userId) => {
+const fallbackRecommendations = async (userId, lang) => {
   const devices = await Device.findAll({
     where: { user_id: userId, is_active: true },
     include: [{ model: DeviceCategory, as: 'category' }],
@@ -156,8 +160,8 @@ const fallbackRecommendations = async (userId) => {
 
   if (devices.length === 0) {
     return [{
-      title: 'Agregá tus dispositivos',
-      description: 'Registrá tus electrodomésticos para poder analizar tu consumo y recibir recomendaciones personalizadas.',
+      title: t(lang, 'rec.add_devices.title'),
+      description: t(lang, 'rec.add_devices.desc'),
       category: 'general',
       priority: 'medium',
       source: 'local',
@@ -172,8 +176,11 @@ const fallbackRecommendations = async (userId) => {
   const hourlyCost = (device) => ((device.nominal_watts * device.hours_daily_usage) / 1000) * 0.085;
 
   recs.push({
-    title: `${top.name} es tu mayor consumidor`,
-    description: `Con ${top.nominal_watts} W y ${top.hours_daily_usage} hs de uso diario, es el dispositivo que más aporta a tu boleta. Revisá si podés reducir sus horas de uso o reemplazarlo por uno más eficiente.`,
+    title: t(lang, 'rec.top_consumer.title', { name: top.name }),
+    description: t(lang, 'rec.top_consumer.desc', {
+      watts: top.nominal_watts,
+      hours: top.hours_daily_usage,
+    }),
     category: 'consumo',
     priority: 'high',
     source: 'local',
@@ -185,8 +192,8 @@ const fallbackRecommendations = async (userId) => {
   const airConditioners = devices.filter((d) => (d.category && d.category.name === 'Climatización'));
   if (airConditioners.length > 0) {
     recs.push({
-      title: 'Optimizá el aire acondicionado',
-      description: 'Configurá el termostato a 24°C y usá el modo eco. Cada grado por debajo de 24°C aumenta el consumo hasta un 8%.',
+      title: t(lang, 'rec.ac.title'),
+      description: t(lang, 'rec.ac.desc'),
       category: 'eficiencia',
       priority: 'high',
       source: 'local',
@@ -198,8 +205,8 @@ const fallbackRecommendations = async (userId) => {
   const refrigerators = devices.filter((d) => (d.category && d.category.name === 'Refrigeración'));
   if (refrigerators.length > 0) {
     recs.push({
-      title: 'Chequeá las gomas de tu heladera',
-      description: 'Si la puerta no cierra bien, el compresor trabaja de más. Verificá los burletes y mantené una distancia de 10 cm de la pared para ventilación.',
+      title: t(lang, 'rec.fridge.title'),
+      description: t(lang, 'rec.fridge.desc'),
       category: 'mantenimiento',
       priority: 'medium',
       source: 'local',
@@ -209,8 +216,8 @@ const fallbackRecommendations = async (userId) => {
   }
 
   recs.push({
-    title: 'Aprovechá la luz natural y LED',
-    description: 'Reemplazá lámparas incandescentes por LED de bajo consumo. Una lámpara LED de 9W consume 85% menos que una de 60W con la misma luminosidad.',
+    title: t(lang, 'rec.led.title'),
+    description: t(lang, 'rec.led.desc'),
     category: 'eficiencia',
     priority: 'low',
     source: 'local',
@@ -219,8 +226,8 @@ const fallbackRecommendations = async (userId) => {
   });
 
   recs.push({
-    title: 'Desconectá los consumos en stand-by',
-    description: 'Televisores, decodificadores y cargadores siguen consumiendo en stand-by. Usá zapatillas con interruptor y desconectalos de noche.',
+    title: t(lang, 'rec.standby.title'),
+    description: t(lang, 'rec.standby.desc'),
     category: 'comportamiento',
     priority: 'medium',
     source: 'local',
@@ -231,7 +238,7 @@ const fallbackRecommendations = async (userId) => {
   return recs;
 };
 
-const generateRecommendations = async (userId, force = false) => {
+const generateRecommendations = async (userId, force = false, lang) => {
   if (force) {
     await Recommendation.destroy({ where: { user_id: userId } });
   }
@@ -239,14 +246,19 @@ const generateRecommendations = async (userId, force = false) => {
   const existing = await Recommendation.findAll({ where: { user_id: userId } });
   if (existing.length > 0) return existing;
 
-  const context = await buildUserContext(userId);
+  const context = await buildUserContext(userId, lang);
 
   if (isConfigured()) {
+    const respondIn = lang === 'en'
+      ? 'Write the recommendations in English.'
+      : 'Escribí las recomendaciones en español rioplatense.';
     const prompt = `
 Eres un asesor energético experto en Argentina. Analizá los datos de consumo de este hogar y generá recomendaciones concretas para ahorrar energía y dinero.
 
 Datos del hogar (JSON):
 ${JSON.stringify(context)}
+
+${respondIn}
 
 Respondé SOLO con un array JSON válido de objetos con esta forma exacta (sin markdown, sin texto adicional):
 [
@@ -283,7 +295,7 @@ Generá entre 4 y 6 recomendaciones personalizadas usando los datos reales del u
     }
   }
 
-  const fallback = await fallbackRecommendations(userId);
+  const fallback = await fallbackRecommendations(userId, lang);
   const rows = fallback.map((r) => ({ ...r, user_id: userId }));
   return Recommendation.bulkCreate(rows);
 };
@@ -304,10 +316,12 @@ const parseRecommendations = (text) => {
 
 /* ----------------------- CHAT ----------------------- */
 
-const SYSTEM_PROMPT = `
+const getSystemPrompt = (lang) => `
 Sos "ControlAR", el asistente energético de ControlAR Energía, una aplicación argentina de monitoreo de consumo eléctrico.
 
-Respondé en español rioplatense, de forma clara y concisa. Podés usar **negritas** y listas.
+${lang === 'en'
+    ? 'Respond in clear, concise English. You may use **bold** and lists.'
+    : 'Respondé en español rioplatense, de forma clara y concisa. Podés usar **negritas** y listas.'}
 
 Tenés acceso al contexto del usuario (entre marcas <CONTEXTO>). Usalo para responder preguntas sobre su consumo, y cuando te pregunten sobre su propio hogar, basate en esos datos.
 
@@ -322,66 +336,75 @@ Reglas:
 - Si te preguntan por tarifas, mencioná los rangos y que pueden verlos en la sección Tarifas.
 `;
 
-const fallbackChat = async (message, context) => {
+const fallbackChat = async (message, context, lang) => {
   const msg = message.toLowerCase();
   const monthKwh = context.summary ? context.summary.month_kwh : 0;
 
-  if (/(hola|buenas|hey)/i.test(msg)) {
-    return `¡Hola ${context.user.name}! 👋 Soy tu asistente energético. Podés preguntarme sobre tu consumo, cómo ahorrar energía, tus facturas o el pronóstico del mes que viene.`;
+  if (/(hola|buenas|hey|hello|hi)/i.test(msg)) {
+    return t(lang, 'chat.hello', { name: context.user.name });
   }
-  if (/(cu[áa]nto.*pagar|boleta|pron[óo]stico|predicci[óo]n|mes.*viene)/i.test(msg)) {
+  if (/(cu[áa]nto.*pagar|boleta|pron[óo]stico|predicci[óo]n|mes.*viene|bill|forecast|predict)/i.test(msg)) {
     if (context.forecast) {
-      return `Según mi análisis, tu boleta estimada para **${context.forecast.month}** sería de aproximadamente **$${context.forecast.predicted_cost.toLocaleString('es-AR')}** por **${context.forecast.total_predicted_kwh} kWh** consumidos (confianza del ${Math.round(context.forecast.confidence * 100)}%).\n\nDetalle en la sección **Predicciones**.`;
+      return t(lang, 'chat.bill_forecast', {
+        month: context.forecast.month,
+        cost: context.forecast.predicted_cost.toLocaleString(lang === 'en' ? 'en-US' : 'es-AR'),
+        kwh: context.forecast.total_predicted_kwh,
+        confidence: Math.round(context.forecast.confidence * 100),
+      });
     }
-    return 'Todavía no tengo datos suficientes para estimar tu boleta. Cargá tu provincia y algunos consumos en la app y volvé a preguntarme. 📊';
+    return t(lang, 'chat.bill_no_data');
   }
-  if (/(consumo|cu[áa]nta.*energ[ií]a|kwh)/i.test(msg)) {
-    return `En lo que va del mes registrás **${monthKwh.toFixed(1)} kWh**. Podés ver el detalle diario y por dispositivo en la sección **Consumo**.\n\nTip: identificá el dispositivo que más consume y tratá de reducir sus horas de uso.`;
+  if (/(consumo|cu[áa]nta.*energ[ií]a|kwh|consumption)/i.test(msg)) {
+    return t(lang, 'chat.consumption', { kwh: monthKwh.toFixed(1) });
   }
-  if (/(ahorrar|reducir|consejo|recomendac|tip)/i.test(msg)) {
+  if (/(ahorrar|reducir|consejo|recomendac|tip|save|saving|advice)/i.test(msg)) {
     const top = context.devices && context.devices.length > 0
       ? context.devices.sort((a, b) => (b.month_kwh || 0) - (a.month_kwh || 0))[0]
       : null;
-    let reply = 'Algunos consejos para ahorrar energía en Argentina:\n\n';
-    reply += '1. **Aire acondicionado a 24°C** en verano, con el modo eco activado.\n';
-    reply += '2. **Desconectá los stand-by** de TV y decodificadores por la noche.\n';
-    reply += '3. **Lavarropas con agua fría** y carga completa.\n';
-    if (top) reply += `4. **${top.name}** es el que más consume en tu hogar (${top.month_kwh} kWh este mes) — priorizá reducir su uso.\n`;
-    reply += '\nTambién podés ver recomendaciones personalizadas en la sección **Recomendaciones**.';
+    let reply = t(lang, 'chat.tips_header');
+    reply += t(lang, 'chat.tip_ac');
+    reply += t(lang, 'chat.tip_standby');
+    reply += t(lang, 'chat.tip_laundry');
+    if (top) reply += t(lang, 'chat.tip_top', { name: top.name, kwh: top.month_kwh || 0 });
+    reply += t(lang, 'chat.tips_footer');
     return reply;
   }
-  if (/(dispositivo|equipo|electrodom[ée]stico)/i.test(msg)) {
+  if (/(dispositivo|equipo|electrodom[ée]stico|device|appliance)/i.test(msg)) {
     if (!context.devices || context.devices.length === 0) {
-      return 'Todavía no tenés dispositivos registrados. Andá a **Mis Dispositivos** y agregalos para empezar a monitorear tu consumo.';
+      return t(lang, 'chat.devices_none');
     }
-    const lines = context.devices.map((d) => `- **${d.name}** (${d.category}): ${d.nominal_watts} W, ${d.month_kwh || 0} kWh este mes`).join('\n');
-    return `Tus dispositivos registrados:\n\n${lines}`;
+    const lines = context.devices.map((d) => `- **${d.name}** (${d.category}): ${d.nominal_watts} W, ${d.month_kwh || 0} kWh ${lang === 'en' ? 'this month' : 'este mes'}`).join('\n');
+    return `${t(lang, 'chat.devices_list')}${lines}`;
   }
-  if (/(factura|pagar|tarifa)/i.test(msg)) {
+  if (/(factura|pagar|tarifa|invoice|bill.*history)/i.test(msg)) {
     if (!context.recent_invoices || context.recent_invoices.length === 0) {
-      return 'Todavía no registraste facturas. Cargalas en la sección **Facturas** para analizar tu historial.';
+      return t(lang, 'chat.invoices_none');
     }
     const last = context.recent_invoices[0];
-    return `Tu última factura fue **${last.period}**: ${last.kwh} kWh por **$${last.amount.toLocaleString('es-AR')}**.\n\nPodés comparar mes a mes en la sección **Facturas**.`;
+    return t(lang, 'chat.last_invoice', {
+      period: last.period,
+      kwh: last.kwh,
+      amount: last.amount.toLocaleString(lang === 'en' ? 'en-US' : 'es-AR'),
+    });
   }
-  if (/(alerta|anomal[íi]a|problema)/i.test(msg)) {
+  if (/(alerta|anomal[íi]a|problema|alert|anomal)/i.test(msg)) {
     if (!context.unread_alerts || context.unread_alerts.length === 0) {
-      return 'No tenés alertas sin leer. Todo tranquilo por acá ✅';
+      return t(lang, 'chat.alerts_none');
     }
     const lines = context.unread_alerts.map((a) => `- **${a.title}** (${a.severity}): ${a.message}`).join('\n');
-    return `Tenés ${context.unread_alerts.length} alerta(s) sin leer:\n\n${lines}`;
+    return `${t(lang, 'chat.alerts_list', { count: context.unread_alerts.length })}\n${lines}`;
   }
-  if (/(ayuda|qu[ée] pod[ée]s|qu[ée] hac[eé]s)/i.test(msg)) {
-    return 'Puedo ayudarte con:\n\n- **Tu consumo**: resúmenes y análisis.\n- **Tu boleta**: estimación del próximo mes.\n- **Ahorro**: consejos y recomendaciones.\n- **Dispositivos**: cuál consume más.\n- **Facturas y alertas**: historial y estado.\n\n¿Sobre qué querés hablar?';
+  if (/(ayuda|qu[ée] pod[ée]s|qu[ée] hac[eé]s|help|what can you)/i.test(msg)) {
+    return t(lang, 'chat.help_intro');
   }
-  return 'Interesante pregunta 🤔. Mi conocimiento se enfoca en tu consumo energético, ahorro de energía, tarifas argentinas y el monitoreo de tus dispositivos. ¿Querés que te cuente sobre tu consumo o cómo ahorrar energía?';
+  return t(lang, 'chat.default');
 };
 
-const chat = async (userId, message, history = []) => {
-  const context = await buildUserContext(userId);
+const chat = async (userId, message, history = [], lang) => {
+  const context = await buildUserContext(userId, lang);
 
   if (!isConfigured()) {
-    return { reply: await fallbackChat(message, context), provider: 'local' };
+    return { reply: await fallbackChat(message, context, lang), provider: 'local' };
   }
 
   const model = getModel();
@@ -396,34 +419,51 @@ const chat = async (userId, message, history = []) => {
       generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
     });
 
-    const prompt = `${SYSTEM_PROMPT.replace('{context}', JSON.stringify(context))}\n\nUsuario: ${message}`;
+    const prompt = `${getSystemPrompt(lang).replace('{context}', JSON.stringify(context))}\n\nUsuario: ${message}`;
     const result = await chatSession.sendMessage(prompt);
     const reply = result.response.text();
     return { reply, provider: 'gemini' };
   } catch (error) {
     console.warn('Gemini chat failed:', error.message);
-    return { reply: await fallbackChat(message, context), provider: 'local' };
+    return { reply: await fallbackChat(message, context, lang), provider: 'local' };
   }
 };
 
 /* ----------------------- INSIGHTS ----------------------- */
 
-const generateInsights = async (userId) => {
-  const context = await buildUserContext(userId);
+const generateInsights = async (userId, lang) => {
+  const context = await buildUserContext(userId, lang);
   const monthKwh = context.summary ? context.summary.month_kwh : 0;
   const deviceCount = context.summary ? context.summary.device_count : 0;
   const topDevice = context.devices && context.devices.length > 0
     ? context.devices.sort((a, b) => (b.month_kwh || 0) - (a.month_kwh || 0))[0]
     : null;
 
-  const localInsight = `Consumís ${monthKwh.toFixed(1)} kWh este mes con ${deviceCount} dispositivos.${topDevice ? ` Tu mayor consumo viene de **${topDevice.name}** (${topDevice.month_kwh || 0} kWh).` : ''}${context.forecast ? ` Para el mes que viene se estima una boleta de **$${context.forecast.predicted_cost.toLocaleString('es-AR')}** con una confianza del ${Math.round(context.forecast.confidence * 100)}%.` : ''}`;
+  const localInsight = t(lang, 'insight.local', {
+    kwh: monthKwh.toFixed(1),
+    count: deviceCount,
+    top: topDevice
+      ? t(lang, 'insight.top', { name: topDevice.name, kwh: topDevice.month_kwh || 0 })
+      : '',
+    forecast: context.forecast
+      ? t(lang, 'insight.forecast', {
+          cost: context.forecast.predicted_cost.toLocaleString(lang === 'en' ? 'en-US' : 'es-AR'),
+          confidence: Math.round(context.forecast.confidence * 100),
+        })
+      : '',
+  });
 
   if (!isConfigured()) {
     return { insight: localInsight, provider: 'local' };
   }
 
+  const respondIn = lang === 'en'
+    ? 'Write your analysis in English.'
+    : 'Escribí el análisis en español rioplatense.';
   const prompt = `
 Analizá el consumo energético de este hogar argentino y resumí en un párrafo de 3-4 oraciones los puntos más importantes (qué significa su consumo, qué se viene el próximo mes, y una acción concreta para ahorrar).
+
+${respondIn}
 
 Datos (JSON):
 ${JSON.stringify(context)}

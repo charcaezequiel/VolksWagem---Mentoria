@@ -41,7 +41,7 @@ export default function ProfilePage() {
       toast.success(t('profile.password_success'));
       setPasswords({ currentPassword: '', newPassword: '' });
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Error al cambiar contraseña');
+      toast.error(err.response?.data?.error || t('profile.password_error'));
     }
     setSaving(false);
   };

@@ -49,7 +49,7 @@ export default function RegisterPage() {
       toast.success(t('register.success'));
       navigate('/dashboard');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Error al registrarse');
+      toast.error(err.response?.data?.error || t('register.error'));
     } finally {
       setLoading(false);
     }

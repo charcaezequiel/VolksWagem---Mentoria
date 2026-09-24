@@ -19,7 +19,7 @@ export function alertText(t, a) {
     return {
       title: t('alerts.type.threshold_exceeded.title'),
       message: t('alerts.type.threshold_exceeded.message', {
-        kwh: fmt(m.current_kwh ?? a.current_kwh),
+        kwh: fmt(m.current_kwh ?? m.actual_kwh ?? a.current_kwh ?? a.actual_kwh),
         threshold: fmt(m.threshold_kwh ?? a.threshold_kwh),
       }),
     };
@@ -29,8 +29,20 @@ export function alertText(t, a) {
     return {
       title: t('alerts.type.peak_consumption.title'),
       message: t('alerts.type.peak_consumption.message', {
-        kwh: fmt(m.recent_kwh ?? a.recent_kwh),
-        avg: fmt(m.avg_daily_kwh ?? a.avg_daily_kwh),
+        kwh: fmt(m.recent_kwh ?? m.peak_watts ?? a.recent_kwh ?? a.peak_watts),
+        avg: fmt(m.avg_daily_kwh ?? m.expected_watts ?? a.avg_daily_kwh ?? a.expected_watts),
+      }),
+    };
+  }
+  if (type === 'anomaly') {
+    const m = a.metadata || {};
+    const dev = m.deviation_percent != null ? Math.round(Number(m.deviation_percent)) : null;
+    return {
+      title: t('alerts.type.anomaly.title'),
+      message: t('alerts.type.anomaly.message', {
+        avg: fmt(m.avg_watts ?? a.avg_watts),
+        normal: fmt(m.normal_avg ?? m.avg_daily_kwh ?? a.normal_avg ?? a.avg_daily_kwh),
+        dev: dev != null ? `${dev}%` : t('alerts.type.anomaly.dev_unknown'),
       }),
     };
   }

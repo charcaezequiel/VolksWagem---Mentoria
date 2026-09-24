@@ -1,16 +1,12 @@
 const { Op } = require('sequelize');
 const { ConsumptionReading, Prediction, User, Province } = require('../models');
 const { calculateCost } = require('./tariffService');
+const { t, MONTHS } = require('../utils/i18n');
 
 const SEASONAL_FACTORS = {
   1: 1.3, 2: 1.25, 3: 1.1, 4: 0.9, 5: 0.85, 6: 0.8,
   7: 0.8, 8: 0.85, 9: 0.9, 10: 1.0, 11: 1.15, 12: 1.3,
 };
-
-const MONTHS_ES = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-];
 
 const MODEL_VERSION = 'v2.1-bill-ai';
 
@@ -109,7 +105,7 @@ const generatePredictions = async (userId) => {
   return predictions;
 };
 
-const detectAnomalies = async (userId) => {
+const detectAnomalies = async (userId, lang) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -151,8 +147,11 @@ const detectAnomalies = async (userId) => {
   if (Math.abs(todayTotal - mean) > 2 * stdDev && stdDev > 0) {
     anomalies.push({
       type: 'anomaly',
-      title: 'Consumption Anomaly Detected',
-      message: `Today's consumption (${todayTotal.toFixed(2)} kWh) deviates significantly from the 30-day average (${mean.toFixed(2)} kWh).`,
+      title: t(lang, 'anomaly.consumption.title'),
+      message: t(lang, 'anomaly.consumption.desc', {
+        value: todayTotal.toFixed(2),
+        avg: mean.toFixed(2),
+      }),
       severity: todayTotal > mean ? 'warning' : 'info',
       metadata: {
         today_total: todayTotal,
@@ -166,13 +165,13 @@ const detectAnomalies = async (userId) => {
   return anomalies;
 };
 
-const generateBillForecast = async (userId) => {
+const generateBillForecast = async (userId, lang) => {
   const user = await User.findByPk(userId, {
     include: [{ model: Province, as: 'province' }],
   });
 
   if (!user || !user.province_id) {
-    const error = new Error('Configurá tu provincia para poder estimar el costo de tu boleta');
+    const error = new Error(t(lang, 'pred.no_province'));
     error.statusCode = 400;
     throw error;
   }
@@ -192,7 +191,7 @@ const generateBillForecast = async (userId) => {
   });
 
   if (readings.length === 0) {
-    const error = new Error('No hay datos de consumo suficientes para generar la predicción');
+    const error = new Error(t(lang, 'pred.no_data'));
     error.statusCode = 400;
     throw error;
   }
@@ -282,7 +281,7 @@ const generateBillForecast = async (userId) => {
       ? (await calculateCost(totalKwh, user.province_id)).total_cost
       : 0;
     monthComparison.push({
-      label: MONTHS_ES[m - 1],
+      label: MONTHS[lang][m - 1],
       month: m,
       year: y,
       total_kwh: Math.round(totalKwh * 1000) / 1000,
@@ -316,7 +315,7 @@ const generateBillForecast = async (userId) => {
 
   return {
     month: targetMonth,
-    month_name: MONTHS_ES[targetMonth - 1],
+    month_name: MONTHS[lang][targetMonth - 1],
     year: targetYear,
     total_predicted_kwh: totalPredicted,
     predicted_cost: Math.round(total_cost * 100) / 100,

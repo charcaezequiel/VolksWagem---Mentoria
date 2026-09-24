@@ -27,7 +27,7 @@ router.post('/generate', authenticateToken, async (req, res, next) => {
 
 router.get('/bill-forecast', authenticateToken, async (req, res, next) => {
   try {
-    const forecast = await generateBillForecast(req.user.id);
+    const forecast = await generateBillForecast(req.user.id, req.lang);
     res.json({ forecast });
   } catch (error) {
     next(error);
@@ -67,7 +67,7 @@ router.get('/accuracy', authenticateToken, async (req, res, next) => {
 
 router.get('/anomalies', authenticateToken, async (req, res, next) => {
   try {
-    const anomalies = await detectAnomalies(req.user.id);
+    const anomalies = await detectAnomalies(req.user.id, req.lang);
     const mapped = anomalies.map((a) => ({
       ...a,
       description: a.title || a.message,

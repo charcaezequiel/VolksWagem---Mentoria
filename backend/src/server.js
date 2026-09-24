@@ -10,6 +10,8 @@ const { sequelize, User } = require('./models');
 const errorHandler = require('./middleware/errorHandler');
 const securityHeaders = require('./middleware/security');
 
+const { getLang } = require('./utils/i18n');
+
 const authRoutes = require('./routes/auth');
 const deviceRoutes = require('./routes/devices');
 const applianceRoutes = require('./routes/appliances');
@@ -47,6 +49,12 @@ const io = new Server(server, {
 app.use(cors({ origin: corsOrigins }));
 app.use(securityHeaders);
 app.use(express.json({ limit: '1mb' }));
+
+// Idioma activo del usuario (header Accept-Language enviado por el frontend)
+app.use((req, res, next) => {
+  req.lang = getLang(req);
+  next();
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', deviceRoutes);

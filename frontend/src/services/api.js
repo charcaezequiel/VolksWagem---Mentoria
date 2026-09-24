@@ -5,6 +5,7 @@ const instance = axios.create({ baseURL: '/api' });
 instance.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  config.headers['Accept-Language'] = localStorage.getItem('lang') || 'es';
   return config;
 });
 

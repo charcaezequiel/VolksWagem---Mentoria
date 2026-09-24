@@ -100,6 +100,7 @@ const translations = {
     'register.submit': 'Crear cuenta',
     'register.submitting': 'Creando cuenta...',
     'register.success': '¡Cuenta creada correctamente!',
+    'register.error': 'Error al registrarse',
     'register.has_account': '¿Ya tenés cuenta?',
     'register.login_link': 'Iniciá sesión',
 
@@ -326,6 +327,9 @@ const translations = {
     'alerts.type.threshold_exceeded.message': 'Tu consumo mensual ({kwh} kWh) superó tu umbral de {threshold} kWh.',
     'alerts.type.peak_consumption.title': 'Pico de consumo detectado',
     'alerts.type.peak_consumption.message': 'Se detectó un pico de {kwh} kWh en la última hora, superando 2x el promedio diario ({avg} kWh).',
+    'alerts.type.anomaly.title': 'Anomalía detectada',
+    'alerts.type.anomaly.message': 'Consumo anómalo de {avg} W ({dev} por encima del promedio de {normal} W). Se recomienda revisar el dispositivo.',
+    'alerts.type.anomaly.dev_unknown': 'desviación significativa',
 
     // Predictions
     'predictions.title': 'Predicción de Boleta — IA',
@@ -439,6 +443,7 @@ const translations = {
     'profile.changing': 'Cambiando...',
     'profile.password_success': 'Contraseña cambiada',
     'profile.password_error_min': 'La contraseña debe tener al menos 6 caracteres',
+    'profile.password_error': 'Error al cambiar contraseña',
 
     // Assistant
     'assistant.title': 'Asistente IA',
@@ -639,6 +644,7 @@ const translations = {
     'register.submit': 'Create account',
     'register.submitting': 'Creating account...',
     'register.success': 'Account created successfully!',
+    'register.error': 'There was an error creating your account',
     'register.has_account': 'Already have an account?',
     'register.login_link': 'Sign in',
 
@@ -865,6 +871,9 @@ const translations = {
     'alerts.type.threshold_exceeded.message': 'Your monthly consumption ({kwh} kWh) exceeded your threshold of {threshold} kWh.',
     'alerts.type.peak_consumption.title': 'Peak Consumption Detected',
     'alerts.type.peak_consumption.message': 'A consumption peak of {kwh} kWh was detected in the last hour, exceeding 2x the daily average ({avg} kWh).',
+    'alerts.type.anomaly.title': 'Detected anomaly',
+    'alerts.type.anomaly.message': 'Anomalous consumption of {avg} W ({dev} above the {normal} W average). You should check the device.',
+    'alerts.type.anomaly.dev_unknown': 'significant deviation',
 
     // Predictions
     'predictions.title': 'Bill Prediction — AI',
@@ -978,6 +987,7 @@ const translations = {
     'profile.changing': 'Changing...',
     'profile.password_success': 'Password changed',
     'profile.password_error_min': 'Password must be at least 6 characters',
+    'profile.password_error': 'Error changing password',
 
     // Assistant
     'assistant.title': 'AI Assistant',
