@@ -45,6 +45,7 @@ export const api = {
     addReading: (data) => instance.post('/consumption/readings', data),
     getReadings: (params) => instance.get('/consumption/readings', { params }),
     getRealtime: () => instance.get('/consumption/realtime'),
+    getLive: () => instance.get('/consumption/live'),
     getSummary: (params) => instance.get('/consumption/summary', { params }),
     getByDevice: (params) => instance.get('/consumption/by-device', { params }),
   },

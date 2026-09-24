@@ -1483,6 +1483,88 @@ body {
 .manual-result-card-head strong { font-size: 0.95rem; }
 .manual-result-card-meta { display: flex; align-items: center; gap: 8px; }
 .manual-result-card .calc-result { margin-top: 10px; }
+
+/* Consumo por dispositivo en vivo (sensor ESP32) */
+.live-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--success);
+  padding: 4px 10px;
+  border: 1px solid var(--success);
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.08);
+}
+.stat-live-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  vertical-align: middle;
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+.stat-card-label-with-dot {
+  display: inline-flex;
+  align-items: center;
+}
+.live-device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.live-device-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: var(--transition);
+}
+.live-device-card.live { border-color: rgba(16, 185, 129, 0.55); }
+.live-device-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.live-device-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.live-device-status.online { color: var(--success); }
+.live-device-status.online .pulse-dot { background: var(--success); }
+.live-device-status.offline { color: var(--text-muted); }
+.pulse-dot-off {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.live-device-card .appliance-card-watts { min-width: 72px; }
+.live-device-name { font-size: 0.98rem; font-weight: 600; color: var(--text); }
+.live-device-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.live-device-meta b { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+.live-device-time { font-size: 0.72rem; }
 .tariff-badge {
   display: inline-block;
   padding: 3px 9px;
@@ -1891,6 +1973,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
   .wizard-summary-meta { justify-content: flex-start; }
   .manual-timer-list { grid-template-columns: 1fr; }
   .manual-start-row { flex-direction: column; align-items: flex-start; }
+  .live-device-grid { grid-template-columns: 1fr; }
 }
 
 /* Checklist de requisitos de contraseña (registro) */

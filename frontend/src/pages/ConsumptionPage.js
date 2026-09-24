@@ -11,6 +11,7 @@ import Field from '../components/common/Field';
 import toast from 'react-hot-toast';
 import { useTranslation } from '../context/LanguageContext';
 import { useManualTimer } from '../context/ManualTimerContext';
+import { useSocket } from '../context/SocketContext';
 
 export default function ConsumptionPage() {
   const { t, lang } = useTranslation();
@@ -29,8 +30,12 @@ export default function ConsumptionPage() {
   const [manualSubsidy, setManualSubsidy] = useState('N1');
   const [manualTimes, setManualTimes] = useState('1');
   const { timers, results, startTimer: startManual, stopTimer, resetTimer, removeResult, clearResults } = useManualTimer();
+  const { connected, on } = useSocket();
   const [now, setNow] = useState(() => Date.now());
+  const [liveByDevice, setLiveByDevice] = useState({});
   const stoppingRef = useRef(new Set());
+  // Una lectura de sensor se considera "en vivo" si llegó en los últimos 60s.
+  const LIVE_WINDOW_MS = 60 * 1000;
 
   const load = async () => {
     setLoading(true);
@@ -38,13 +43,14 @@ export default function ConsumptionPage() {
       const params = {};
       if (dateRange.start) params.startDate = dateRange.start;
       if (dateRange.end) params.endDate = dateRange.end;
-      const [rRes, sRes, rtRes, bdRes, dRes, pRes] = await Promise.all([
+      const [rRes, sRes, rtRes, bdRes, dRes, pRes, lvRes] = await Promise.all([
         api.consumption.getReadings(params),
         api.consumption.getSummary(params),
         api.consumption.getRealtime().catch(() => ({ data: null })),
         api.consumption.getByDevice(params),
         api.devices.getAll(),
         api.auth.getProfile().catch(() => ({ data: { user: null } })),
+        api.consumption.getLive().catch(() => ({ data: { live: [] } })),
       ]);
       setReadings(rRes.data.readings || rRes.data || []);
       setSummary(sRes.data);
@@ -52,6 +58,8 @@ export default function ConsumptionPage() {
       setByDevice(bdRes.data.by_device || bdRes.data.data || bdRes.data || []);
       setDevices(dRes.data.devices || dRes.data || []);
       setProfile(pRes.data?.user || null);
+      const live = lvRes.data.live || [];
+      setLiveByDevice(Object.fromEntries(live.map((r) => [r.device_id, r])));
     } catch { toast.error(t('consumption.error')); }
     setLoading(false);
   };
@@ -80,14 +88,43 @@ export default function ConsumptionPage() {
     return `${pad(Math.floor(sec / 3600))}:${pad(Math.floor((sec % 3600) / 60))}:${pad(sec % 60)}`;
   };
 
-  // Ticker: refresca el "now" mientras haya cronómetros activos. El tiempo
-  // transcurrido se calcula siempre desde `startAt`, por lo que los cronómetros
-  // siguen contando aunque navegues a otra página y vuelvas.
+  // Ticker: refresca el "now" cada segundo para el tiempo transcurrido de los
+  // cronómetros y para marcar cuándo una lectura de sensor deja de estar "en vivo".
   useEffect(() => {
-    if (timers.length === 0) return undefined;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [timers.length]);
+  }, []);
+
+  // Tiempo real del ESP32: cada lectura del sensor actualiza su dispositivo
+  // al instante y se agrega al historial visible sin recargar toda la página.
+  useEffect(() => {
+    const off = on('reading:new', (payload) => {
+      if (!payload?.reading) return;
+      const r = payload.reading;
+      if (r.device_id) {
+        setLiveByDevice((prev) => ({
+          ...prev,
+          [r.device_id]: {
+            ...r,
+            device_name: payload.device_name || r.device?.name || prev[r.device_id]?.device_name,
+          },
+        }));
+      }
+      setReadings((prev) => [
+        { ...r, device: r.device || (payload.device_name ? { name: payload.device_name } : undefined) },
+        ...prev.filter((x) => x.id !== r.id),
+      ].slice(0, 100));
+      if (r.instant_watts != null) {
+        setRealtime((prev) => ({
+          ...(prev || {}),
+          instant_watts: r.instant_watts,
+          current_watts: r.instant_watts,
+          timestamp: new Date().toISOString(),
+        }));
+      }
+    });
+    return off;
+  }, [on]);
 
   const startTimer = () => {
     if (!manualDevice) return toast.error(t('consumption.manual_pick_device'));
@@ -117,6 +154,14 @@ export default function ConsumptionPage() {
     }
   };
 
+  const liveDevices = Object.values(liveByDevice)
+    .sort((a, b) => new Date(b.reading_timestamp) - new Date(a.reading_timestamp));
+  const liveTotalWatts = Object.keys(liveByDevice).length
+    ? Object.values(liveByDevice).reduce((sum, r) => sum + (Number(r.instant_watts) || 0), 0)
+    : 0;
+  const currentWatts = liveTotalWatts > 0 ? liveTotalWatts : (realtime?.instant_watts || realtime?.current_watts || realtime?.currentWatts || 0);
+  const locale = lang === 'en' ? 'en-US' : 'es-AR';
+
   const columns = [
     { header: t('consumption.col_date'), key: 'reading_timestamp', render: (v) => (
       <span className="table-mono">{new Date(v).toLocaleString(lang === 'en' ? 'en-US' : 'es-AR')}</span>
@@ -140,11 +185,14 @@ export default function ConsumptionPage() {
       </div>
 
       <div className="dashboard-grid" style={{ marginBottom: 24 }}>
-        {realtime ? (
+        {realtime || liveDevices.length > 0 ? (
           <div className="stat-card stat-card-primary">
             <div className="stat-card-icon"><Activity size={22} /></div>
             <div className="stat-card-content">
-              <h3 className="stat-card-value">{realtime.instant_watts || realtime.currentWatts || 0} W</h3>
+              <h3 className="stat-card-value">
+                {Math.round(currentWatts * 10) / 10} W
+                {liveDevices.length > 0 && <span className="stat-live-dot" title={t('consumption.live')} />}
+              </h3>
               <p className="stat-card-label">{t('consumption.current')}</p>
             </div>
           </div>
@@ -274,16 +322,52 @@ export default function ConsumptionPage() {
         </div>
       </PageSection>
 
-      {byDevice.length > 0 && (
-        <PageSection
-          icon={<Cpu size={18} />}
-          title={t('consumption.by_device_title')}
-          subtitle={t('consumption.by_device_subtitle')}
-          style={{ marginBottom: 24 }}
-        >
-          <BarChart data={byDevice} xKey="name" yKey="consumption" title="" />
-        </PageSection>
-      )}
+      <PageSection
+        icon={<Cpu size={18} />}
+        title={t('consumption.by_device_title')}
+        subtitle={t('consumption.by_device_subtitle')}
+        style={{ marginBottom: 24 }}
+        actions={
+          connected ? (
+            <span className="live-section-badge">
+              <span className="pulse-dot" style={{ background: 'var(--success)' }} /> {t('consumption.live')}
+            </span>
+          ) : null
+        }
+      >
+        <div className="live-device-grid">
+          {liveDevices.length === 0 && (
+            <p className="form-hint" style={{ margin: 0 }}>{t('consumption.live_empty')}</p>
+          )}
+          {liveDevices.map((d) => {
+            const fresh = (now - new Date(d.reading_timestamp).getTime()) < LIVE_WINDOW_MS;
+            return (
+              <div key={d.device_id} className={`live-device-card ${fresh ? 'live' : 'stale'}`}>
+                <div className="live-device-card-top">
+                  <span className={`live-device-status ${fresh ? 'online' : 'offline'}`}>
+                    <span className={fresh ? 'pulse-dot' : 'pulse-dot-off'} />
+                    {fresh ? t('consumption.live') : t('consumption.live_offline')}
+                  </span>
+                  <span className="appliance-card-watts">
+                    <strong>{Math.round(Number(d.instant_watts) || 0)} W</strong>
+                    <small>{t('device_form.power_label')}</small>
+                  </span>
+                </div>
+                <strong className="live-device-name">{d.device_name || '—'}</strong>
+                <div className="live-device-meta">
+                  <span>{t('consumption.live_kwh_day')}: <b>{Number(d.accumulated_kwh_day || 0).toFixed(3)} kWh</b></span>
+                  <span className="live-device-time">{t('consumption.last_update')}: {new Date(d.reading_timestamp).toLocaleTimeString(locale)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {byDevice.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <BarChart data={byDevice} xKey="name" yKey="consumption" title="" />
+          </div>
+        )}
+      </PageSection>
 
       <PageSection
         icon={<CalendarRange size={18} />}

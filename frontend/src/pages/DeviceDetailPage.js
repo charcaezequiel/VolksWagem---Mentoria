@@ -9,13 +9,16 @@ import LineChart from '../components/charts/LineChart';
 import DataTable from '../components/common/DataTable';
 import toast from 'react-hot-toast';
 import { useTranslation } from '../context/LanguageContext';
+import { useSocket } from '../context/SocketContext';
 
 export default function DeviceDetailPage() {
   const { id } = useParams();
   const [device, setDevice] = useState(null);
   const [readings, setReadings] = useState([]);
   const [stats, setStats] = useState(null);
+  const [liveReading, setLiveReading] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { connected, on } = useSocket();
   const { t, lang } = useTranslation();
   const locale = lang === 'en' ? 'en-US' : 'es-AR';
 
@@ -38,6 +41,24 @@ export default function DeviceDetailPage() {
   };
 
   useEffect(() => { load(); }, [id]);
+
+  // Tiempo real: cada lectura del sensor de ESTE dispositivo actualiza la
+  // potencia actual, la fecha de última medición y el historial al instante.
+  useEffect(() => {
+    const off = on('reading:new', (payload) => {
+      const r = payload?.reading;
+      if (!r || !r.device_id || r.device_id !== id) return;
+      setLiveReading(r);
+      setStats((prev) => ({
+        ...(prev || {}),
+        last_watts: r.instant_watts,
+        last_reading_at: r.reading_timestamp,
+        is_online: true,
+      }));
+      setReadings((prev) => [r, ...prev.filter((x) => x.id !== r.id)].slice(0, 100));
+    });
+    return off;
+  }, [on, id]);
 
   const copyToken = () => {
     if (!device?.device_token) return;
@@ -96,8 +117,8 @@ export default function DeviceDetailPage() {
       <div className="dashboard-grid" style={{ marginBottom: 24 }}>
         <StatCard
           icon={<Zap size={20} />}
-          value={stats?.last_watts != null ? `${stats.last_watts} W` : '—'}
-          label={t('device.power_current')}
+          value={liveReading?.instant_watts != null ? `${Math.round(Number(liveReading.instant_watts))} W` : (stats?.last_watts != null ? `${stats.last_watts} W` : '—')}
+          label={<span className="stat-card-label-with-dot">{t('device.power_current')}{connected && <span className="stat-live-dot" title={t('consumption.live')} />}</span>}
           color="primary"
         />
         <StatCard
@@ -108,7 +129,7 @@ export default function DeviceDetailPage() {
         />
         <StatCard
           icon={<CalendarDays size={20} />}
-          value={stats?.last_reading_at ? new Date(stats.last_reading_at).toLocaleDateString(locale) : t('device.no_data')}
+          value={liveReading?.reading_timestamp ? new Date(liveReading.reading_timestamp).toLocaleString(locale) : (stats?.last_reading_at ? new Date(stats.last_reading_at).toLocaleString(locale) : t('device.no_data'))}
           label={t('device.last_measurement')}
           color="info"
         />

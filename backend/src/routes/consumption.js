@@ -2,6 +2,7 @@ const express = require('express');
 const { Op } = require('sequelize');
 const router = express.Router();
 const { ConsumptionReading, Device } = require('../models');
+const sequelize = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { addReading } = require('../validators/consumptionValidators');
@@ -55,6 +56,33 @@ router.get('/readings', authenticateToken, async (req, res, next) => {
     });
 
     res.json({ readings });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/live', authenticateToken, async (req, res, next) => {
+  try {
+    // Última lectura de cada dispositivo (base para las tarjetas en vivo).
+    const rows = await sequelize.query(
+      `SELECT r.device_id, r.instant_watts, r.accumulated_kwh_day,
+              r.voltage, r.current, r.frequency, r.power_factor,
+              r.reading_timestamp, d.name AS device_name
+       FROM consumption_readings r
+       INNER JOIN (
+         SELECT device_id, MAX(reading_timestamp) AS max_ts
+         FROM consumption_readings
+         WHERE user_id = :userId AND device_id IS NOT NULL
+         GROUP BY device_id
+       ) latest ON latest.device_id = r.device_id AND latest.max_ts = r.reading_timestamp
+       LEFT JOIN devices d ON d.id = r.device_id
+       ORDER BY r.reading_timestamp DESC`,
+      {
+        replacements: { userId: req.user.id },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+    res.json({ live: rows });
   } catch (error) {
     next(error);
   }
