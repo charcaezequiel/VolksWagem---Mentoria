@@ -433,7 +433,7 @@ cron.schedule('0 * * * *', async () => {
 | **AssistantPage** | `/assistant` | Chat con asistente IA (Gemini o local) |
 | **RecommendationsPage** | `/recommendations` | Recomendaciones personalizadas de ahorro |
 
-### 4 Contextos
+### 5 Contextos
 
 | Contexto | Archivo | Funcion |
 |---|---|---|
@@ -441,6 +441,7 @@ cron.schedule('0 * * * *', async () => {
 | **ThemeContext** | `context/ThemeContext.js` | Toggle modo oscuro/claro, preferencia guardada |
 | **SocketContext** | `context/SocketContext.js` | Conexion Socket.IO, notificaciones en vivo |
 | **LanguageContext** | `context/LanguageContext.js` | Internacionalizacion ES/EN, toggle idioma |
+| **ManualTimerContext** | `context/ManualTimerContext.js` | Cronometros manuales persistentes (localStorage) y multi-dispositivo |
 
 ### Componentes compartidos
 
@@ -894,6 +895,7 @@ Todas las rutas (excepto auth) requieren header `Authorization: Bearer <token>`.
 | GET | `/api/consumption/readings` | Obtener lecturas de consumo |
 | POST | `/api/consumption/readings` | Registrar nueva lectura |
 | GET | `/api/consumption/realtime` | Consumo en tiempo real |
+| GET | `/api/consumption/live` | Ultima lectura de cada dispositivo (snapshot para las tarjetas en vivo) |
 | GET | `/api/consumption/summary` | Resumen de consumo |
 | GET | `/api/consumption/by-device` | Consumo por dispositivo |
 
@@ -1036,10 +1038,44 @@ function MiComponente() {
 - **Modales** (DeviceFormModal) y **LoadingSpinner** traducidos
 - Idioma persistido en `localStorage`
 - Correccion de tildes: "En linea" -> "En linea", "Sin conexion" -> "Sin conexion"
+- **Backend bilingue**: chat, insights, recomendaciones, predicciones, anomalias y alertas se traducen segun el header `Accept-Language` (ver `backend/src/utils/i18n.js`)
 
 ---
 
 ## Cambios recientes
+
+### 24/09/2026 - Consumo por dispositivo en tiempo real (sensor IoT + socket)
+
+- Nuevo endpoint **`GET /api/consumption/live`**: ultima lectura de cada dispositivo (query agrupada por `MAX(reading_timestamp)`, compatible PostgreSQL).
+- **ConsumptionPage**: grilla de tarjetas en vivo por dispositivo (punto pulsante, badge "EN VIVO" / "Sin datos recientes" con ventana de 60s, watts actuales, kWh del dia y hora de actualizacion). La tarjeta "Consumo actual" suma los watts en vivo de todos los sensores.
+- El frontend se suscribe al evento Socket.IO **`reading:new`** y actualiza la grilla, la tarjeta actual y el historial de lecturas **sin recargar la pagina**.
+- **DeviceDetailPage**: la potencia actual y la ultima medicion se actualizan en tiempo real por socket, con punto pulsante.
+
+### 24/09/2026 - Estado "En suspenso" cuando el sensor reporta 0 W
+
+- Si el sensor esta conectado (lectura reciente) pero la ultima lectura es **0 W**, la tarjeta de potencia y el estado del sensor muestran **"Conectado · En suspenso"** (chip y punto ambar pulsante), manteniendo el indicador de que sigue conectado.
+- En las tarjetas en vivo del consumo, el badge pasa a **"EN SUSPENSO"** con el hint "Sin carga detectada" cuando la lectura fresca es <= 0.5 W.
+
+### 24/09/2026 - Cronometro manual persistente y multi-dispositivo
+
+- Nuevo contexto global **`ManualTimerContext`** con persistencia en `localStorage` (`controlar.manual_timers` / `controlar.manual_results`): el cronometro **sigue contando aunque navegues a otra pagina o recargues** (el tiempo se calcula siempre desde `startAt`).
+- Se pueden medir **varios dispositivos a la vez** (N cronometros simultaneos).
+- Resultados de la sesion conservados (ultimas 20) con descarte individual y vaciado completo; cada resultado se puede guardar como lectura manual (`source: manual`).
+
+### 24/09/2026 - Lista de electrodomesticos mas clara (wizard paso 2)
+
+- Tarjetas del catalogo con separacion clara entre nombre, consumo y horas/dia, chip de potencia rotulado (`device_form.power_label`), icono de horas/dia y scrollbar estilizado con estilos responsive.
+
+### 24/09/2026 - Backend 100% bilingue (ES/EN via Accept-Language)
+
+- Middleware de idioma: **chat, insights, recomendaciones, predicciones, anomalias, alertas y meses de las facturas** se responden en el idioma del usuario.
+- Diccionario centralizado en `backend/src/utils/i18n.js` (`t`, `MONTHS`, `getLang`, `localizeRecommendation`, `localizeAlert`).
+- El frontend envia el idioma por interceptor axios (`Accept-Language` desde `localStorage`); las recomendaciones locales guardadas se retraducen on-the-fly.
+
+### 22/09/2026 - i18n frontend completo + fix visual desglose por categoria
+
+- **Alertas bilingues** (`alertText`), **catalogo de electrodomesticos** bilingue (nuevo `frontend/src/i18n/catalog.js`), navegacion, modales, DataTable y LoadingSpinner traducidos.
+- Fix visual del desglose por categoria (PieChart) y correccion de tildes en las traducciones.
 
 ### Seguridad base de datos / Supabase
 
