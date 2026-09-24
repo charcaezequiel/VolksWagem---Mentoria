@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, Moon, Sun, Wifi, Globe } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useSocket } from '../../context/SocketContext';
 import { useTranslation } from '../../context/LanguageContext';
-import { api } from '../../services/api';
+import { useNotifications } from '../../context/NotificationContext';
 
 export default function Header() {
   const { user } = useAuth();
   const { dark, toggle } = useTheme();
-  const { connected, on } = useSocket();
+  const { connected } = useSocket();
   const { lang, toggleLang, t } = useTranslation();
+  const { unread } = useNotifications();
   const location = useLocation();
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const titles = {
     '/dashboard': t('nav.dashboard'),
@@ -28,19 +28,6 @@ export default function Header() {
     '/recommendations': t('nav.recommendations'),
   };
   const title = titles[location.pathname] || 'ControlAR';
-
-  const loadUnread = () => {
-    api.alerts.getUnreadCount().then((res) => setUnreadCount(res.data.count || 0)).catch(() => {});
-  };
-
-  useEffect(() => {
-    loadUnread();
-  }, [location.pathname]);
-
-  useEffect(() => {
-    const off = on('alert:new', () => loadUnread());
-    return off;
-  }, [on]);
 
   return (
     <header className="main-header">
@@ -60,7 +47,7 @@ export default function Header() {
         </button>
         <Link to="/alerts" className="header-notification">
           <Bell size={20} />
-          {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+          {unread > 0 && <span className="notification-badge">{unread > 99 ? '99+' : unread}</span>}
         </Link>
         <div className="header-user">
           <div className="header-avatar">{user?.name?.charAt(0) || 'U'}</div>

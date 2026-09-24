@@ -5,9 +5,11 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import PageSection from '../components/common/PageSection';
 import toast from 'react-hot-toast';
 import { useTranslation, alertText } from '../context/LanguageContext';
+import { useNotifications } from '../context/NotificationContext';
 
 export default function AlertsPage() {
   const { t, lang } = useTranslation();
+  const { refresh: refreshUnread } = useNotifications();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ severity: '', unread_only: '' });
@@ -30,6 +32,7 @@ export default function AlertsPage() {
     try {
       await api.alerts.markAsRead(id);
       setAlerts(prev => prev.map(a => (a.id || a._id) === id ? { ...a, is_read: true } : a));
+      refreshUnread();
       toast.success(t('alerts.mark_read_success'));
     } catch { toast.error(t('common.error')); }
   };
@@ -38,6 +41,7 @@ export default function AlertsPage() {
     try {
       await api.alerts.markAllAsRead();
       setAlerts(prev => prev.map(a => ({ ...a, is_read: true })));
+      refreshUnread();
       toast.success(t('alerts.mark_all_success'));
     } catch { toast.error(t('common.error')); }
   };
@@ -46,6 +50,7 @@ export default function AlertsPage() {
     try {
       await api.alerts.delete(id);
       setAlerts(prev => prev.filter(a => (a.id || a._id) !== id));
+      refreshUnread();
       toast.success(t('alerts.delete_success'));
     } catch { toast.error(t('common.error')); }
   };

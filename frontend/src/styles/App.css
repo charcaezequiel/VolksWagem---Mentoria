@@ -94,6 +94,28 @@ body {
 }
 .sidebar-link:hover { background: var(--sidebar-hover); color: #fff; }
 .sidebar-link.active { background: var(--primary); color: #fff; }
+.sidebar-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sidebar-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--sidebar-bg);
+}
 .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
 .sidebar-user { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .sidebar-user-avatar {

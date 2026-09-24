@@ -2,11 +2,13 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { LayoutDashboard, Cpu, Zap, FileText, Bell, Brain, DollarSign, Bot, Lightbulb, User, LogOut, Menu, X } from 'lucide-react';
 
 export default function Sidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
+  const { unread } = useNotifications();
 
   const navItems = [
     { to: '/dashboard', label: t('nav.dashboard'), icon: LayoutDashboard },
@@ -32,12 +34,18 @@ export default function Sidebar({ collapsed, onToggle }) {
         </button>
       </div>
       <nav className="sidebar-nav">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
-            <Icon size={20} />
-            {!collapsed && <span>{label}</span>}
-          </NavLink>
-        ))}
+        {navItems.map(({ to, label, icon: Icon }) => {
+          const showBadge = to === '/alerts' && unread > 0;
+          return (
+            <NavLink key={to} to={to} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+              <span className="sidebar-icon-wrap">
+                <Icon size={20} />
+                {showBadge && <span className="sidebar-badge" title={t('nav.alerts')}>{unread > 99 ? '99+' : unread}</span>}
+              </span>
+              {!collapsed && <span>{label}</span>}
+            </NavLink>
+          );
+        })}
 
         {!collapsed && <div className="sidebar-section-label">{t('nav.ai_section')}</div>}
         {aiItems.map(({ to, label, icon: Icon, highlight }) => (
