@@ -143,9 +143,10 @@ const DICT = {
     es: 'Puedo ayudarte con:\n\n- **Tu consumo**: resúmenes y análisis.\n- **Tu boleta**: estimación del próximo mes.\n- **Ahorro**: consejos y recomendaciones.\n- **Dispositivos**: cuál consume más.\n- **Facturas y alertas**: historial y estado.\n\n¿Sobre qué querés hablar?',
     en: 'I can help you with:\n\n- **Your consumption**: summaries and analysis.\n- **Your bill**: next month estimation.\n- **Savings**: tips and recommendations.\n- **Devices**: which one consumes the most.\n- **Bills and alerts**: history and status.\n\nWhat would you like to talk about?',
   },
-  'chat.default': {
-    es: 'Interesante pregunta 🤔. Mi conocimiento se enfoca en tu consumo energético, ahorro de energía, tarifas argentinas y el monitoreo de tus dispositivos. ¿Querés que te cuente sobre tu consumo o cómo ahorrar energía?',
-    en: 'Interesting question 🤔. My knowledge focuses on your energy consumption, energy savings, Argentine tariffs and monitoring your devices. Would you like me to tell you about your consumption or how to save energy?',
+  // Rechazo de consultas fuera del dominio del software.
+  'chat.off_scope': {
+    es: 'Esa pregunta se sale del alcance de ControlAR 🔒. Estoy entrenado únicamente para este software: consumo eléctrico de tu hogar, ahorro de energía, tus dispositivos, facturas, tarifas argentinas, alertas y predicción de la boleta. No puedo responder temas ajenos a eso.\n\n¿Me preguntás por tu consumo o por cómo ahorrar energía?',
+    en: 'That question is outside ControlAR\'s scope 🔒. I am trained only for this software: your home\'s electricity consumption, energy saving, your devices, bills, Argentine tariffs, alerts and bill prediction. I cannot answer topics unrelated to that.\n\nWould you like to ask me about your consumption or how to save energy?',
   },
   // Insights locals
   'insight.local': {

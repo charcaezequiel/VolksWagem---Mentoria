@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, Sparkles, User, Cpu, Wifi, WifiOff } from 'lucide-react';
+import { Bot, Send, Sparkles, User, Cpu, Wifi, WifiOff, ShieldAlert } from 'lucide-react';
 import { api } from '../services/api';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -44,7 +44,12 @@ export default function AssistantPage() {
     try {
       const history = messages.map((m) => ({ role: m.role, content: m.content }));
       const res = await api.ai.chat({ message, history });
-      setMessages((prev) => [...prev, { role: 'assistant', content: res.data.reply, provider: res.data.provider }]);
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        content: res.data.reply,
+        provider: res.data.provider,
+        outOfScope: !!res.data.outOfScope,
+      }]);
     } catch (err) {
       toast.error(err.response?.data?.error || t('assistant.error'));
     }
@@ -97,7 +102,12 @@ export default function AssistantPage() {
               <div className="chat-avatar">
                 {m.role === 'user' ? <User size={16} /> : <Bot size={16} />}
               </div>
-              <div className="chat-bubble">
+              <div className={`chat-bubble${m.outOfScope ? ' chat-bubble-offscope' : ''}`}>
+                {m.outOfScope && (
+                  <div className="chat-scope-badge">
+                    <ShieldAlert size={12} /> {t('assistant.out_of_scope_badge')}
+                  </div>
+                )}
                 <div className="chat-bubble-text">{formatContent(m.content)}</div>
                 {m.provider && (
                   <div className="chat-provider">

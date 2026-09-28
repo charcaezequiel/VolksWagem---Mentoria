@@ -76,7 +76,7 @@ export default function InvoicesPage() {
           subtitle={t('invoices.comparison_subtitle')}
           style={{ marginBottom: 24 }}
         >
-          <BarChart data={comparison} xKey="period" yKey="amount" title="" color="#f59e0b" />
+          <BarChart data={comparison} xKey="period" yKey="amount" title="" colorIndex={3} />
         </PageSection>
       )}
 

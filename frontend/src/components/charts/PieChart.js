@@ -1,9 +1,9 @@
 import React from 'react';
 import { PieChart as RePie, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-const COLORS = ['#059669', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899', '#84cc16'];
+import useChartPalette from './useChartPalette';
 
 export default function PieChart({ data, nameKey = 'name', valueKey = 'value', title }) {
+  const colors = useChartPalette();
   return (
     <div className="chart-container">
       {title && <h3 className="chart-title">{title}</h3>}
@@ -21,7 +21,7 @@ export default function PieChart({ data, nameKey = 'name', valueKey = 'value', t
             labelLine={false}
           >
             {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              <Cell key={i} fill={colors[i % colors.length]} />
             ))}
           </Pie>
           <Tooltip formatter={(v) => `${v} kWh`} />

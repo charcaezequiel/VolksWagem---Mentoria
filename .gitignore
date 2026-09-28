@@ -51,6 +51,9 @@ Desktop.ini
 *.crt
 *.p12
 *.pfx
+# Excepcion: los CA publicos del proveedor no son secretos, son material de
+# confianza compartido. Sin esto, cada miembro del equipo tendria que bajarlo.
+!backend/certs/supabase-ca.crt
 
 # ============ Arduino / IoT ============
 .pio/
