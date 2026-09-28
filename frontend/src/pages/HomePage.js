@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
+import Logo from '../components/common/Logo';
 import {
   LayoutDashboard,
   Cpu,
@@ -25,11 +27,15 @@ import {
   Smartphone,
   Cloud,
   ChevronDown,
+  Globe,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 export default function HomePage() {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, lang, toggleLang } = useTranslation();
+  const { dark, toggle: toggleTheme } = useTheme();
 
   const navLinks = [
     { href: '#how', label: t('home.nav.how') },
@@ -129,7 +135,9 @@ export default function HomePage() {
   return (
     <div className="home-page">
       <nav className="home-nav">
-        <div className="home-logo">⚡ ControlAR</div>
+        <div className="home-logo">
+          <Logo size={30} />
+        </div>
         <div className="home-nav-links">
           {user ? (
             <Link to="/dashboard" className="btn btn-primary">
@@ -238,13 +246,13 @@ export default function HomePage() {
           <div className="home-iot">
             <div className="home-iot-card">
               <Wifi size={28} />
-              <h3>ESP32</h3>
-              <p>{t('home.iot_esp32_desc')}</p>
+              <h3>ESP8266MOD</h3>
+              <p>{t('home.iot_mcu_desc')}</p>
             </div>
             <div className="home-iot-arrow">→</div>
             <div className="home-iot-card">
               <Gauge size={28} />
-              <h3>PZEM-004T v3.0</h3>
+              <h3>PZEM-004T v3.0 + bobina CT</h3>
               <p>{t('home.iot_pzem_desc')}</p>
             </div>
             <div className="home-iot-arrow">→</div>
@@ -255,7 +263,7 @@ export default function HomePage() {
             </div>
           </div>
           <p className="home-iot-note">
-            {t('home.iot_note')} <code>arduino/esp32_pzem_monitor/</code>.
+            {t('home.iot_note')} <code>arduino/esp8266_pzem_ct_monitor/</code>.
           </p>
         </section>
 
@@ -306,9 +314,39 @@ export default function HomePage() {
       </main>
 
       <footer className="home-footer">
-        <div className="home-logo">⚡ ControlAR Energía</div>
+        <div className="home-logo">
+          <Logo size={30} text="ControlAR" sub=" Energía" />
+        </div>
         <p>{t('home.footer')}</p>
       </footer>
+
+      {/* Controles flotantes, solo en el index: idioma y tema. Son los mismos
+          toggles del Header de la app, con los mismos textos, para que se
+          comporten igual en los dos lugares. */}
+      <div className="home-float-controls">
+        <button
+          type="button"
+          className="home-float-btn"
+          onClick={toggleLang}
+          title={t('header.toggle_lang')}
+          aria-label={t('header.toggle_lang')}
+        >
+          <Globe size={20} />
+          {/* El codigo va como badge superpuesto: si fuera parte del flex, el
+              boton se estiraria y dejaria de ser un circulo. */}
+          <span className="home-float-btn-tag">{lang.toUpperCase()}</span>
+        </button>
+        <button
+          type="button"
+          className="home-float-btn"
+          onClick={toggleTheme}
+          title={dark ? t('header.theme_light') : t('header.theme_dark')}
+          aria-label={dark ? t('header.theme_light') : t('header.theme_dark')}
+          aria-pressed={dark}
+        >
+          {dark ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+      </div>
     </div>
   );
 }

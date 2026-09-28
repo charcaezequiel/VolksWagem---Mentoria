@@ -69,6 +69,14 @@
   --glow-a: rgba(29, 78, 216, 0.16);
   --glow-b: rgba(8, 145, 178, 0.13);
 
+  /* ---- Marca ---- */
+  /* Sin override en :root.dark a proposito: la baldosa es azul en los dos temas.
+     Un logo que cambia de color al cambiar de tema se percibe como dos logos. */
+  --logo-tile-a: #1d4ed8;
+  --logo-tile-b: #3b82f6;
+  --logo-mark: #ffffff;
+  --logo-bar: rgba(255, 255, 255, 0.42);
+
   --radius: 14px;
   --radius-sm: 8px;
   --radius-lg: 20px;
@@ -115,6 +123,9 @@ body {
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .sidebar-logo { font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
+/* Colapsado el sidebar queda en 72px: sobra la marca sola y se centraria. */
+.sidebar.collapsed .sidebar-logo .logo-word { display: none; }
+.sidebar.collapsed .sidebar-header { padding: 20px 0; justify-content: center; }
 .sidebar-toggle {
   background: none;
   border: none;
@@ -454,6 +465,28 @@ body {
   width: 100%;
   max-width: 440px;
 }
+/* ============ Marca ============ */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  /* El texto hereda el color del contenedor: la misma marca sirve sobre el azul
+     oscuro del nav/sidebar y sobre el fondo claro de login/register. */
+  color: inherit;
+  line-height: 1;
+}
+.logo-word {
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+.logo-word-sub { font-weight: 600; }
+.logo-mark { display: block; flex-shrink: 0; filter: drop-shadow(0 2px 5px rgba(2, 8, 23, 0.35)); }
+.logo-stop-a { stop-color: var(--logo-tile-a); }
+.logo-stop-b { stop-color: var(--logo-tile-b); }
+.logo-bolt { fill: var(--logo-mark); }
+.logo-bar { fill: var(--logo-bar); }
+
 .auth-logo { text-align: center; margin-bottom: 32px; }
 .auth-logo h1 { font-size: 2rem; font-weight: 800; color: var(--primary); }
 .auth-logo p { color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px; }
@@ -867,7 +900,7 @@ body {
 /* ---- Llamada a la acción ---- */
 .home-cta {
   max-width: 1036px;
-  margin: 0 auto 72px;
+  margin: 64px auto 72px;
   padding: 56px 32px;
   border-radius: var(--radius-lg);
   background: var(--grad-hero);
@@ -888,7 +921,7 @@ body {
   .home-features-grid, .home-ai-grid, .home-tech-grid, .home-steps { grid-template-columns: 1fr; }
   .home-iot { grid-template-columns: 1fr; }
   .home-iot-arrow { transform: rotate(90deg); }
-  .home-cta { margin: 0 16px 48px; padding: 40px 20px; }
+  .home-cta { margin: 48px 16px; padding: 40px 20px; }
 }
 
 .home-iot {
@@ -925,6 +958,73 @@ body {
 }
 .home-footer p { color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 8px; }
 
+/* ============ Controles flotantes del index (idioma + tema) ============ */
+.home-float-controls {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.home-float-btn {
+  position: relative;
+  /* Cuadrado perfecto: es lo unico que garantiza un circulo real, en vez de
+     depender de que el contenido Inside happen que tenga la misma altura. */
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  /* Relleno azul, no blanco: sobre las secciones claras un boton blanco daba
+     1.06 de contraste contra el fondo y solo se sostenia por el borde. Asi
+     ademas queda en la misma familia que la baldosa del logo. */
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 1px solid var(--primary-dark);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.home-float-btn:hover {
+  background: var(--primary-dark);
+  color: var(--on-primary);
+  transform: translateY(-2px);
+}
+.home-float-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.home-float-btn-tag {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  min-width: 19px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  /* Invertido respecto al boton: si el badge tambien fuera azul se fundiria
+     con el circulo. */
+  background: var(--surface);
+  color: var(--primary);
+  border: 2px solid var(--primary-dark);
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+/* Los controles son fijos, asi que el footer tiene que cederles lugar: el texto
+   centrado (715px sin envolver) entra en la franja x=24..70 de los botones por
+   debajo de ~855px de ancho. 148px = 128 del cluster (46+12+46) + 20 de aire.
+   Arriba de ese breakpoint no hace falta y el footer queda como estaba. */
+@media (max-width: 880px) {
+  .home-footer { padding-bottom: 148px; }
+}
+
 @media (max-width: 1024px) {
   .home-features-grid { grid-template-columns: repeat(2, 1fr); }
   .home-stats-band { grid-template-columns: repeat(2, 1fr); margin-top: -32px; }
@@ -949,10 +1049,14 @@ body {
   /* --primary es claro aquÃ­, asÃ­ que el texto sobre Ã©l va oscuro. */
   --on-primary: #0b1220;
   --secondary: #3b82f6;
-  --bg: #0b1220;
+  /* Escalera de fondos, de mas oscuro a mas claro:
+     footer/sidebar #0b1220 < tarjetas #131c2e < pagina #1e293b < bandas #2b3a4f.
+     El footer toma --sidebar-bg, asi que al aclarar --bg deja de fundirse con el.
+     --card-bg iguala a --surface como en el tema claro, donde ambos son blanco. */
+  --bg: #1e293b;
   --surface: #131c2e;
-  --surface-2: #1e293b;
-  --card-bg: #1e293b;
+  --surface-2: #2b3a4f;
+  --card-bg: #131c2e;
   --sidebar-bg: #0b1220;
   --sidebar-hover: #1e293b;
   --sidebar-active: #1d4ed8;
@@ -1789,7 +1893,7 @@ body {
 .manual-result-card-meta { display: flex; align-items: center; gap: 8px; }
 .manual-result-card .calc-result { margin-top: 10px; }
 
-/* Consumo por dispositivo en vivo (sensor ESP32) */
+/* Consumo por dispositivo en vivo (sensor ESP8266MOD) */
 .live-section-badge {
   display: inline-flex;
   align-items: center;
@@ -1967,18 +2071,12 @@ body {
 }
 .forecast-meta { color: var(--text-secondary); font-size: 0.82rem; margin-top: 6px; }
 
-/* Auth: logo con Ã­cono y hint demo */
+/* Auth: la marca ya trae su propia baldosa, asi que el contenedor solo centra. */
 .auth-logo-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-  color: var(--on-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 14px;
-  box-shadow: var(--shadow-md);
 }
 .auth-demo-hint {
   margin-top: 16px;

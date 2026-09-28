@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Zap, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, ArrowLeft } from 'lucide-react';
+import { LogoMark } from '../components/common/Logo';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import toast from 'react-hot-toast';
@@ -35,7 +36,7 @@ export default function LoginPage() {
       </Link>
       <div className="auth-card">
         <div className="auth-logo">
-          <div className="auth-logo-icon"><Zap size={32} /></div>
+          <div className="auth-logo-icon"><LogoMark size={64} /></div>
           <h1>{t('login.title')}</h1>
           <p>{t('login.subtitle')}</p>
         </div>

@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { LayoutDashboard, Cpu, Zap, FileText, Bell, Brain, DollarSign, Bot, Lightbulb, User, LogOut, Menu, X } from 'lucide-react';
+import Logo from '../common/Logo';
 
 export default function Sidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth();
@@ -28,7 +29,9 @@ export default function Sidebar({ collapsed, onToggle }) {
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
-        <span className="sidebar-logo">⚡ ControlAR</span>
+        <span className="sidebar-logo">
+          <Logo size={30} markClassName="sidebar-logo-mark" />
+        </span>
         <button className="sidebar-toggle" onClick={onToggle}>
           {collapsed ? <Menu size={20} /> : <X size={20} />}
         </button>

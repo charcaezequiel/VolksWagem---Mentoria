@@ -95,7 +95,7 @@ export default function ConsumptionPage() {
     return () => clearInterval(id);
   }, []);
 
-  // Tiempo real del ESP32: cada lectura del sensor actualiza su dispositivo
+  // Tiempo real del ESP8266MOD: cada lectura del sensor actualiza su dispositivo
   // al instante y se agrega al historial visible sin recargar toda la página.
   useEffect(() => {
     const off = on('reading:new', (payload) => {

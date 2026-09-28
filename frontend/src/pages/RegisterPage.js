@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, MapPin, Zap, Check, X, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, MapPin, Check, X, ArrowLeft } from 'lucide-react';
+import { LogoMark } from '../components/common/Logo';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import { api } from '../services/api';
@@ -65,7 +66,7 @@ export default function RegisterPage() {
       </Link>
       <div className="auth-card">
         <div className="auth-logo">
-          <div className="auth-logo-icon"><Zap size={32} /></div>
+          <div className="auth-logo-icon"><LogoMark size={64} /></div>
           <h1>{t('register.title')}</h1>
           <p>{t('register.subtitle')}</p>
         </div>

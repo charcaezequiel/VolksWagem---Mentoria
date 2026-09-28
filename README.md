@@ -450,6 +450,7 @@ cron.schedule('0 * * * *', async () => {
 |---|---|---|
 | **Header** | `components/layout/Header.js` | Barra superior con toggle idioma (ES/EN), usuario, notificaciones |
 | **Sidebar** | `components/layout/Sidebar.js` | Navegacion lateral con etiquetas traducidas |
+| **Logo** | `components/common/Logo.js` | Marca SVG (rayo + barras de consumo) con tokens de color, usada en nav, sidebar, login, registro y footer |
 | **LoadingSpinner** | `components/common/LoadingSpinner.js` | Indicador de carga traducido |
 | **DeviceFormModal** | `components/devices/DeviceFormModal.js` | Asistente de 3 pasos para registrar dispositivos |
 
@@ -1035,6 +1036,7 @@ function MiComponente() {
 
 - **14 paginas** traducidas completamente
 - **Header** con toggle de idioma (boton globe)
+- **Index (HomePage)** con botones flotantes circulares de idioma y tema (abajo a la izquierda), reutilizando los mismos toggles del Header
 - **Sidebar** con etiquetas de navegacion traducidas
 - **Modales** (DeviceFormModal) y **LoadingSpinner** traducidos
 - Idioma persistido en `localStorage`
@@ -1044,6 +1046,36 @@ function MiComponente() {
 ---
 
 ## Cambios recientes
+
+### 28/09/2026 - Conexion TLS a Supabase, paleta azul, landing, logo y controles del index
+
+Sesion de OpenCode (build) + Cursor: se desbloqueo el backend contra PostgreSQL en la nube y se unifico la identidad visual y el contenido del sitio.
+
+**Backend / base de datos**
+
+- Error de arranque `SequelizeConnectionError: self-signed certificate in certificate chain` (`SELF_SIGNED_CERT_IN_CHAIN`) al conectar Sequelize con el pooler de Supabase.
+- Connection string correcta del **Session Pooler** (IPv4): host `aws-0-us-west-2.pooler.supabase.com`, puerto `5432`, user `postgres.<project-ref>`, database `postgres`. El host `db.*.supabase.co` sigue siendo IPv6-only en esta red.
+- `backend/src/config/database.js`: SSL configurable (`DB_SSL_REJECT_UNAUTHORIZED`, `DB_SSL_CA` con resolucion de PEM por ruta o contenido), pool con `keepAlive` y `connectionTimeoutMillis`, advertencia si se desactiva la verificacion del certificado.
+- Certificado CA de referencia en `backend/certs/supabase-ca.crt` y variables documentadas en `backend/.env.example`. En desarrollo el pooler de Supabase suele requerir `DB_SSL_REJECT_UNAUTHORIZED=false` porque el certificado de la cadena no aparece en Project Settings → Database → SSL Certificates.
+
+**Asistente IA (alcance del software)**
+
+- El chat deja de seguir temas ajenos al consumo electrico y al producto. El backend detecta roleplay / cambio de rol antes de llamar al modelo y, si Gemini marca `inScope=false`, inyecta el rechazo oficial bilingue (`chat.off_scope` en `backend/src/utils/i18n.js`).
+- La landing explica ese alcance (no es un fallo: es una decision de diseno). El frontend muestra badge de fuera de alcance en el asistente.
+
+**Landing (HomePage)**
+
+- Index reescrito con mas informacion del producto: como funciona (4 pasos), ocho modulos, que hace la IA, hardware IoT ESP8266MOD + PZEM-004T, stack y FAQ.
+- Textos que decian ESP32 pasan a **ESP8266MOD** (home, consumo, detalle de dispositivo, traducciones ES/EN).
+- Botones flotantes circulares solo en el index: idioma (ES/EN) y tema (claro/oscuro), abajo a la izquierda.
+- Bloque CTA "Empeza a medir tu consumo hoy": sin marco gris externo; una sola capa con `var(--grad-hero)`. Separacion de **64px** respecto de la banda de FAQ (48px en mobile) para que no pegue contra el borde de esa seccion.
+
+**Identidad visual**
+
+- Paleta azul (navy / blue / slate) para modo claro y oscuro, con tokens CSS (`--bg`, `--surface`, `--grad-hero`, logo, graficos).
+- Modo oscuro: fondo de pagina `#1e293b` (Slate 800) y footer/sidebar `#0b1220`, para que el pie contraste con el body (misma logica que en claro).
+- Graficos (Bar/Line/Pie) leen la paleta via `useChartPalette.js`.
+- Nuevo componente **`Logo` / `LogoMark`**: rayo + barras de consumo, colores por tokens (`--logo-tile-a/b`, `--logo-mark`, `--logo-bar`), usado en nav, sidebar, login, registro y footer.
 
 ### 24/09/2026 - Circulo rojo de notificaciones no leidas en la barra de navegacion
 
@@ -1204,13 +1236,16 @@ DB_SSL_REJECT_UNAUTHORIZED=false
 
 **Solucion:** Asegurarse de que ambos servidores esten arrancados.
 
-### 6. Certificado TLS al conectar con Supabase
+### 6. Certificado TLS al conectar con Supabase (28/09/2026)
 
-**Problema:** El backend verifica el certificado SSL de la BD por defecto (`rejectUnauthorized: true`). Si el hosting usa un certificado autofirmado o con CA no estandar, la conexion falla con `UNABLE_TO_VERIFY_LEAF_SIGNATURE` o `DEPTH_ZERO_SELF_SIGNED_CERT`.
+**Problema:** Al arrancar el backend (`npm run dev`) Sequelize fallaba con `self-signed certificate in certificate chain` / `SELF_SIGNED_CERT_IN_CHAIN`. Node rechaza la cadena TLS del **pooler** de Supabase (`aws-0-us-west-2.pooler.supabase.com`). En el panel de Supabase **no aparece** la seccion Project Settings → Database → SSL Certificates para bajar un CA propio.
 
 **Soluciones (por orden de preferencia):**
-1. **Recomendado:** Exportar el CA cert del hosting y guardarlo, y configurar `DB_SSL_CA=ruta/al/cert.pem` en `.env`.
-2. **Alternativa insegura** (solo si no hay otra): setear `DB_SSL_REJECT_UNAUTHORIZED=false` en `.env`. Esto desactiva la verificacion del certificado, similar al comportamiento anterior.
+1. **Recomendado en produccion:** si el proveedor entrega un CA, guardarlo (p. ej. `backend/certs/supabase-ca.crt`) y apuntar `DB_SSL_CA` en `.env`. `database.js` resuelve la ruta relativa al backend o un PEM inline.
+2. **Desarrollo con el pooler:** `DB_SSL_REJECT_UNAUTHORIZED=false`. El trafico sigue cifrado; no se valida la identidad del certificado. El backend emite un warning al arrancar.
+3. No usar `NODE_TLS_REJECT_UNAUTHORIZED=0` (deshabilitaba SSL de **todo** Node, no solo Postgres).
+
+**Aprendizaje:** el host directo `db.<ref>.supabase.co` es IPv6-only (falla con `ENOTFOUND` sin IPv6). El pooler es IPv4 pero trae cadena autofirmada; el usuario del pooler es `postgres.<project-ref>`, no `postgres`. Puerto `5432` = sesion (adecuado para Sequelize).
 
 ---
 
