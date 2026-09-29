@@ -10,6 +10,7 @@
     "db:migrate:admin": "node src/config/migrateAdmin.js",
     "db:admin": "node seeds/createAdmin.js",
     "db:seed": "node seeds/seed.js",
+    "db:seed:readings": "node seeds/refreshReadings.js",
     "db:reset": "node src/config/migrate.js && node seeds/seed.js"
   },
   "dependencies": {

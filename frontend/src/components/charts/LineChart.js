@@ -1,8 +1,19 @@
 import React from 'react';
-import { LineChart as ReLine, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart as ReLine, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColor } from './useChartPalette';
 
-export default function LineChart({ data, xKey = 'date', yKey = 'consumption', color, colorIndex = 1, title }) {
+/**
+ * `label` es el nombre de la serie. No es opcional en la practica: Recharts cae
+ * en el dataKey cuando no se le pasa `name`, y eso imprimia literalmente
+ * "consumption" o "watts" en el tooltip.
+ *
+ * No hay leyenda a proposito. El componente dibuja una sola serie, y una leyenda
+ * de una sola entrada no agrega informacion: solo repite lo que ya dice el
+ * titulo del bloque de arriba.
+ */
+export default function LineChart({
+  data, xKey = 'date', yKey = 'consumption', color, colorIndex = 1, title, label, unit,
+}) {
   const fallback = useChartColor(colorIndex);
   const stroke = color || fallback;
   return (
@@ -14,9 +25,19 @@ export default function LineChart({ data, xKey = 'date', yKey = 'consumption', c
           <CartesianGrid strokeDasharray="3 3" className="chart-grid" />
           <XAxis dataKey={xKey} tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-          <Legend />
-          <Line type="monotone" dataKey={yKey} stroke={stroke} strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+          <Tooltip
+            formatter={(valor) => [unit ? `${valor} ${unit}` : valor, label]}
+            contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+          />
+          <Line
+            type="monotone"
+            dataKey={yKey}
+            name={label}
+            stroke={stroke}
+            strokeWidth={2}
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
+          />
         </ReLine>
       </ResponsiveContainer>
     </div>

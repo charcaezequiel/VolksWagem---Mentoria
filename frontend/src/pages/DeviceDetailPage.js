@@ -190,7 +190,7 @@ export default function DeviceDetailPage() {
           subtitle={t('device.chart_subtitle')}
           style={{ marginBottom: 24 }}
         >
-          <LineChart data={chartData} xKey="time" yKey="watts" colorIndex={4} title="" />
+          <LineChart data={chartData} xKey="time" yKey="watts" colorIndex={4} title="" label={t('charts.watts')} unit="W" />
         </PageSection>
       )}
 

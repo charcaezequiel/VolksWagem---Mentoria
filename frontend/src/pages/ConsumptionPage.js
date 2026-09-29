@@ -368,7 +368,7 @@ export default function ConsumptionPage() {
         </div>
         {byDevice.length > 0 && (
           <div style={{ marginTop: 20 }}>
-            <BarChart data={byDevice} xKey="name" yKey="consumption" title="" />
+            <BarChart data={byDevice} xKey="name" yKey="consumption" title="" label={t('charts.consumption')} unit="kWh" />
           </div>
         )}
       </PageSection>

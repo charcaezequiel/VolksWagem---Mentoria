@@ -78,10 +78,10 @@ export default function DashboardPage() {
 
       <div className="dashboard-charts" style={{ marginBottom: 24 }}>
         <PageSection icon={<TrendingUp size={18} />} title={t('dashboard.daily_title')} subtitle={t('dashboard.daily_subtitle')} style={{ marginBottom: 0 }}>
-          <LineChart data={daily} xKey="date" yKey="consumption" title="" />
+          <LineChart data={daily} xKey="date" yKey="consumption" title="" label={t('charts.consumption')} unit="kWh" />
         </PageSection>
         <PageSection icon={<TrendingUp size={18} />} title={t('dashboard.monthly_title')} subtitle={t('dashboard.monthly_subtitle')} style={{ marginBottom: 0 }}>
-          <BarChart data={monthly} xKey="month" yKey="consumption" title="" />
+          <BarChart data={monthly} xKey="month" yKey="consumption" title="" label={t('charts.consumption')} unit="kWh" />
         </PageSection>
       </div>
 

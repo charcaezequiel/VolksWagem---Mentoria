@@ -1,8 +1,14 @@
 import React from 'react';
-import { BarChart as ReBar, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart as ReBar, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColor } from './useChartPalette';
 
-export default function BarChart({ data, xKey = 'month', yKey = 'consumption', color, colorIndex = 1, title }) {
+/**
+ * Mismo criterio que LineChart: una sola serie, sin leyenda, y `label` para que
+ * el tooltip no muestre el dataKey crudo ("consumption", "amount").
+ */
+export default function BarChart({
+  data, xKey = 'month', yKey = 'consumption', color, colorIndex = 1, title, label, unit,
+}) {
   const fallback = useChartColor(colorIndex);
   const fill = color || fallback;
   return (
@@ -14,9 +20,11 @@ export default function BarChart({ data, xKey = 'month', yKey = 'consumption', c
           <CartesianGrid strokeDasharray="3 3" className="chart-grid" />
           <XAxis dataKey={xKey} tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-          <Legend />
-          <Bar dataKey={yKey} fill={fill} radius={[4, 4, 0, 0]} />
+          <Tooltip
+            formatter={(valor) => [unit ? `${valor} ${unit}` : valor, label]}
+            contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+          />
+          <Bar dataKey={yKey} name={label} fill={fill} radius={[4, 4, 0, 0]} />
         </ReBar>
       </ResponsiveContainer>
     </div>

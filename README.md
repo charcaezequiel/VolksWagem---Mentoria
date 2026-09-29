@@ -294,7 +294,8 @@ Total: 1771.4 W | 3.214 kWh enviado
 ```
 backend/
 ├── seeds/
-│   └── seed.js                  # Datos iniciales (provincias, tarifas, usuario demo)
+│   ├── seed.js                    # Datos iniciales (provincias, tarifas, usuario demo)
+│   └── refreshReadings.js         # Renueva solo las lecturas de consumo (62 dias)
 ├── src/
 │   ├── config/
 │   │   ├── database.js          # Conexion a Supabase PostgreSQL via Sequelize
@@ -567,7 +568,8 @@ device_categories 1────N appliances     (catalogo de electrodomesticos)
 VolksWagem---Mentoria/
 ├── backend/
 │   ├── seeds/
-│   │   └── seed.js
+│   │   ├── seed.js
+│   │   └── refreshReadings.js
 │   ├── src/
 │   │   ├── config/
 │   │   │   ├── database.js
@@ -818,7 +820,19 @@ chmod +x start.sh && ./start.sh
 | `npm start` | Arranca el servidor en modo produccion |
 | `npm run db:migrate` | Ejecuta la migracion de tablas |
 | `npm run db:seed` | Carga datos iniciales |
+| `npm run db:seed:readings` | Regenera solo las lecturas de consumo de los ultimos 62 dias |
 | `npm run db:reset` | Resetea la base: migra + seed |
+
+> `db:seed` arranca con un `sync({ force: true })`, asi que **borra la base
+> entera**. Para renovar el historico de consumo no hay que correrlo: usar
+> `db:seed:readings`, que solo reemplaza las lecturas generadas y conserva las
+> que se cargaron a mano con "Agregar Lectura".
+>
+> Son 62 dias y no 30 porque el dashboard compara contra el mes anterior y
+> grafica 12 meses. Con 30 dias de datos el mes anterior queda representado por
+> un solo dia, y la comparacion sale en `null` o en cero. Con 62 siempre entra
+> el mes anterior completo (31 del mes previo + 31 del mes en curso es el peor
+> caso).
 
 ### Verificar que funciona
 

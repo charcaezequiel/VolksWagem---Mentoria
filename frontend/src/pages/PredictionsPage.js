@@ -134,12 +134,12 @@ export default function PredictionsPage() {
           <div className="dashboard-charts" style={{ marginBottom: 24 }}>
             <PageSection icon={<TrendingUp size={18} />} title={t('predictions.daily_forecast', { month: forecast.month_name, year: forecast.year })} subtitle={`${forecast.province} · ${forecast.distributor} · Modelo ${forecast.model_version}`} style={{ marginBottom: 0 }}>
               {dailyChartData.length > 0 && (
-                <LineChart data={dailyChartData} xKey="date" yKey="kwh" colorIndex={4} />
+                <LineChart data={dailyChartData} xKey="date" yKey="kwh" colorIndex={4} label={t('charts.consumption')} unit="kWh" />
               )}
             </PageSection>
             <PageSection icon={<Scale size={18} />} title={t('predictions.monthly_comparison')} subtitle={t('predictions.monthly_comparison_sub')} style={{ marginBottom: 0 }}>
               {monthChartData.length > 0 && (
-                <BarChart data={monthChartData} xKey="month" yKey="consumption" colorIndex={1} />
+                <BarChart data={monthChartData} xKey="month" yKey="consumption" colorIndex={1} label={t('charts.consumption')} unit="kWh" />
               )}
             </PageSection>
           </div>
