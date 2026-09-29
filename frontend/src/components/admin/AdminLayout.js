@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Users, DollarSign, Boxes, Brain, ArrowLeft, Shield,
 } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 const TABS = [
   { to: '/admin', end: true, label: 'admin.tab.overview', icon: LayoutDashboard },
@@ -21,6 +22,7 @@ const TABS = [
  */
 export default function AdminLayout() {
   const { t } = useTranslation();
+  const { isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,10 +37,17 @@ export default function AdminLayout() {
             <p>{t('admin.subtitle')}</p>
           </div>
         </div>
-        <NavLink to="/dashboard" className="admin-back">
-          <ArrowLeft size={16} />
-          <span>{t('admin.back')}</span>
-        </NavLink>
+        {/* El panel es la CASA del administrador, asi que el boton de volver no
+            tiene a donde ir: /dashboard esta del lado del cliente y
+            CustomerRoute lo devolveria acá mismo, dejando un enlace que parece
+            funcionar y no cambia nada. Para un admin el menu lateral ya tiene
+            la salida (perfil y logout). */}
+        {!isAdmin && (
+          <NavLink to="/dashboard" className="admin-back">
+            <ArrowLeft size={16} />
+            <span>{t('admin.back')}</span>
+          </NavLink>
+        )}
 
         <button
           type="button"

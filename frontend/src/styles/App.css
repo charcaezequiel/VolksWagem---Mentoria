@@ -2747,6 +2747,37 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
 
 .admin-content { min-height: 0; }
 
+/* ---------- Importacion de tarifario desde archivo ---------- */
+.admin-import {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+}
+/* El input real se oculta pero NO se usa display:none ni el atributo hidden:
+   si el elemento no esta en el layout, algunos navegadores no abren el
+   selector de archivos cuando se lo dispara con .click() desde un boton. */
+.admin-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.admin-import-loaded {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 500;
+}
+
 /* ---------- Paneles y tarjetas ---------- */
 .admin-panel { display: flex; flex-direction: column; gap: 18px; }
 

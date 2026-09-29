@@ -1,9 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Upload, Plus, Trash2, History } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Upload, Plus, Trash2, History, FileSpreadsheet, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import { useTranslation } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { parseTariffFile, plantillaCSV, normProvincia, ACCEPTED_EXTENSIONS } from '../../utils/tariffFileParser';
+
+/* Dos nombres de provincia se consideran el mismo si uno contiene al otro
+   una vez normalizados. Es lo que hace falta en la practica: el tarifario
+   exportado suele traer "Buenos Aires" y la base lo llama "Buenos Aires
+   (AMBA)". Una igualdad exacta daria un falso positivo en cada provincia con
+   sede, que es justo donde el error de subir el tarifario equivocado cuesta
+   mas. */
+const sameProvincia = (a, b) => {
+  const na = normProvincia(a);
+  const nb = normProvincia(b);
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
+};
 
 /* Fila vacia con el shape exacto que espera el backend. Los precios N2/N3 se
    dejan vacios (no 0) a proposito: null significa "no aplica para este
@@ -43,6 +57,56 @@ export default function AdminTariffsPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [rowErrors, setRowErrors] = useState({});
+  const [importing, setImporting] = useState(false);
+  const [archivo, setArchivo] = useState(null);
+  const archivoRef = useRef(null);
+
+  /* Importar un tarifario NO sube nada: solo llena la grilla de abajo, que ya
+     es editable. El admin revisa los numeros, corrige lo que haga falta y
+     recien ahi toca "Cargar tarifario". Subir directo desde el archivo seria
+     un salto sin red: si el archivo esta mal headedado, se pisa el tarifario
+     vigente de la provincia y no hay forma de deshacerlo. */
+  const onFile = async (e) => {
+    const f = e.target.files?.[0];
+    // Se limpia el input para poder volver a elegir el MISMO archivo: si no,
+    // cambiar de opinion y elegirlo de nuevo no dispara el evento.
+    e.target.value = '';
+    if (!f) return;
+    setImporting(true);
+    try {
+      const { rows, avisos, provincia, nombre } = await parseTariffFile(f);
+      if (!rows.length) {
+        toast.error(t('admin.tariffs.import_no_rows'));
+        return;
+      }
+      setRows(rows);
+      setRowErrors({});
+      setArchivo({ nombre, provincia, cantidad: rows.length });
+
+      // Si el archivo viene con columna de provincia y no es la que esta
+      // seleccionada, avisar antes de que se confunda: searia cargar el
+      // tarifario de Mendoza sobre Buenos Aires.
+      if (provincia && selected && !sameProvincia(provincia, selected.name)) {
+        toast.error(t('admin.tariffs.import_other_province').replace('{{provincia}}', provincia));
+      } else {
+        toast.success(t('admin.tariffs.import_ok').replace('{{n}}', String(rows.length)));
+      }
+      avisos.forEach((a) => toast(a, { icon: '⚠' }));
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const descargarPlantilla = () => {
+    const url = URL.createObjectURL(new Blob(['﻿' + plantillaCSV()], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plantilla-tarifario.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     api.tariffs.getProvinces()
@@ -160,7 +224,16 @@ export default function AdminTariffsPage() {
       <div className="admin-filters">
         <label className="admin-field">
           <span>{t('admin.tariffs.province')}</span>
-          <select value={provinceId} onChange={(e) => setProvinceId(e.target.value)}>
+          <select
+            value={provinceId}
+            onChange={(e) => {
+              setProvinceId(e.target.value);
+              // El archivo importado era de la provincia anterior: dejar el
+              // aviso puesto dira "estas revisando el tarifario de X" cuando
+              // en realidad se esta por subir el de otra.
+              setArchivo(null);
+            }}
+          >
             {provinces.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
@@ -211,6 +284,40 @@ export default function AdminTariffsPage() {
       ) : (
         <form className="admin-card" onSubmit={submit}>
           <p className="admin-hint">{t('admin.tariffs.upload_hint')}</p>
+
+          {/* Importacion de archivo. El input esta oculto y se dispara con el
+              boton: un <label for> sobre un input oculto funciona igual pero
+              no deja cambiar el texto del boton segun el estado. */}
+          <div className="admin-import">
+            <input
+              ref={archivoRef}
+              type="file"
+              accept={ACCEPTED_EXTENSIONS}
+              onChange={onFile}
+              className="admin-file-input"
+              aria-label={t('admin.tariffs.import')}
+            />
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => archivoRef.current?.click()}
+              disabled={importing}
+            >
+              <FileSpreadsheet size={15} /> {t('admin.tariffs.import')}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={descargarPlantilla}>
+              <Download size={15} /> {t('admin.tariffs.template')}
+            </button>
+            <span className="admin-hint">{t('admin.tariffs.import_formats')}</span>
+          </div>
+
+          {/* Que archivo se esta por cargar. Importar no sube nada todavia:
+              las filas quedan en la grilla de abajo para revisar. */}
+          {archivo && (
+            <p className="admin-hint admin-import-loaded">
+              {t('admin.tariffs.imported_from').replace('{{archivo}}', archivo.nombre)}
+            </p>
+          )}
 
           <div className="admin-form-grid">
             <label>
