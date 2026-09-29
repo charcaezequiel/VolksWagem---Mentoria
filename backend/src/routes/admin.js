@@ -45,6 +45,24 @@ const TARIFF_NUMERIC = [
 
 const WATT_NUMERIC = ['nominal_watts', 'min_watts', 'max_watts', 'hours_daily_usage'];
 
+/**
+ * Campos que describen a un CLIENTE y que un admin no debe tener cargados:
+ * provincia (de que tarifario se le factura), rubro energetico y umbral de
+ * alerta. Un admin administra esas cosas, no las tiene.
+ *
+ * Se aplican al crear un admin y al promover a admin a alguien, para que el
+ * estado de la base no diga "admin con rubro residencial" solo porque la
+ * columna se lo permitia antes.
+ */
+const CUSTOMER_FIELDS_CLEARED = {
+  province_id: null,
+  user_type: null,
+  alert_threshold_kwh: null,
+};
+
+/** Umbral de alerta que se le da a una cuenta recien degradada a cliente. */
+const DEFAULT_ALERT_THRESHOLD_KWH = 15;
+
 /* ================== 1. USUARIOS ================== */
 
 router.get('/users', async (req, res, next) => {
@@ -58,7 +76,11 @@ router.get('/users', async (req, res, next) => {
         { email: { [Op.iLike]: `%${search}%` } },
       ];
     }
-    if (role === 'admin' || role === 'user') where.role = role;
+    /* La lista es de CLIENTES, no de cuentas. Sin esto el admin aparecia
+       mezclado con los usuarios y el total de la pagina lo incluía, dejando
+       la metrica de clientes inflada por uno siempre. Los administradores
+       se piden explicitamente con ?role=admin. */
+    where.role = role === 'admin' ? 'admin' : 'user';
     if (province_id) where.province_id = Number(province_id);
     if (status === 'active') where.is_active = true;
     if (status === 'inactive') where.is_active = false;
@@ -133,6 +155,24 @@ router.put('/users/:id', async (req, res, next) => {
       return bad(res, "role debe ser 'user' o 'admin'");
     }
 
+    /* Al cruzar el rol hay que reconciliar los datos de dominio del cliente.
+       Sin esto, promover a admin dejaba el rubro residencial y la provincia
+       cargados, y degradar a cliente dejaba un admin sin rubro (la columna
+       ahora acepta NULL) que despues no podria facturar. */
+    if (patch.role !== undefined && patch.role !== target.role) {
+      if (patch.role === 'admin') {
+        Object.assign(patch, CUSTOMER_FIELDS_CLEARED);
+      } else {
+        // Vuelve a ser cliente: necesita provincia para que el tarifario
+        // Applicable exista, y el umbral por defecto es 15 kWh.
+        if (target.province_id == null && patch.province_id === undefined) {
+          return bad(res, 'Para degradar a cliente hay que indicar una provincia: sin ella no hay tarifario aplicable');
+        }
+        if (patch.user_type === undefined) patch.user_type = 'residencial';
+        if (patch.alert_threshold_kwh === undefined) patch.alert_threshold_kwh = DEFAULT_ALERT_THRESHOLD_KWH;
+      }
+    }
+
     await target.update(patch);
 
     const fresh = await User.findByPk(target.id, {
@@ -172,15 +212,36 @@ router.post('/users', async (req, res, next) => {
       return bad(res, 'alert_threshold_kwh no es un numero');
     }
 
+    const esAdmin = role === 'admin';
+
+    /* Un admin se crea sin provincia, sin rubro y sin umbral: administra
+       esas cosas, no las tiene. Si el payload los trae, se ignoran en
+       silencio en vez de fallar, porque el formulario tiene un solo camino y
+       no vale la pena obligar a elegir entre "crear admin" y "crear cliente". */
+    if (esAdmin) {
+      if (province_id || user_type || alert_threshold_kwh != null) {
+        console.warn(
+          `[admin] ${email} se crea como admin: se ignoran provincia, rubro y umbral, ` +
+          'que son datos de cliente.'
+        );
+      }
+    } else if (user_type && !['residencial', 'comercial', 'industrial', 'agropecuario'].includes(user_type)) {
+      return bad(res, 'user_type debe ser residencial, comercial, industrial o agropecuario');
+    }
+
     // El hook beforeCreate del modelo hashea password_hash por nosotros.
     const user = await User.create({
       name,
       email,
       password_hash: password,
-      province_id: province_id || null,
-      user_type: user_type || 'residencial',
-      role: role === 'admin' ? 'admin' : 'user',
-      alert_threshold_kwh: threshold,
+      ...(esAdmin
+        ? CUSTOMER_FIELDS_CLEARED
+        : {
+            province_id: province_id || null,
+            user_type: user_type || 'residencial',
+            alert_threshold_kwh: threshold,
+          }),
+      role: esAdmin ? 'admin' : 'user',
     });
 
     /* Se relee con la provincia para que el objeto devuelto sea identico al que
@@ -586,8 +647,12 @@ router.get('/stats', async (req, res, next) => {
       readings30d, readings24h, totalInvoices, totalPredictions, totalRecommendations,
       byType, byProvince, topConsumers,
     ] = await Promise.all([
-      User.count(),
-      User.count({ where: { is_active: true } }),
+      /* Los conteos de clientes filtran role:'user'. Sin ese filtro el admin
+         entraba en el total y las tarjetas del resumen mostraban un cliente de
+         mas para siempre, porque el admin es uno solo y siempre esta. Los
+         administradores se cuentan aparte. */
+      User.count({ where: { role: 'user' } }),
+      User.count({ where: { role: 'user', is_active: true } }),
       User.count({ where: { role: 'admin' } }),
       Device.count(),
       Device.count({ where: { is_active: true, last_seen_at: { [Op.gte]: since24h } } }),
@@ -610,6 +675,10 @@ router.get('/stats', async (req, res, next) => {
       Prediction.count(),
       Recommendation.count(),
       User.findAll({
+        /* Se excluyen los admins: su user_type es NULL y aparecerian como un
+           grupo mas en la distribucion por rubro, que es una categoria de
+           cliente y no de administracion. */
+        where: { role: 'user' },
         attributes: ['user_type', [fn('COUNT', col('User.id')), 'count']],
         group: ['user_type'],
       }),
@@ -618,6 +687,7 @@ router.get('/stats', async (req, res, next) => {
            nombre de la tabla: Sequelize alinea la tabla principal como "User".
            Sin calificar, el "id" es ambiguo porque provinces tambien tiene id
            y el JOIN lo trae al SELECT. */
+        where: { role: 'user' },
         attributes: ['province_id', [fn('COUNT', col('User.id')), 'count']],
         include: [{ model: Province, as: 'province', attributes: ['id', 'name'] }],
         group: ['province_id', 'province.id', 'province.name'],

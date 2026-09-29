@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from '../context/LanguageContext';
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, isAdmin } = useAuth();
   const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', province_id: '', alert_threshold_kwh: '' });
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '' });
@@ -17,14 +17,20 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (user) setForm({ name: user.name || '', province_id: user.province_id || user.province?.id || '', alert_threshold_kwh: user.alert_threshold_kwh || '' });
-    api.tariffs.getProvinces().then(res => setProvinces(res.data.provinces || res.data || [])).catch(() => {});
-  }, [user]);
+    /* El admin no elige provincia, asi que no hace falta pedirle la lista. */
+    if (!isAdmin) {
+      api.tariffs.getProvinces().then(res => setProvinces(res.data.provinces || res.data || [])).catch(() => {});
+    }
+  }, [user, isAdmin]);
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateProfile(form);
+      /* Al admin solo se le manda el nombre. Mandar provincia y umbral
+         vacios los haria llegar al backend como "" y, aunque alli se ignoran,
+         es ruido que no corresponde: ese formulario no existe para un admin. */
+      await updateProfile(isAdmin ? { name: form.name } : form);
       toast.success(t('profile.save_success'));
     } catch (err) {
       toast.error(err.response?.data?.error || t('common.error'));
@@ -68,19 +74,28 @@ export default function ProfilePage() {
                 <input className="form-input" value={user?.email || ''} disabled style={{ opacity: 0.6 }} />
               </Field>
             </div>
-            <div className="form-group">
-              <Field label={t('profile.province')} icon={<MapPin size={15} />} hint={t('profile.province_hint')}>
-                <select className="form-select" value={form.province_id} onChange={e => setForm({ ...form, province_id: e.target.value })}>
-                  <option value="">{t('profile.province_placeholder')}</option>
-                  {provinces.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>)}
-                </select>
-              </Field>
-            </div>
-            <div className="form-group">
-              <Field label={t('profile.threshold')} icon={<BellRing size={15} />} hint={t('profile.threshold_hint')}>
-                <input className="form-input" type="number" step="0.1" value={form.alert_threshold_kwh} onChange={e => setForm({ ...form, alert_threshold_kwh: e.target.value })} placeholder={t('profile.threshold_placeholder')} />
-              </Field>
-            </div>
+            {/* Provincia y umbral de alerta son dominio del cliente: de que
+                tarifario se le factura y cuando avisarle que se paso. Un admin
+                no se le factura nada, asi que no tiene que poder elegirlo. El
+                backend ignora estos campos si llegan, pero ni siquiera se
+                ofrecen. */}
+            {!isAdmin && (
+              <>
+                <div className="form-group">
+                  <Field label={t('profile.province')} icon={<MapPin size={15} />} hint={t('profile.province_hint')}>
+                    <select className="form-select" value={form.province_id} onChange={e => setForm({ ...form, province_id: e.target.value })}>
+                      <option value="">{t('profile.province_placeholder')}</option>
+                      {provinces.map(p => <option key={p.id || p._id} value={p.id || p._id}>{p.name}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                <div className="form-group">
+                  <Field label={t('profile.threshold')} icon={<BellRing size={15} />} hint={t('profile.threshold_hint')}>
+                    <input className="form-input" type="number" step="0.1" value={form.alert_threshold_kwh} onChange={e => setForm({ ...form, alert_threshold_kwh: e.target.value })} placeholder={t('profile.threshold_placeholder')} />
+                  </Field>
+                </div>
+              </>
+            )}
             <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? t('profile.saving') : t('profile.save')}</button>
           </form>
         </PageSection>

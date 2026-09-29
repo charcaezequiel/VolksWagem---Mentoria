@@ -18,7 +18,7 @@ export default function AdminUsersPage() {
   const [provinces, setProvinces] = useState([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, pages: 1 });
   const [search, setSearch] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState('user');
   const [status, setStatus] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -112,25 +112,32 @@ export default function AdminUsersPage() {
               <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} minLength={8} required />
             </label>
             <label>
-              <span>{t('admin.tariffs.province')}</span>
-              <select value={form.province_id} onChange={(e) => setForm({ ...form, province_id: e.target.value })}>
-                <option value="">—</option>
-                {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </label>
-            <label>
-              <span>{t('admin.by_type')}</span>
-              <select value={form.user_type} onChange={(e) => setForm({ ...form, user_type: e.target.value })}>
-                {USER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-              </select>
-            </label>
-            <label>
               <span>{t('admin.users.filter_role')}</span>
               <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
                 <option value="user">{t('admin.role.user')}</option>
                 <option value="admin">{t('admin.role.admin')}</option>
               </select>
             </label>
+            {/* Provincia y rubro solo aplican a un cliente. Al crear un admin
+                el backend los descarta, asi que ni se ofrecen: es menos
+                confuso que mostrar campos que el sistema va a ignorar. */}
+            {form.role !== 'admin' && (
+              <>
+                <label>
+                  <span>{t('admin.tariffs.province')}</span>
+                  <select value={form.province_id} onChange={(e) => setForm({ ...form, province_id: e.target.value })}>
+                    <option value="">—</option>
+                    {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </label>
+                <label>
+                  <span>{t('admin.by_type')}</span>
+                  <select value={form.user_type} onChange={(e) => setForm({ ...form, user_type: e.target.value })}>
+                    {USER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                  </select>
+                </label>
+              </>
+            )}
           </div>
           {formError && <p className="admin-form-error" role="alert">{formError}</p>}
           <div className="admin-form-actions">
@@ -153,10 +160,15 @@ export default function AdminUsersPage() {
             placeholder={t('admin.users.search')}
           />
         </div>
+        {/* El filtro arranca en "user" y no en "todos" a proposito: la lista
+            es de CLIENTES. El administrador se mira en su propia pestaña, con
+            su conteo, en vez de mezclarlo con los usuarios y tener que
+            descontarlo a mano de cada total. El backend tambien fuerza 'user'
+            cuando no se manda rol, asi que la lista nunca incluye al admin por
+            accidente. */}
         <select value={role} onChange={(e) => { setRole(e.target.value); setPage(1); }}>
-          <option value="">{t('admin.users.filter_role')}: {t('admin.users.all')}</option>
-          <option value="admin">{t('admin.role.admin')}</option>
-          <option value="user">{t('admin.role.user')}</option>
+          <option value="user">{t('admin.users.only_customers')}</option>
+          <option value="admin">{t('admin.users.only_admins')}</option>
         </select>
         <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
           <option value="">{t('admin.users.filter_status')}: {t('admin.users.all')}</option>

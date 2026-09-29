@@ -42,8 +42,14 @@ const User = sequelize.define('User', {
   },
   user_type: {
     type: DataTypes.ENUM('residencial', 'comercial', 'industrial', 'agropecuario'),
+    /* Rubro energetico: a quien se le factura. Es NULL para los admins, que
+       no son clientes. El default sigue puesto a proposito: el formulario de
+       registro no manda user_type y los clientes autocontenidos deben
+       seguir cayendo en 'residencial'. El default solo se aplica cuando la
+       columna se omite del INSERT, asi que un admin la pasa en NULL
+       explicito y queda sin rubro. */
     defaultValue: 'residencial',
-    allowNull: false,
+    allowNull: true,
   },
   alert_threshold_kwh: {
     type: DataTypes.FLOAT,

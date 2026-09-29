@@ -92,19 +92,44 @@ router.put('/profile', authenticateToken, async (req, res, next) => {
   try {
     const { name, province_id, user_type, alert_threshold_kwh, notification_preferences } = req.body;
 
-    await req.user.update({
-      ...(name !== undefined && { name }),
-      ...(province_id !== undefined && { province_id }),
-      ...(user_type !== undefined && { user_type }),
-      ...(alert_threshold_kwh !== undefined && { alert_threshold_kwh }),
-      ...(notification_preferences !== undefined && { notification_preferences }),
-    });
+    /* Los campos de dominio del cliente (provincia, rubro, umbral de alerta)
+       no aplican a un administrador: no es un cliente y no se le factura.
+       Se ignoran en vez de rechazarse para que el guardado del perfil no
+       rompa por un campo que la propia UI de admin ni muestra. Un admin solo
+       gestiona su nombre, su correo y su contrasena. */
+    const esAdmin = req.user.role === 'admin';
+    const ignorados = [];
+    const patch = {};
+
+    if (name !== undefined) patch.name = name;
+
+    if (esAdmin) {
+      for (const [campo, valor] of Object.entries({ province_id, user_type, alert_threshold_kwh })) {
+        if (valor !== undefined) ignorados.push(campo);
+      }
+    } else {
+      if (province_id !== undefined) patch.province_id = province_id;
+      if (user_type !== undefined) patch.user_type = user_type;
+      if (alert_threshold_kwh !== undefined) patch.alert_threshold_kwh = alert_threshold_kwh;
+    }
+
+    // Los canales de notificacion son de la cuenta, no del cliente: se
+    // pueden tocar en los dos casos.
+    if (notification_preferences !== undefined) {
+      patch.notification_preferences = notification_preferences;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return res.status(400).json({ error: 'No hay nada para actualizar' });
+    }
+
+    await req.user.update(patch);
 
     const updated = await User.findByPk(req.user.id, {
       attributes: { exclude: ['password_hash'] },
     });
 
-    res.json({ user: updated });
+    res.json({ user: updated, ...(ignorados.length ? { ignored: ignorados } : {}) });
   } catch (error) {
     next(error);
   }

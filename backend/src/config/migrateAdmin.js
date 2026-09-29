@@ -34,6 +34,44 @@ step('Agregar columna users.role', async (queryInterface) => {
   );
 });
 
+step('Permitir user_type nulo para que un admin no tenga rubro', async (queryInterface) => {
+  /* user_type es el RUBRO ENERGETICO (residencial/comercial/industrial/
+     agropecuario): describe a quien se le factura. Un administrador no es un
+     cliente, asi que no tiene rubro ni provincia. Antes la columna era
+     NOT NULL DEFAULT 'residencial', o sea que la base le imponia un rubro
+     residencial a todo admin que se creara, por mas que la app no le
+     mandara nada.
+
+     Se saca el NOT NULL pero se DEJA el DEFAULT: el formulario de registro
+     no manda user_type, asi que los clientes autocontenidos siguen
+     tomando 'residencial' por defecto. El default solo aplica cuando la
+     columna se omite del INSERT; un admin la manda en NULL explicito y
+     queda en NULL. Asi la columna puede ser nula sin tocar el
+     comportamiento de los clientes. */
+  await queryInterface.sequelize.query(
+    `ALTER TABLE "users" ALTER COLUMN "user_type" DROP NOT NULL`
+  );
+});
+
+step('Limpiar datos de cliente de los administradores existentes', async () => {
+  /* Los admins creados antes de esta migracion quedaron con provincia y
+     rubro residencial porque createAdmin.js los seteaba. Se limpian para que
+     el estado de la base coincida con el modelo.
+
+     Solo se tocan las columnas de dominio del cliente. NO se toca is_active:
+     desactivar al unico admin dejaria el sistema sin administracion. */
+  /* User.update() devuelve [filasAfectadas, filas]. El primer elemento es el
+     conteo; leer el segundo daria el array de filas y el "0" que reportaba
+     antes. */
+  const [n] = await User.update(
+    { province_id: null, user_type: null, alert_threshold_kwh: null },
+    { where: { role: 'admin' } }
+  );
+  console.log(n > 0
+    ? `   ${n} administrador(es) quedaron sin provincia ni rubro.`
+    : '   Ningun admin tenia datos de cliente cargados.');
+});
+
 step('Crear tabla ai_configs', async () => {
   // force:false la crea sola si falta, pero sync no corre garantizados en este
   // script, asi que se asegura de forma explicita.

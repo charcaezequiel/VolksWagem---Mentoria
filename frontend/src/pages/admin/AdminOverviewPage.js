@@ -100,7 +100,22 @@ export default function AdminOverviewPage() {
       {error && <ErrorNote error={error} onRetry={load} />}
 
       <div className="admin-stats">
-        <StatCard accent={1} label={t('admin.stat.users')} value={totals.users} hint={`${totals.active_users} ${t('admin.stat.active_users').toLowerCase()}`} />
+        {/* "Clientes" y no "Usuarios": el conteo excluye a los administradores
+            (lo filtra el backend con role:'user'), asi que el numero que se ve
+            aca es el de gente a la que se le factura. Los administradores se
+            informan aparte, en la propia pista de la tarjeta. */}
+        <StatCard
+          accent={1}
+          label={t('admin.stat.customers')}
+          value={totals.users}
+          hint={`${totals.active_users} ${t('admin.stat.active_users').toLowerCase()}`}
+        />
+        <StatCard
+          accent={4}
+          label={t('admin.stat.admins')}
+          value={totals.admins}
+          hint={t('admin.stat.admins_hint')}
+        />
         <StatCard accent={3} label={t('admin.stat.devices')} value={totals.devices} hint={`${totals.online_devices} ${t('admin.stat.online_devices').toLowerCase()}`} />
         <StatCard accent={2} label={t('admin.stat.tariffs')} value={totals.tariffs} hint={`${totals.provinces_with_tariffs} provincias`} />
         <StatCard accent={4} label={t('admin.stat.readings_24h')} value={totals.readings_24h} hint={`${totals.readings_30d} / 30 d`} />

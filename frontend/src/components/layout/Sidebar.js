@@ -26,6 +26,55 @@ export default function Sidebar({ collapsed, onToggle }) {
     { to: '/recommendations', label: t('nav.recommendations'), icon: Lightbulb },
   ];
 
+  /* Un admin no es un cliente: no tiene hogar, ni dispositivos, ni consumo, ni
+     facturas. Mostrarle ese menu lo lleva a paginas que CustomerRoute le
+     devuelve a /admin, asi que los enlaces serian trampas. El admin ve solo
+     su panel; el perfil queda para los dos porque la identidad no es dominio
+     del cliente. */
+  if (isAdmin) {
+    return (
+      <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-header">
+          <span className="sidebar-logo">
+            <Logo size={30} markClassName="sidebar-logo-mark" />
+          </span>
+          <button className="sidebar-toggle" onClick={onToggle}>
+            {collapsed ? <Menu size={20} /> : <X size={20} />}
+          </button>
+        </div>
+        <nav className="sidebar-nav">
+          <NavLink
+            to="/admin"
+            end
+            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''} sidebar-admin`}
+          >
+            <Shield size={20} />
+            {!collapsed && <span>{t('nav.admin')}</span>}
+          </NavLink>
+          <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+            <User size={20} />
+            {!collapsed && <span>{t('nav.profile')}</span>}
+          </NavLink>
+        </nav>
+        <div className="sidebar-footer">
+          {!collapsed && (
+            <div className="sidebar-user">
+              <div className="sidebar-user-avatar">{user?.name?.charAt(0) || 'A'}</div>
+              <div className="sidebar-user-info">
+                <span className="sidebar-user-name">{user?.name}</span>
+                <span className="sidebar-user-email">{t('nav.admin')}</span>
+              </div>
+            </div>
+          )}
+          <button className="sidebar-logout" onClick={logout} title={t('nav.logout_title')}>
+            <LogOut size={20} />
+            {!collapsed && <span>{t('nav.logout')}</span>}
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
@@ -62,21 +111,10 @@ export default function Sidebar({ collapsed, onToggle }) {
           </NavLink>
         ))}
 
-        {/* El acceso al panel se oculta si el usuario no es admin. El backend
-            igual lo rechaza con 403: esto es solo para no ofrecer un link
-            que va a fallar. */}
-        {isAdmin && (
-          <>
-            {!collapsed && <div className="sidebar-section-label">{t('nav.admin_section')}</div>}
-            <NavLink
-              to="/admin"
-              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''} sidebar-admin`}
-            >
-              <Shield size={20} />
-              {!collapsed && <span>{t('nav.admin')}</span>}
-            </NavLink>
-          </>
-        )}
+        {/* El enlace al panel ya no vive en esta rama: un admin nunca la
+            alcanza, porque arriba se devuelve su propia version del sidebar.
+            Si se dejara, seria un bloque que solo se activaria en el caso que
+            ya esta resuelto arriba. */}
 
         <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
           <User size={20} />

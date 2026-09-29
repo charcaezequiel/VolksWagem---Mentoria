@@ -18,9 +18,13 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
+      const user = await login(email, password);
       toast.success(t('login.welcome'));
-      navigate('/dashboard');
+      /* El admin no tiene un dashboard de cliente: no posee dispositivos ni
+         lecturas, asi que /dashboard le abriria en una pantalla vacia. Lo
+         CustomerRoute igual lo devolveria a /admin, pero mas vale no hacerlo
+         aparecer ni un instante. */
+      navigate(user?.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.error || t('login.error'));
     } finally {
