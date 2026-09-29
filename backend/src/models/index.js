@@ -10,6 +10,7 @@ const Alert = require('./Alert');
 const Tariff = require('./Tariff');
 const Prediction = require('./Prediction');
 const Recommendation = require('./Recommendation');
+const AiConfig = require('./AiConfig');
 
 User.hasMany(Device, { foreignKey: 'user_id', as: 'devices' });
 User.hasMany(Alert, { foreignKey: 'user_id', as: 'alerts' });
@@ -40,6 +41,8 @@ Tariff.belongsTo(Province, { foreignKey: 'province_id', as: 'province' });
 
 Prediction.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
+AiConfig.belongsTo(User, { foreignKey: 'updated_by', as: 'updatedByUser' });
+
 module.exports = {
   sequelize,
   User,
@@ -53,4 +56,5 @@ module.exports = {
   Tariff,
   Prediction,
   Recommendation,
+  AiConfig,
 };

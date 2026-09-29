@@ -60,6 +60,14 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  /* Rol de autorizacion. Distinto de user_type, que es el RUBRO energetico
+     (residencial/comercial) y lo elige el propio usuario. Este solo lo puede
+     cambiar un admin, y es lo que abre /api/admin. */
+  role: {
+    type: DataTypes.ENUM('user', 'admin'),
+    defaultValue: 'user',
+    allowNull: false,
+  },
 }, {
   tableName: 'users',
   hooks: {
@@ -80,6 +88,10 @@ const User = sequelize.define('User', {
 
 User.prototype.validPassword = async function (password) {
   return bcrypt.compare(password, this.password_hash);
+};
+
+User.prototype.isAdmin = function () {
+  return this.role === 'admin';
 };
 
 module.exports = User;

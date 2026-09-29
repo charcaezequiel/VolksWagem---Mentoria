@@ -45,6 +45,20 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
+/**
+ * Exige rol admin. Va SIEMPRE despues de authenticateToken, nunca solo:
+ * sin authenticateToken, req.user es undefined y esto daria 401 en vez de 403.
+ */
+const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
 const generateDeviceToken = () => {
   return crypto.randomBytes(24).toString('hex');
 };
@@ -77,4 +91,4 @@ const authenticateSensor = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticateToken, optionalAuth, authenticateSensor, generateDeviceToken };
+module.exports = { authenticateToken, optionalAuth, authenticateSensor, requireAdmin, generateDeviceToken };

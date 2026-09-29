@@ -1,4 +1,5 @@
 const { Tariff } = require('../models');
+const { getConfig, DEFAULTS } = require('./aiConfigService');
 
 const SUBSIDY_PRICES = {
   N1: 'price_per_kwh',
@@ -6,9 +7,12 @@ const SUBSIDY_PRICES = {
   N3: 'price_per_kwh_n3',
 };
 
-const TAX_FACTOR = 1.31;
-
-const computeCostFromTariffs = (tariffs, kwh, subsidy = 'N1') => {
+/**
+ * IVA + tasas. Configurable por el admin desde ai_configs.tax_factor.
+ * Se pasa por parametro (y no se lee aca) porque computeCostFromTariffs es
+ * sincrona y sus llamadores la usan en mapeos; leer la config Requiere await.
+ */
+const computeCostFromTariffs = (tariffs, kwh, subsidy = 'N1', taxFactor = DEFAULTS.tax_factor) => {
   if (!tariffs || !tariffs.length) {
     return { total_cost: 0, fixed_charge: 0, variable_cost: 0, estimated_total: 0, category: null, breakdown: [] };
   }
@@ -30,7 +34,7 @@ const computeCostFromTariffs = (tariffs, kwh, subsidy = 'N1') => {
     total_cost: Math.round(base * 100) / 100,
     fixed_charge: Math.round(fixed * 100) / 100,
     variable_cost: Math.round(variable * 100) / 100,
-    estimated_total: Math.round(base * TAX_FACTOR * 100) / 100,
+    estimated_total: Math.round(base * taxFactor * 100) / 100,
     category: {
       category: category.category,
       tier_from: category.tier_from,
@@ -59,7 +63,8 @@ const calculateCost = async (kwh, provinceId, subsidy = 'N1') => {
     order: [['tier_from', 'ASC']],
   });
 
-  return computeCostFromTariffs(tariffs, kwh, subsidy);
+  const { tax_factor } = await getConfig();
+  return computeCostFromTariffs(tariffs, kwh, subsidy, tax_factor);
 };
 
 module.exports = { calculateCost, computeCostFromTariffs };

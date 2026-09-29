@@ -8,10 +8,21 @@ const { register, login } = require('../validators/authValidators');
 const { authRateLimiter, authStrictLimiter } = require('../middleware/rateLimit');
 
 const generateToken = (user) => {
-  return jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 };
+
+// El front necesita el rol para decidir si muestra el panel de admin,
+// asi que va explicito en las dos respuestas de sesion.
+const publicUser = (user) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  user_type: user.user_type,
+  province_id: user.province_id,
+  role: user.role,
+});
 
 router.post('/register', authStrictLimiter, validate(register), async (req, res, next) => {
   try {
@@ -34,13 +45,7 @@ router.post('/register', authStrictLimiter, validate(register), async (req, res,
 
     res.status(201).json({
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        user_type: user.user_type,
-        province_id: user.province_id,
-      },
+      user: publicUser(user),
     });
   } catch (error) {
     next(error);
@@ -65,13 +70,7 @@ router.post('/login', authRateLimiter, validate(login), async (req, res, next) =
 
     res.json({
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        user_type: user.user_type,
-        province_id: user.province_id,
-      },
+      user: publicUser(user),
     });
   } catch (error) {
     next(error);

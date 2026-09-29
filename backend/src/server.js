@@ -23,6 +23,7 @@ const predictionRoutes = require('./routes/predictions');
 const dashboardRoutes = require('./routes/dashboard');
 const aiRoutes = require('./routes/ai');
 const sensorRoutes = require('./routes/sensor');
+const adminRoutes = require('./routes/admin');
 const { checkThreshold, checkPeakDetection } = require('./services/alertService');
 
 const app = express();
@@ -67,6 +68,9 @@ app.use('/api/predictions', predictionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/sensor', sensorRoutes);
+/* El router de admin se autoprotege: aplica authenticateToken + requireAdmin
+   a todas sus rutas internamente, asi que no puede quedar exposed por error. */
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

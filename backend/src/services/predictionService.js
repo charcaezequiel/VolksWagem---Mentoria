@@ -1,14 +1,21 @@
 const { Op } = require('sequelize');
 const { ConsumptionReading, Prediction, User, Province } = require('../models');
 const { calculateCost } = require('./tariffService');
+const { getConfig } = require('./aiConfigService');
 const { t, MONTHS } = require('../utils/i18n');
 
-const SEASONAL_FACTORS = {
-  1: 1.3, 2: 1.25, 3: 1.1, 4: 0.9, 5: 0.85, 6: 0.8,
-  7: 0.8, 8: 0.85, 9: 0.9, 10: 1.0, 11: 1.15, 12: 1.3,
-};
+/* Los parametros del motor salen de la tabla ai_configs (editables por el
+   admin). Se leen una vez por corrida: getConfig() cae a los defaults si la
+   tabla todavia no fue migrada, asi que el motor nunca queda sin funcionar. */
 
-const MODEL_VERSION = 'v2.1-bill-ai';
+/** Resuelve la confianza segun cuantos dias de datos hay. */
+const confidenceFor = (days, ladder) => {
+  const steps = Array.isArray(ladder) && ladder.length ? ladder : [[60, 0.92], [30, 0.85], [14, 0.7], [7, 0.55], [0, 0.4]];
+  for (const [minDays, value] of steps) {
+    if (days >= minDays) return value;
+  }
+  return steps[steps.length - 1][1];
+};
 
 const linearRegression = (values) => {
   const n = values.length;
@@ -45,13 +52,15 @@ const localDateKey = (date) =>
   `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 
 const generatePredictions = async (userId) => {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const cfg = await getConfig();
+
+  const windowStart = new Date();
+  windowStart.setDate(windowStart.getDate() - cfg.history_window_days);
 
   const readings = await ConsumptionReading.findAll({
     where: {
       user_id: userId,
-      reading_timestamp: { [Op.gte]: thirtyDaysAgo },
+      reading_timestamp: { [Op.gte]: windowStart },
     },
     order: [['reading_timestamp', 'ASC']],
   });
@@ -69,7 +78,7 @@ const generatePredictions = async (userId) => {
     : 0;
 
   const currentMonth = new Date().getMonth() + 1;
-  const seasonalFactor = SEASONAL_FACTORS[currentMonth] || 1;
+  const seasonalFactor = cfg.seasonal_factors[currentMonth] || 1;
 
   const predictions = [];
   const today = new Date();
@@ -80,10 +89,10 @@ const generatePredictions = async (userId) => {
 
     const predictedKwh = avgDaily * seasonalFactor;
     const dayOfWeek = predDate.getDay();
-    const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? 1.1 : 1.0;
+    const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? cfg.weekend_factor : 1.0;
     const finalPredicted = predictedKwh * weekendFactor;
 
-    const confidenceScore = dailyValues.length >= 7 ? 0.85 : dailyValues.length >= 3 ? 0.65 : 0.4;
+    const confidenceScore = confidenceFor(dailyValues.length, cfg.confidence_thresholds);
 
     predictions.push({
       prediction_date: localDateKey(predDate),
@@ -98,7 +107,7 @@ const generatePredictions = async (userId) => {
       prediction_date: pred.prediction_date,
       predicted_kwh: pred.predicted_kwh,
       confidence_score: pred.confidence_score,
-      model_version: 'v1.0',
+      model_version: cfg.model_version,
     });
   }
 
@@ -106,11 +115,13 @@ const generatePredictions = async (userId) => {
 };
 
 const detectAnomalies = async (userId, lang) => {
+  const cfg = await getConfig();
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const windowStart = new Date();
+  windowStart.setDate(windowStart.getDate() - cfg.history_window_days);
 
   const todayReadings = await ConsumptionReading.findAll({
     where: {
@@ -122,7 +133,7 @@ const detectAnomalies = async (userId, lang) => {
   const historicalReadings = await ConsumptionReading.findAll({
     where: {
       user_id: userId,
-      reading_timestamp: { [Op.and]: [{ [Op.gte]: thirtyDaysAgo }, { [Op.lt]: today }] },
+      reading_timestamp: { [Op.and]: [{ [Op.gte]: windowStart }, { [Op.lt]: today }] },
     },
   });
 
@@ -136,7 +147,7 @@ const detectAnomalies = async (userId, lang) => {
   }
 
   const dailyValues = Object.values(dailyTotals);
-  if (dailyValues.length < 3) return [];
+  if (dailyValues.length < cfg.min_days_for_anomalies) return [];
 
   const mean = dailyValues.reduce((a, b) => a + b, 0) / dailyValues.length;
   const stdDev = standardDeviation(dailyValues);
@@ -144,7 +155,7 @@ const detectAnomalies = async (userId, lang) => {
   const todayTotal = todayReadings.reduce((sum, r) => sum + r.instant_watts / 1000, 0);
   const anomalies = [];
 
-  if (Math.abs(todayTotal - mean) > 2 * stdDev && stdDev > 0) {
+  if (Math.abs(todayTotal - mean) > cfg.anomaly_sigma * stdDev && stdDev > 0) {
     anomalies.push({
       type: 'anomaly',
       title: t(lang, 'anomaly.consumption.title'),
@@ -166,6 +177,8 @@ const detectAnomalies = async (userId, lang) => {
 };
 
 const generateBillForecast = async (userId, lang) => {
+  const cfg = await getConfig();
+
   const user = await User.findByPk(userId, {
     include: [{ model: Province, as: 'province' }],
   });
@@ -177,7 +190,7 @@ const generateBillForecast = async (userId, lang) => {
   }
 
   const startDate = new Date();
-  startDate.setDate(startDate.getDate() - 90);
+  startDate.setDate(startDate.getDate() - cfg.bill_forecast_window_days);
   startDate.setHours(0, 0, 0, 0);
 
   const readings = await ConsumptionReading.findAll({
@@ -224,7 +237,7 @@ const generateBillForecast = async (userId, lang) => {
   const targetYear = targetDate.getFullYear();
   const targetMonth = targetDate.getMonth() + 1;
   const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
-  const seasonalFactor = SEASONAL_FACTORS[targetMonth] || 1;
+  const seasonalFactor = cfg.seasonal_factors[targetMonth] || 1;
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -242,7 +255,7 @@ const generateBillForecast = async (userId, lang) => {
     const trendAdjusted = avgRecent + slope * daysAhead;
     const base = Math.max(0.5, trendAdjusted);
     const dayOfWeek = date.getDay();
-    const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? 1.08 : 1.0;
+    const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? cfg.bill_weekend_factor : 1.0;
     const kwh = Math.round(base * seasonalFactor * weekendFactor * 1000) / 1000;
 
     totalPredicted += kwh;
@@ -292,16 +305,12 @@ const generateBillForecast = async (userId, lang) => {
   const stdDev = standardDeviation(recentValues);
   const cv = avgRecent > 0 ? stdDev / avgRecent : 0.5;
 
-  let confidence = dailySeries.length >= 60 ? 0.92
-    : dailySeries.length >= 30 ? 0.85
-      : dailySeries.length >= 14 ? 0.7
-        : dailySeries.length >= 7 ? 0.55
-          : 0.4;
+  let confidence = confidenceFor(dailySeries.length, cfg.confidence_thresholds);
   if (cv > 0.5) confidence -= 0.1;
-  confidence = Math.round(Math.max(0.2, Math.min(0.98, confidence)) * 100) / 100;
+  confidence = Math.round(Math.max(cfg.min_confidence, Math.min(cfg.max_confidence, confidence)) * 100) / 100;
 
   await Prediction.destroy({
-    where: { user_id: userId, model_version: MODEL_VERSION },
+    where: { user_id: userId, model_version: cfg.model_version },
   });
 
   const predictionRows = dailyForecast.map((day) => ({
@@ -309,7 +318,7 @@ const generateBillForecast = async (userId, lang) => {
     prediction_date: day.date,
     predicted_kwh: day.kwh,
     confidence_score: confidence,
-    model_version: MODEL_VERSION,
+    model_version: cfg.model_version,
   }));
   await Prediction.bulkCreate(predictionRows);
 
@@ -323,7 +332,7 @@ const generateBillForecast = async (userId, lang) => {
     peak_day_kwh: peak,
     peak_day_date: peakDate,
     confidence_score: confidence,
-    model_version: MODEL_VERSION,
+    model_version: cfg.model_version,
     seasonal_factor: seasonalFactor,
     days_in_month: daysInTargetMonth,
     price_per_kwh_avg: totalPredicted > 0
