@@ -66,8 +66,13 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
+  /* El backend ya es la autoridad (requireAdmin devuelve 403), esto solo
+     decide que se renderiza. Notar que user puede ser null mientras loading
+     es false si el token vencio, de ahi el chequeo de isAdmin sobre user?. */
+  const isAdmin = user?.role === 'admin';
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateProfile, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

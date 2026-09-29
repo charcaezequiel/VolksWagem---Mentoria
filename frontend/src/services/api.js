@@ -94,4 +94,39 @@ export const api = {
   sensor: {
     addReading: (data) => instance.post('/sensor/readings', data),
   },
+  /* Panel de administracion. El backend responde 403 a cualquier request sin
+     role === 'admin', asi que no hace falta chequeos aqui: la UI solo decide
+     que mostrar, la autorizacion real esta en el servidor. */
+  admin: {
+    getStats: () => instance.get('/admin/stats'),
+    getConsumption: (params) => instance.get('/admin/consumption', { params }),
+    getConsumptionByProvince: (params) => instance.get('/admin/consumption/by-province', { params }),
+    getAlerts: (params) => instance.get('/admin/alerts', { params }),
+
+    getUsers: (params) => instance.get('/admin/users', { params }),
+    getUser: (id) => instance.get(`/admin/users/${id}`),
+    createUser: (data) => instance.post('/admin/users', data),
+    updateUser: (id, data) => instance.put(`/admin/users/${id}`, data),
+
+    getTariffs: (params) => instance.get('/admin/tariffs', { params }),
+    bulkUploadTariffs: (data) => instance.post('/admin/tariffs/bulk', data),
+    updateTariff: (id, data) => instance.put(`/admin/tariffs/${id}`, data),
+    deleteTariff: (id) => instance.delete(`/admin/tariffs/${id}`),
+
+    getCategories: () => instance.get('/admin/categories'),
+    createCategory: (data) => instance.post('/admin/categories', data),
+    updateCategory: (id, data) => instance.put(`/admin/categories/${id}`, data),
+    deleteCategory: (id) => instance.delete(`/admin/categories/${id}`),
+
+    createAppliance: (data) => instance.post('/admin/appliances', data),
+    deleteAppliance: (id) => instance.delete(`/admin/appliances/${id}`),
+
+    createDevice: (data) => instance.post('/admin/devices', data),
+    updateDevice: (id, data) => instance.put(`/admin/devices/${id}`, data),
+    rotateDeviceToken: (id) => instance.post(`/admin/devices/${id}/rotate-token`),
+
+    getAiConfig: () => instance.get('/admin/ai-config'),
+    updateAiConfig: (data) => instance.put('/admin/ai-config', data),
+    resetAiConfig: () => instance.post('/admin/ai-config/reset'),
+  },
 };

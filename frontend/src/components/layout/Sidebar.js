@@ -3,11 +3,11 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
-import { LayoutDashboard, Cpu, Zap, FileText, Bell, Brain, DollarSign, Bot, Lightbulb, User, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Cpu, Zap, FileText, Bell, Brain, DollarSign, Bot, Lightbulb, User, LogOut, Menu, X, Shield } from 'lucide-react';
 import Logo from '../common/Logo';
 
 export default function Sidebar({ collapsed, onToggle }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { t } = useTranslation();
   const { unread } = useNotifications();
 
@@ -61,6 +61,22 @@ export default function Sidebar({ collapsed, onToggle }) {
             {!collapsed && <span>{label}</span>}
           </NavLink>
         ))}
+
+        {/* El acceso al panel se oculta si el usuario no es admin. El backend
+            igual lo rechaza con 403: esto es solo para no ofrecer un link
+            que va a fallar. */}
+        {isAdmin && (
+          <>
+            {!collapsed && <div className="sidebar-section-label">{t('nav.admin_section')}</div>}
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''} sidebar-admin`}
+            >
+              <Shield size={20} />
+              {!collapsed && <span>{t('nav.admin')}</span>}
+            </NavLink>
+          </>
+        )}
 
         <NavLink to="/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
           <User size={20} />

@@ -8,7 +8,9 @@ import { LanguageProvider } from './context/LanguageContext';
 import { ManualTimerProvider } from './context/ManualTimerContext';
 import { NotificationProvider } from './context/NotificationContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import AdminRoute from './components/common/AdminRoute';
 import Layout from './components/layout/Layout';
+import AdminLayout from './components/admin/AdminLayout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -23,6 +25,11 @@ import TariffsPage from './pages/TariffsPage';
 import ProfilePage from './pages/ProfilePage';
 import AssistantPage from './pages/AssistantPage';
 import RecommendationsPage from './pages/RecommendationsPage';
+import AdminOverviewPage from './pages/admin/AdminOverviewPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminTariffsPage from './pages/admin/AdminTariffsPage';
+import AdminCatalogPage from './pages/admin/AdminCatalogPage';
+import AdminAISettingsPage from './pages/admin/AdminAISettingsPage';
 
 function App() {
   return (
@@ -49,6 +56,19 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/assistant" element={<AssistantPage />} />
                     <Route path="/recommendations" element={<RecommendationsPage />} />
+                    {/* Ruta sin path: AdminRoute envuelve a /admin y sus
+                        sub-paneles. La autorizacion real la hace requireAdmin
+                        en el backend; esto solo evita renderizar el panel a
+                        quien no puede usarlo. */}
+                    <Route element={<AdminRoute />}>
+                      <Route path="/admin" element={<AdminLayout />}>
+                        <Route index element={<AdminOverviewPage />} />
+                        <Route path="users" element={<AdminUsersPage />} />
+                        <Route path="tariffs" element={<AdminTariffsPage />} />
+                        <Route path="catalog" element={<AdminCatalogPage />} />
+                        <Route path="ai" element={<AdminAISettingsPage />} />
+                      </Route>
+                    </Route>
                   </Route>
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
