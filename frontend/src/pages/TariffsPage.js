@@ -24,6 +24,17 @@ const estRange = (min, max, locale = 'es-AR') => {
   return `${fmtARS(min, locale)} – ${fmtARS(max, locale)}`;
 };
 
+/* Banda de subsidio segun el escalon. El color no es decorativo: marca cuanto
+   ayuda el estado a ese escalon, que es justo el dato que un usuario viene a
+   buscar en la tabla. R1 es el unico tramo con banda social (esmeralda); el
+   resto va degradando hacia la advertencia. */
+const SUBSIDY_BAND = { 1: 'social', 2: 'normal', 3: 'normal', 4: 'alto' };
+const subsidyBand = (category) => {
+  const n = parseInt(String(category || '').replace(/\D/g, ''), 10);
+  if (!Number.isFinite(n)) return '';
+  return SUBSIDY_BAND[n] || 'critico';
+};
+
 export default function TariffsPage() {
   const { t, lang } = useTranslation();
   const locale = lang === 'en' ? 'en-US' : 'es-AR';
@@ -63,7 +74,15 @@ export default function TariffsPage() {
   };
 
   const columns = useMemo(() => [
-    { header: t('tariffs.col_category'), key: 'category', render: (_, r) => <span className="tariff-badge">{r.category || '—'}</span> },
+    {
+      header: t('tariffs.col_category'),
+      key: 'category',
+      render: (_, r) => (
+        <span className={`tier-chip ${subsidyBand(r.category)}`}>
+          {r.category || '—'}
+        </span>
+      ),
+    },
     { header: t('tariffs.col_range'), key: 'range', render: (_, r) => <span className="table-mono">{r.tier_from || 0} - {r.tier_to || t('tariffs.up_to')}</span> },
     { header: t('tariffs.col_fixed'), key: 'fixed', render: (_, r) => <span className="table-mono"><strong>{fmtARS(r.fixed_charge, locale)}</strong></span> },
     {

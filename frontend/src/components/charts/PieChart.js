@@ -1,9 +1,11 @@
 import React from 'react';
 import { PieChart as RePie, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import useChartPalette from './useChartPalette';
+import { usePiePalette } from './useChartPalette';
 
 export default function PieChart({ data, nameKey = 'name', valueKey = 'value', title }) {
-  const colors = useChartPalette();
+  // Orden de luminancia, no el orden de los datos: los slices contiguos del
+  // circulo tienen que separarse entre si.
+  const colors = usePiePalette();
   return (
     <div className="chart-container">
       {title && <h3 className="chart-title">{title}</h3>}

@@ -1,81 +1,137 @@
+/* =====================================================================
+   SISTEMA DE COLOR "CONTROLAR"
+   Cada familia tiene UNA sola tarea, para que nada compita por la atencion:
+
+   · Esmeralda ............. Eficiencia y sustentabilidad (CTA, ahorro, serie 1)
+   · Indigo / Violeta / Cian Inteligencia y tecnologia (IA, IoT, series 2/4/6)
+   · Slate ................. Confianza y claridad (texto, bordes, estructura)
+   · Ambar / Rojo .......... Atencion. Solo cuando hay un umbral superado
+
+   Regla de contraste: --primary es el tono SEGURO (texto blanco encima, AA).
+   El esmeralda brillante (#10b981) no da 4.5:1 sobre blanco, asi que se reserva
+   para bordes, iconos, series y superficies: para eso esta --primary-bright.
+   ===================================================================== */
 :root {
-  /* ---- Marca: azul corporativo (separado del verde semÃ¡ntico de --success) ---- */
-  --primary: #1d4ed8;
-  --primary-light: #3b82f6;
-  --primary-dark: #1e3a8a;
-  --primary-bg: #eff6ff;
-  /* Texto sobre superficies primarias. Oscuro en dark, donde --primary es claro. */
+  /* ---- Marca: esmeralda (pilar "eficiencia") ---- */
+  /* Oscuro a proposito: #10b981 sobre blanco da 2.5:1 y no llegaria a AA. */
+  --primary: #047857;
+  /* Tono brillante: iconos, bordes, rings, series, barras. NO para texto chico. */
+  --primary-bright: #10b981;
+  --primary-light: #10b981;
+  --primary-dark: #065f46;
+  --primary-bg: #ecfdf5;
+  /* Texto sobre superficies primarias (botones, item activo, avatar). */
   --on-primary: #ffffff;
-  --secondary: #60a5fa;
-  --bg: #f6f8fb;
-  --surface: #ffffff;
+  --secondary: #4f46e5;
+
+  /* ---- Tecnologia: indigo / violeta / cian (pilar "IA + IoT") ---- */
+  --accent-indigo: #4f46e5;
+  --accent-indigo-text: #4338ca;   /* tono seguro para texto */
+  --accent-violet: #7c3aed;         /* predicciones / Asistente IA */
+  --accent-cyan: #0891b2;           /* sensor PZEM, valores en vivo */
+  --accent-cyan-text: #0e7490;      /* tono seguro para texto */
+
+  /* ---- Neutros: slate (pilar "claridad") ---- */
+  --bg: #ffffff;
+  --bg-alt: #f8fafc;                /* hero y secciones alternas */
+  --surface: #ffffff;               /* tarjetas */
   --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;             /* hover y zebra */
   --card-bg: #ffffff;
   --sidebar-bg: #0f172a;
   --sidebar-hover: #1e293b;
-  --sidebar-active: #1d4ed8;
+  --sidebar-active: #047857;
   --text: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #64748b;
   --text-muted: #94a3b8;
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
-  /* ---- Estados: tonos Oscurecidos para que el texto pequeÃ±o alcance AA ---- */
+
+  /* ---- Estados ---- */
   --danger: #dc2626;
   --danger-dark: #b91c1c;
   --on-danger: #ffffff;
-  --warning: #b45309;
-  --on-warning: #ffffff;
+  --warning: #d97706;               /* relleno de badge */
+  --on-warning: #b45309;            /* texto ambar: #f59e0b da 2.1:1 */
+  --warning-bright: #f59e0b;        /* barras, puntos, iconos */
   --info: #0e7490;
-  --success: #047857;
-  --violet: #6d28d9;
-  --ring: rgba(29, 78, 216, 0.28);
-  --primary-glow: rgba(29, 78, 216, 0.22);
-  --primary-tint: rgba(29, 78, 216, 0.12);
+  --success: #059669;
+  --success-bright: #10b981;
+  --violet: #7c3aed;
+  --inactive: #cbd5e1;
+  --on-inactive: #64748b;
+
+  --ring: rgba(16, 185, 129, 0.35);
+  --primary-glow: rgba(16, 185, 129, 0.22);
+  --primary-tint: rgba(16, 185, 129, 0.12);
   --danger-tint: rgba(220, 38, 38, 0.10);
   --danger-ring: rgba(220, 38, 38, 0.18);
   --danger-glow: rgba(220, 38, 38, 0.22);
-  --zebra: var(--zebra);
-  --badge-inset: var(--badge-inset);
-  --overlay: var(--overlay);
+  --zebra: #f8fafc;
+  --badge-inset: rgba(15, 23, 42, 0.08);
+  --overlay: rgba(15, 23, 42, 0.55);
 
   /* ---- Fondos tintados + su texto (badges, stat cards, recomendaciones) ---- */
-  --tint-info: #eff6ff;
+  --tint-info: #eef2ff;
   --tint-warning: #fffbeb;
   --tint-danger: #fef2f2;
-  --tint-success: #f0fdf4;
+  --tint-success: #ecfdf5;
   --tint-violet: #f5f3ff;
-  --on-tint-info: #1e40af;
+  --on-tint-info: #4338ca;
   --on-tint-warning: #b45309;
   --on-tint-danger: #b91c1c;
   --on-tint-success: #047857;
   --on-tint-violet: #6d28d9;
 
-  /* ---- Series de grÃ¡ficas (Recharts): separadas en luminancia, no solo matiz ---- */
-  --chart-1: #1d4ed8;
-  --chart-2: #0e7490;
-  --chart-3: #b45309;
-  --chart-4: #6d28d9;
-  --chart-5: #dc2626;
-  --chart-6: #047857;
-  --chart-7: #be185d;
-  --chart-8: #4d7c0f;
+  /* ---- Rangos tarifarios (OCEBA / EPRE): el color codifica el rango ---- */
+  --tier-social-bg: #ecfdf5;  --tier-social-fg: #047857;  --tier-social-br: #a7f3d0;
+  --tier-normal-bg: #eef2ff;  --tier-normal-fg: #4338ca;  --tier-normal-br: #c7d2fe;
+  --tier-alto-bg: #fffbeb;     --tier-alto-fg: #b45309;     --tier-alto-br: #fde68a;
+  --tier-alto-crit-bg: #fef2f2; --tier-alto-crit-fg: #b91c1c; --tier-alto-crit-br: #fecaca;
 
-  /* ---- Gradientes y halos ---- */
-  /* Extremos oscuros a propÃ³sito: el hero lleva texto blanco encima. */
-  --grad-hero: linear-gradient(135deg, #172554 0%, #1d4ed8 55%, #2563eb 100%);
-  --grad-auth: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 50%, #f5f3ff 100%);
-  /* El hero es oscuro en ambos modos, asÃ­ que su texto siempre va en blanco. */
-  --on-hero: #ffffff;
-  --glow-a: rgba(29, 78, 216, 0.16);
-  --glow-b: rgba(8, 145, 178, 0.13);
+  /* ---- Series de graficas (Recharts): separadas en luminancia, no solo matiz ----
+     El orden del donut lo fija usePiePalette (1,5,3,7,6,4,8,2): con el orden
+     natural de los datos dos pares vecinos quedan por debajo de 1.3 de
+     luminancia y se funden en escala de grises. */
+  --chart-1: #10b981;  /* consumo total del hogar */
+  --chart-2: #4f46e5;  /* referencia / promedio */
+  --chart-3: #d97706;  /* proyeccion de prediccion */
+  --chart-4: #7c3aed;  /* tarifa estimada */
+  --chart-5: #dc2626;  /* pico / maximo */
+  --chart-6: #0891b2;  /* generacion solar */
+  --chart-7: #be185d;  /* cargas altas */
+  --chart-8: #65a30d;  /* otros dispositivos */
+
+  /* ---- Hero: sin gradiente saturado. El resplandor va aparte. ---- */
+  --grad-hero: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  --grad-auth: linear-gradient(135deg, #f8fafc 0%, #ecfdf5 50%, #eef2ff 100%);
+  /* El cierre "Empezar gratis" mantiene un fondo oscuro para que el CTA siga
+     siendo el punto de mayor contraste de la pagina. Siempre texto blanco. */
+  --grad-cta: linear-gradient(135deg, #064e3b 0%, #047857 55%, #059669 100%);
+  /* El hero es claro en ambos modos, asi que su texto va siempre oscuro. */
+  --on-hero: #0f172a;
+  --hero-glow-a: rgba(16, 185, 129, 0.12);
+  --hero-glow-b: rgba(8, 145, 178, 0.08);
+  --hero-badge-bg: #ecfdf5;
+  --hero-badge-br: #a7f3d0;
+  --hero-badge-fg: #047857;
+  --glow-a: rgba(16, 185, 129, 0.14);
+  --glow-b: rgba(8, 145, 178, 0.10);
 
   /* ---- Marca ---- */
-  /* Sin override en :root.dark a proposito: la baldosa es azul en los dos temas.
-     Un logo que cambia de color al cambiar de tema se percibe como dos logos. */
-  --logo-tile-a: #1d4ed8;
-  --logo-tile-b: #3b82f6;
+  /* Sin override en :root.dark a proposito: la baldosa es esmeralda en los dos
+     temas. Un logo que cambia de color al cambiar de tema se percibe como dos logos. */
+  --logo-tile-a: #047857;
+  --logo-tile-b: #10b981;
   --logo-mark: #ffffff;
   --logo-bar: rgba(255, 255, 255, 0.42);
+
+  /* Las 4 tarjetas de cifras del hero usan un color de familia distinto cada
+     una, en orden: esmeralda, indigo, violeta, cian. */
+  --stat-accent-1: #047857;
+  --stat-accent-2: #4f46e5;
+  --stat-accent-3: #7c3aed;
+  --stat-accent-4: #0891b2;
 
   --radius: 14px;
   --radius-sm: 8px;
@@ -83,7 +139,7 @@
   --shadow: 0 1px 2px rgba(15,23,42,0.04), 0 1px 3px rgba(15,23,42,0.06);
   --shadow-md: 0 4px 10px rgba(15,23,42,0.06), 0 2px 4px rgba(15,23,42,0.04);
   --shadow-lg: 0 14px 28px rgba(15,23,42,0.10), 0 4px 8px rgba(15,23,42,0.06);
-  --shadow-primary: 0 6px 16px rgba(29, 78, 216, 0.24);
+  --shadow-primary: 0 6px 16px rgba(16, 185, 129, 0.24);
   --transition: all 0.2s ease;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
@@ -299,9 +355,12 @@ body {
   font-size: 1.3rem;
   flex-shrink: 0;
 }
+/* Cada KPI toma la familia de su metric: el de consumo es esmeralda, el de
+   alertas es rojo, el de dispositivos es cian (hardware). Nada de un color unico
+   para las cuatro, que es lo que hacia que se perdieran entre si. */
 .stat-card-primary .stat-card-icon { background: var(--primary-bg); color: var(--primary); }
 .stat-card-warning .stat-card-icon { background: var(--tint-warning); color: var(--on-tint-warning); }
-.stat-card-info .stat-card-icon { background: var(--tint-info); color: var(--on-tint-info); }
+.stat-card-info .stat-card-icon { background: var(--tint-info); color: var(--accent-indigo-text); }
 .stat-card-danger .stat-card-icon { background: var(--tint-danger); color: var(--on-tint-danger); }
 .stat-card-value { font-size: 1.5rem; font-weight: 800; line-height: 1.2; }
 .stat-card-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px; }
@@ -504,7 +563,9 @@ body {
   font-weight: 600;
   white-space: nowrap;
 }
-.badge-primary { background: var(--primary-bg); color: var(--on-tint-info); }
+/* badge-primary va esmeralda con texto esmeralda, no indice: cada badge toma
+   la familia de su propio fondo. */
+.badge-primary { background: var(--primary-bg); color: var(--on-tint-success); }
 .badge-info { background: var(--tint-info); color: var(--on-tint-info); }
 .badge-warning { background: var(--tint-warning); color: var(--on-tint-warning); }
 .badge-danger { background: var(--tint-danger); color: var(--on-tint-danger); }
@@ -645,60 +706,87 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 16px 32px;
-  background: var(--sidebar-bg);
-  color: #fff;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
   position: sticky;
   top: 0;
   z-index: 50;
 }
-.home-logo { font-size: 1.25rem; font-weight: 800; }
+.home-logo { font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
 .home-nav-links { display: flex; gap: 12px; align-items: center; }
 .home-nav-anchor {
-  color: rgba(255,255,255,0.72);
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 0.86rem;
   font-weight: 500;
   padding: 6px 2px;
   transition: color 0.2s ease;
 }
-.home-nav-anchor:hover { color: #fff; }
+.home-nav-anchor:hover { color: var(--primary); }
 @media (max-width: 900px) {
   .home-nav-anchor { display: none; }
 }
 
 .home-hero {
+  position: relative;
   background: var(--grad-hero);
   color: var(--on-hero);
   text-align: center;
   padding: 96px 32px 72px;
+  overflow: hidden;
 }
+/* Resplandor esmeralda + cian detras del titulo. Sustituye al gradiente saturado. */
+.home-hero::before,
+.home-hero::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.home-hero::before {
+  width: 620px; height: 620px;
+  top: -240px; left: 50%;
+  margin-left: -310px;
+  background: radial-gradient(circle, var(--hero-glow-a) 0%, transparent 70%);
+}
+.home-hero::after {
+  width: 460px; height: 460px;
+  bottom: -220px; right: -120px;
+  background: radial-gradient(circle, var(--hero-glow-b) 0%, transparent 70%);
+}
+.home-hero > * { position: relative; z-index: 1; }
 .home-hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.25);
+  background: var(--hero-badge-bg);
+  border: 1px solid var(--hero-badge-br);
+  color: var(--hero-badge-fg);
   padding: 6px 16px;
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 24px;
 }
+.home-hero-badge svg { color: var(--primary); }
 .home-hero h1 {
   font-size: 2.75rem;
   font-weight: 800;
   line-height: 1.15;
   max-width: 760px;
   margin: 0 auto 20px;
+  letter-spacing: -0.02em;
 }
 .home-hero p {
   font-size: 1.1rem;
-  color: rgba(255,255,255,0.9);
+  color: var(--text-secondary);
   max-width: 640px;
   margin: 0 auto 32px;
   line-height: 1.7;
 }
-.home-hero p strong { color: #fff; }
+.home-hero p strong { color: var(--text); }
 .home-hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
 
 .home-stats-band {
@@ -711,15 +799,28 @@ body {
   position: relative;
   z-index: 5;
 }
+/* Cada tarjeta lleva un borde superior del color de su familia: esmeralda,
+   indigo, violeta, cian. Da variedad sin salir del sistema. */
 .home-stat {
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border);
+  border-top: 3px solid var(--stat-accent-1);
   padding: 24px;
   text-align: center;
 }
-.home-stat-value { font-size: 1.9rem; font-weight: 800; color: var(--primary); }
+.home-stat:nth-child(1) { border-top-color: var(--stat-accent-1); }
+.home-stat:nth-child(2) { border-top-color: var(--stat-accent-2); }
+.home-stat:nth-child(3) { border-top-color: var(--stat-accent-3); }
+.home-stat:nth-child(4) { border-top-color: var(--stat-accent-4); }
+.home-stat-value {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
 .home-stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px; }
 
 /* scroll-margin evita que el nav sticky tape el titulo al saltar por un ancla. */
@@ -814,12 +915,12 @@ body {
 }
 .home-feature-list svg { color: var(--success); flex-shrink: 0; margin-top: 2px; }
 
-/* ---- Inteligencia artificial ---- */
+/* ---- Inteligencia artificial: familia violeta (pilar tecnologia) ---- */
 .home-ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
 .home-ai-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--primary);
+  border-left: 3px solid var(--accent-violet);
   border-radius: var(--radius);
   padding: 22px;
 }
@@ -827,8 +928,8 @@ body {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-sm);
-  background: var(--primary-bg);
-  color: var(--primary);
+  background: var(--tint-violet);
+  color: var(--accent-violet);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -849,7 +950,7 @@ body {
 .home-scope-note h4 { font-size: 0.95rem; font-weight: 700; color: var(--on-tint-warning); margin-bottom: 6px; }
 .home-scope-note p { font-size: 0.87rem; color: var(--on-tint-warning); }
 
-/* ---- Tecnología ---- */
+/* ---- Tecnología: familia cian (hardware / sensor IoT) ---- */
 .home-tech-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; }
 .home-tech-card {
   background: var(--surface);
@@ -863,8 +964,8 @@ body {
   height: 44px;
   margin: 0 auto 14px;
   border-radius: var(--radius-sm);
-  background: var(--primary-bg);
-  color: var(--primary);
+  background: var(--tint-info);
+  color: var(--accent-cyan-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -899,16 +1000,21 @@ body {
 
 /* ---- Llamada a la acción ---- */
 .home-cta {
+  position: relative;
+  overflow: hidden;
   max-width: 1036px;
   margin: 64px auto 72px;
   padding: 56px 32px;
   border-radius: var(--radius-lg);
-  background: var(--grad-hero);
-  color: var(--on-hero);
+  background: var(--grad-cta);
+  color: #fff;
   text-align: center;
 }
-.home-cta h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 12px; }
+.home-cta h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.02em; }
 .home-cta p { font-size: 1rem; margin-bottom: 28px; color: rgba(255,255,255,0.88); }
+/* Sobre el fondo verde oscuro el secundario va en blanco translucido. */
+.home-cta .btn-primary { background: #fff; color: #047857; }
+.home-cta .btn-primary:hover { background: #ecfdf5; }
 .home-cta .btn-secondary { background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.4); }
 .home-cta .btn-secondary:hover { background: rgba(255,255,255,0.24); }
 
@@ -936,13 +1042,13 @@ body {
   box-shadow: var(--shadow);
 }
 .home-iot-card { text-align: center; padding: 8px; }
-.home-iot-card svg { color: var(--primary); margin-bottom: 12px; }
+.home-iot-card svg { color: var(--accent-cyan); margin-bottom: 12px; }
 .home-iot-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
 .home-iot-card p { font-size: 0.85rem; color: var(--text-secondary); }
 .home-iot-arrow { color: var(--primary); font-size: 1.5rem; font-weight: 700; }
 .home-iot-note { text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 0.85rem; }
 .home-iot-note code {
-  background: var(--bg);
+  background: var(--bg-alt);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 2px 6px;
@@ -1040,80 +1146,114 @@ body {
   .home-nav { padding: 12px 16px; }
 }
 
-/* ============ Dark mode ============ */
+/* ============ Dark mode ============
+   Mismos roles, luminancias adaptadas. Ojo: --primary es claro (#34d399), asi
+   que --on-primary va oscuro. Texto blanco sobre este verde da 2.1:1. */
 :root.dark {
-  --primary: #60a5fa;
-  --primary-light: #93c5fd;
-  --primary-dark: #3b82f6;
-  --primary-bg: #0b1e3f;
-  /* --primary es claro aquÃ­, asÃ­ que el texto sobre Ã©l va oscuro. */
-  --on-primary: #0b1220;
-  --secondary: #3b82f6;
+  --primary: #34d399;
+  --primary-bright: #10b981;
+  --primary-light: #10b981;
+  --primary-dark: #059669;
+  --primary-bg: #064e3b;
+  /* Verde claro exige texto oscuro: nunca blanco. */
+  --on-primary: #052e24;
+  --secondary: #818cf8;
+
+  --accent-indigo: #818cf8;
+  --accent-indigo-text: #a5b4fc;
+  --accent-violet: #a78bfa;
+  --accent-cyan: #38bdf8;
+  --accent-cyan-text: #38bdf8;
+
   /* Escalera de fondos, de mas oscuro a mas claro:
-     footer/sidebar #0b1220 < tarjetas #131c2e < pagina #1e293b < bandas #2b3a4f.
-     El footer toma --sidebar-bg, asi que al aclarar --bg deja de fundirse con el.
-     --card-bg iguala a --surface como en el tema claro, donde ambos son blanco. */
-  --bg: #1e293b;
-  --surface: #131c2e;
-  --surface-2: #2b3a4f;
-  --card-bg: #131c2e;
-  --sidebar-bg: #0b1220;
+     footer/sidebar < tarjetas < pagina < bandas.
+     El footer toma --sidebar-bg, asi que al aclarar --bg deja de fundirse con el. */
+  --bg: #0b0f17;
+  --bg-alt: #131c2e;
+  --surface: #1e293b;
+  --surface-2: #24344b;
+  --surface-3: #24344b;
+  --card-bg: #1e293b;
+  --sidebar-bg: #0b0f17;
   --sidebar-hover: #1e293b;
-  --sidebar-active: #1d4ed8;
-  --text: #e2e8f0;
+  --sidebar-active: #34d399;
+  --text: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  --border: #243447;
+  --border: #2b3a4f;
   --border-strong: #334155;
-  --danger: #f87171;
-  --danger-dark: #ef4444;
+
+  --danger: #ef4444;
+  --danger-dark: #f87171;
   --on-danger: #450a0a;
-  --warning: #fbbf24;
-  --on-warning: #451a03;
-  --info: #22d3ee;
-  --success: #4ade80;
+  --warning: #f59e0b;
+  --on-warning: #fbbf24;
+  --warning-bright: #fbbf24;
+  --info: #38bdf8;
+  --success: #10b981;
+  --success-bright: #34d399;
   --violet: #a78bfa;
-  --ring: rgba(96, 165, 250, 0.30);
-  --primary-glow: rgba(96, 165, 250, 0.24);
-  --primary-tint: rgba(96, 165, 250, 0.12);
-  --danger-tint: rgba(248, 113, 113, 0.12);
+  --inactive: #334155;
+  --on-inactive: #94a3b8;
+
+  --ring: rgba(52, 211, 153, 0.40);
+  --primary-glow: rgba(52, 211, 153, 0.20);
+  --primary-tint: rgba(52, 211, 153, 0.14);
+  --danger-tint: rgba(239, 68, 68, 0.14);
   --danger-ring: rgba(248, 113, 113, 0.20);
   --danger-glow: rgba(248, 113, 113, 0.24);
-  --zebra: var(--zebra);
+  --zebra: #16202f;
   --badge-inset: rgba(148, 163, 184, 0.14);
   --overlay: rgba(2, 6, 23, 0.65);
 
-  --tint-info: #0c2f3f;
-  --tint-warning: #2b1a03;
-  --tint-danger: #2d0f0f;
-  --tint-success: #052e16;
+  --tint-info: #1e1b4b;
+  --tint-warning: #451a03;
+  --tint-danger: #450a0a;
+  --tint-success: #064e3b;
   --tint-violet: #1e1533;
-  --on-tint-info: #7dd3fc;
+  --on-tint-info: #a5b4fc;
   --on-tint-warning: #fbbf24;
   --on-tint-danger: #fca5a5;
-  --on-tint-success: #4ade80;
+  --on-tint-success: #34d399;
   --on-tint-violet: #c4b5fd;
 
+  /* Rangos tarifarios: superficies oscuras + tono 300/400 del color. */
+  --tier-social-bg: #064e3b;  --tier-social-fg: #6ee7b7;  --tier-social-br: #047857;
+  --tier-normal-bg: #1e1b4b;  --tier-normal-fg: #a5b4fc;  --tier-normal-br: #4338ca;
+  --tier-alto-bg: #451a03;     --tier-alto-fg: #fcd34d;     --tier-alto-br: #b45309;
+  --tier-alto-crit-bg: #450a0a; --tier-alto-crit-fg: #fca5a5; --tier-alto-crit-br: #b91c1c;
+
   /* Mismos roles, luminosidades adaptadas al fondo oscuro. */
-  --chart-1: #60a5fa;
-  --chart-2: #22d3ee;
+  --chart-1: #34d399;
+  --chart-2: #818cf8;
   --chart-3: #fbbf24;
   --chart-4: #a78bfa;
   --chart-5: #f87171;
-  --chart-6: #4ade80;
+  --chart-6: #22d3ee;
   --chart-7: #f472b6;
-  --chart-8: #a3e635;
+  --chart-8: #84cc16;
 
-  --grad-hero: linear-gradient(135deg, #0b1a3a 0%, #1e3a8a 60%, #1d4ed8 100%);
-  --grad-auth: linear-gradient(135deg, #0b1e3f 0%, #0b1220 55%, #131c2e 100%);
-  --on-hero: #ffffff;
-  --glow-a: rgba(96, 165, 250, 0.10);
-  --glow-b: rgba(34, 211, 238, 0.08);
+  --grad-hero: linear-gradient(180deg, #131c2e 0%, #0b0f17 100%);
+  --grad-cta: linear-gradient(135deg, #022c22 0%, #064e3b 60%, #047857 100%);
+  --grad-auth: linear-gradient(135deg, #131c2e 0%, #0b0f17 55%, #1e1b4b 100%);
+  --on-hero: #f8fafc;
+  --hero-glow-a: rgba(52, 211, 153, 0.14);
+  --hero-glow-b: rgba(56, 189, 248, 0.10);
+  --hero-badge-bg: #064e3b;
+  --hero-badge-br: #047857;
+  --hero-badge-fg: #34d399;
+  --glow-a: rgba(52, 211, 153, 0.12);
+  --glow-b: rgba(56, 189, 248, 0.08);
+
+  --stat-accent-1: #34d399;
+  --stat-accent-2: #818cf8;
+  --stat-accent-3: #a78bfa;
+  --stat-accent-4: #38bdf8;
 
   --shadow: 0 1px 2px rgba(0,0,0,0.35);
   --shadow-md: 0 4px 10px rgba(0,0,0,0.35);
   --shadow-lg: 0 14px 28px rgba(0,0,0,0.5);
-  --shadow-primary: 0 6px 16px rgba(96, 165, 250, 0.24);
+  --shadow-primary: 0 6px 16px rgba(52, 211, 153, 0.24);
 }
 :root.dark .tariff-calculator { border-color: var(--primary-dark); }
 :root.dark .data-table tbody tr:hover { background: var(--surface-2); }
@@ -1664,8 +1804,10 @@ body {
   transform: translateY(-1px);
 }
 .appliance-card:hover .appliance-card-watts { background: var(--primary); border-color: var(--primary); }
-.appliance-card:hover .appliance-card-watts strong { color: #fff; }
-.appliance-card:hover .appliance-card-watts small { color: rgba(255, 255, 255, 0.85); }
+/* El texto va con --on-primary: en claro es blanco, en oscuro es verde oscuro,
+   porque --primary ahi es claro y el blanco no llegaria a AA. */
+.appliance-card:hover .appliance-card-watts strong { color: var(--on-primary); }
+.appliance-card:hover .appliance-card-watts small { color: var(--on-primary); opacity: 0.85; }
 .appliance-card-icon {
   width: 40px;
   height: 40px;
@@ -2055,9 +2197,46 @@ body {
   font-size: 0.82rem;
   color: var(--text-secondary);
 }
-.tariff-legend svg { flex-shrink: 0; color: var(--primary); }
+.tariff-legend svg { flex-shrink: 0; color: var(--accent-indigo); }
 /* .tariff-badge y .calc-result-cat ya usan var(--primary) + var(--on-primary). */
 :root.dark .tariff-legend { background: var(--bg); }
+
+/* ---- Rangos tarifarios: el color codifica el rango (OCEBA / EPRE) ----
+   Cada rango tiene su tinte, su borde y su texto, asi se distinguen de un
+   vistazo y no se ven como "el mismo color mas claro". */
+.tier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--tier-normal-br);
+  background: var(--tier-normal-bg);
+  color: var(--tier-normal-fg);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.tier-chip.social { border-color: var(--tier-social-br); background: var(--tier-social-bg); color: var(--tier-social-fg); }
+.tier-chip.normal { border-color: var(--tier-normal-br); background: var(--tier-normal-bg); color: var(--tier-normal-fg); }
+.tier-chip.alto { border-color: var(--tier-alto-br); background: var(--tier-alto-bg); color: var(--tier-alto-fg); }
+.tier-chip.critico { border-color: var(--tier-alto-crit-br); background: var(--tier-alto-crit-bg); color: var(--tier-alto-crit-fg); }
+
+/* ---- Cifras: ancho fijo para que no salten al actualizarse en vivo ---- */
+.stat-card-value,
+.home-stat-value,
+.forecast-total,
+.reading-value,
+.tariff-rate-cell strong {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ---- Foco visible: el anillo es esmeralda en ambos temas ---- */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 /* Predicciones: total y meta */
 .forecast-total {
@@ -2460,3 +2639,614 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
   .dashboard-grid { gap: 14px; }
   .timer-display { font-size: 2.4rem; }
 }
+
+
+/* =====================================================================
+   PANEL DE ADMINISTRACION
+   Usa los mismos tokens del sistema unificado: no hay hexes aca.
+   Reparto de color: esmeralda = accion/estado OK, indigo = datos de
+   plataforma, cian = dispositivo/IoT, violeta = IA. Mismo criterio que
+   el resto de la app, para que el panel no se lea como otra aplicacion.
+   ===================================================================== */
+
+.admin-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ---------- Encabezado ---------- */
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-header-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-header-mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+}
+
+.admin-header p {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.admin-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.admin-back:hover { border-color: var(--primary); color: var(--primary); }
+
+.admin-nav-toggle { display: none; }
+
+/* ---------- Navegacion ---------- */
+.admin-nav {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 5px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.admin-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 15px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.87rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.admin-nav-link:hover { background: var(--surface); color: var(--text); }
+.admin-nav-link.active {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.admin-content { min-height: 0; }
+
+/* ---------- Paneles y tarjetas ---------- */
+.admin-panel { display: flex; flex-direction: column; gap: 18px; }
+
+.admin-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.admin-panel-head h2 { margin: 0; font-size: 1.1rem; }
+.admin-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-card {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.admin-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.admin-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.admin-card-head h3 { margin: 0; }
+
+.admin-hint {
+  margin: 0 0 14px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.admin-empty {
+  margin: 0;
+  padding: 22px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.admin-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: var(--tint-danger);
+  color: var(--on-tint-danger);
+  font-size: 0.85rem;
+}
+.admin-error button {
+  margin-left: auto;
+  padding: 5px 12px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- Cifras ---------- */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+/* Borde superior de acento, igual que las tarjetas de cifras del home:
+   identifica la familia de la cifra sin gastar un color en el fondo. */
+.admin-stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.admin-stat::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--admin-accent, var(--stat-accent-1));
+}
+.admin-stat-accent-1 { --admin-accent: var(--stat-accent-1); }
+.admin-stat-accent-2 { --admin-accent: var(--stat-accent-2); }
+.admin-stat-accent-3 { --admin-accent: var(--stat-accent-3); }
+.admin-stat-accent-4 { --admin-accent: var(--stat-accent-4); }
+
+.admin-stat-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.admin-stat-value {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.admin-stat-hint { font-size: 0.76rem; color: var(--text-secondary); }
+
+/* ---------- Barras comparativas ---------- */
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+.admin-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.admin-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+
+.admin-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 130px) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.83rem;
+}
+.admin-bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.admin-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.admin-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--stat-accent-2);
+}
+.admin-bar-value {
+  min-width: 64px;
+  text-align: right;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Formularios ---------- */
+.admin-form { display: flex; flex-direction: column; gap: 16px; }
+.admin-form-inline { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.admin-form label { display: flex; flex-direction: column; gap: 5px; }
+.admin-form label.grow { flex: 1 1 220px; }
+.admin-form label > span {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.admin-form label > strong { font-size: 0.9rem; padding: 9px 0; }
+
+.admin-form input,
+.admin-form select,
+.admin-filters select,
+.admin-search input {
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.87rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-search input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+
+.admin-input-sm { width: 100%; min-width: 76px; padding: 6px 8px !important; font-size: 0.82rem !important; }
+
+.admin-form-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.admin-sticky-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 14px 0;
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
+}
+
+.admin-form-error {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: var(--tint-danger);
+  color: var(--on-tint-danger);
+  font-size: 0.83rem;
+}
+
+/* ---------- Filtros ---------- */
+.admin-filters { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.admin-filters .admin-field { display: flex; flex-direction: column; gap: 5px; }
+.admin-filters .admin-field > span {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.admin-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 240px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text-secondary);
+}
+.admin-search input { flex: 1; border: none; background: transparent; padding-left: 0; }
+.admin-search input:focus { box-shadow: none; }
+
+/* ---------- Tablas ---------- */
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+
+.admin-table th {
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.admin-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--zebra, var(--border));
+  color: var(--text);
+  vertical-align: middle;
+}
+.admin-table tbody tr:last-child td { border-bottom: none; }
+.admin-table tbody tr:hover td { background: var(--bg-alt); }
+
+/* Una fila desactivada se atenua en vez de ocultarse: el admin tiene que
+   ver que la cuenta existe para poder reactivarla. */
+.admin-row-inactive td { opacity: 0.55; }
+.admin-row-error td { background: var(--tint-danger); }
+.admin-row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+.admin-user-cell { display: flex; align-items: center; gap: 10px; }
+.admin-user-cell div { display: flex; flex-direction: column; min-width: 0; }
+.admin-user-cell span:not(.admin-avatar) {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--tint-success);
+  color: var(--on-tint-success);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+/* ---------- Chips ---------- */
+.admin-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* admin = familia indigo (datos de plataforma), ok/activo = familia
+   esmeralda, neutro = solo estructura. Mismo criterio que los badges
+   del resto de la app. */
+.admin-chip-admin { border-color: var(--accent-indigo); background: var(--tint-info); color: var(--on-tint-info); }
+.admin-chip-user  { border-color: var(--border); background: var(--bg-alt); color: var(--text-secondary); }
+.admin-chip-ok    { border-color: var(--success); background: var(--tint-success); color: var(--on-tint-success); }
+.admin-chip-off   { border-color: var(--border); background: var(--bg-alt); color: var(--text-secondary); }
+
+.admin-chips { display: flex; flex-direction: column; gap: 10px; }
+.admin-appliance-chip { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.admin-appliance-chip em {
+  font-style: normal;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.admin-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.admin-chip-btn:hover { border-color: var(--danger); color: var(--on-tint-danger); }
+
+.admin-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+}
+.admin-tile-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.admin-tile p { margin: 0; font-size: 0.79rem; color: var(--text-secondary); }
+.admin-tile-meta { font-size: 0.74rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+.admin-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Parametros de IA ---------- */
+.admin-seasonal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+}
+.admin-seasonal-month { display: flex; flex-direction: column; gap: 4px; }
+.admin-seasonal-month span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.admin-seasonal-month input {
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.admin-seasonal-month input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+
+.admin-ladder { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.admin-ladder-row { display: flex; align-items: center; gap: 9px; }
+.admin-ladder-row input {
+  width: 100px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+.admin-ladder-row input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+.admin-ladder-row span { color: var(--text-secondary); font-size: 0.85rem; }
+
+/* ---------- Botones ---------- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-ghost:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.btn-ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-ghost.btn-active { border-color: var(--primary); color: var(--primary); }
+.btn-sm { padding: 6px 10px; font-size: 0.8rem; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .admin-shell { padding: 16px; }
+  .admin-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  /* En mobile la nav colapsa: 5 tabs no entran en una fila sin partirse. */
+  .admin-nav { display: none; flex-direction: column; }
+  .admin-nav.open { display: flex; }
+  .admin-stats { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
+  .admin-stat-value { font-size: 1.45rem; }
+}
+
