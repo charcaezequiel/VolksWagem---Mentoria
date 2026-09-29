@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { ErrorBoundaryWithTranslation } from '../common/ErrorBoundary';
 
 const TABS = [
   { to: '/admin', end: true, label: 'admin.tab.overview', icon: LayoutDashboard },
@@ -75,7 +76,9 @@ export default function AdminLayout() {
       </nav>
 
       <div className="admin-content">
-        <Outlet />
+        <ErrorBoundaryWithTranslation zona="admin">
+          <Outlet />
+        </ErrorBoundaryWithTranslation>
       </div>
     </div>
   );

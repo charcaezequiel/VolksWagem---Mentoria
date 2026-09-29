@@ -31,6 +31,7 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminTariffsPage from './pages/admin/AdminTariffsPage';
 import AdminCatalogPage from './pages/admin/AdminCatalogPage';
 import AdminAISettingsPage from './pages/admin/AdminAISettingsPage';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 function App() {
   return (
@@ -41,10 +42,11 @@ function App() {
             <NotificationProvider>
               <ManualTimerProvider>
                 <Toaster position="top-right" toastOptions={{ duration: 4000, style: { fontFamily: 'Inter, sans-serif' } }} />
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
+                <ErrorBoundary zona="raiz">
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
                   {/* El Layout envuelve las dos ramas para que el admin y el
                       cliente compartan barra, tema e idioma. /profile queda
                       fuera de CustomerRoute a proposito: la identidad (nombre,
@@ -78,7 +80,8 @@ function App() {
                     </Route>
                   </Route>
                   <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                  </Routes>
+                </ErrorBoundary>
               </ManualTimerProvider>
             </NotificationProvider>
           </SocketProvider>

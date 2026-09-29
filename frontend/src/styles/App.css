@@ -2778,6 +2778,78 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
   font-weight: 500;
 }
 
+/* ---------- Limite de error ---------- */
+/* Se usa el color de atencion (rojo del sistema unificado), no uno nuevo:
+   el aviso tiene que leerse igual al resto de los estados de alerta. */
+.error-boundary {
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  min-height: 320px;
+}
+.error-boundary-card {
+  width: 100%;
+  max-width: 520px;
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+.error-boundary-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: var(--danger-tint);
+  color: var(--danger);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.error-boundary-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+}
+.error-boundary-card p {
+  margin: 0 0 18px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.error-boundary-detail {
+  margin-bottom: 18px;
+  text-align: left;
+  font-size: 0.8rem;
+}
+.error-boundary-detail summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 6px 0;
+}
+.error-boundary-detail pre {
+  max-height: 220px;
+  overflow: auto;
+  margin: 8px 0 0;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.error-boundary-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* ---------- Paneles y tarjetas ---------- */
 .admin-panel { display: flex; flex-direction: column; gap: 18px; }
 
