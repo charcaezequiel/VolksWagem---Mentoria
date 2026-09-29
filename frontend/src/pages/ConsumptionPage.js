@@ -397,7 +397,7 @@ export default function ConsumptionPage() {
         >
           <form onSubmit={handleAddReading}>
             <div className="form-group">
-              <Field label={t('consumption.form_field_device')} icon={<Cpu size={15} />} hint={t('consumption.form_field_device_hint')}>
+              <Field label={t('consumption.form_device')} icon={<Cpu size={15} />} hint={t('consumption.form_device_hint')}>
                 <select className="form-select" value={form.device_id} onChange={(e) => setForm({ ...form, device_id: e.target.value })}>
                   <option value="">{t('consumption.general_device')}</option>
                   {devices.map((d) => <option key={d.id || d._id} value={d.id || d._id}>{d.name} · {d.nominal_watts} W</option>)}
@@ -405,22 +405,22 @@ export default function ConsumptionPage() {
               </Field>
             </div>
             <div className="form-group">
-              <Field label={t('consumption.form_field_watts')} icon={<Zap size={15} />} required hint={t('consumption.form_field_watts_hint')}>
+              <Field label={t('consumption.form_watts')} icon={<Zap size={15} />} required hint={t('consumption.form_watts_hint')}>
                 <input className="form-input" type="number" step="0.01" min="0" value={form.instant_watts} onChange={(e) => setForm({ ...form, instant_watts: e.target.value })} required placeholder={t('consumption.form_watts_placeholder')} />
               </Field>
             </div>
             <div className="form-group">
-              <Field label={t('consumption.form_field_kwh')} icon={<Activity size={15} />} hint={t('consumption.form_field_kwh_hint')}>
+              <Field label={t('consumption.form_kwh')} icon={<Activity size={15} />} hint={t('consumption.form_kwh_hint')}>
                 <input className="form-input" type="number" step="0.01" min="0" value={form.accumulated_kwh_day} onChange={(e) => setForm({ ...form, accumulated_kwh_day: e.target.value })} placeholder={t('consumption.form_kwh_placeholder')} />
               </Field>
             </div>
             <div className="form-group">
-              <Field label={t('consumption.form_field_date')} icon={<CalendarRange size={15} />} hint={t('consumption.form_field_date_hint')}>
+              <Field label={t('consumption.form_date')} icon={<CalendarRange size={15} />} hint={t('consumption.form_date_hint')}>
                 <input className="form-input" type="datetime-local" value={form.reading_timestamp} onChange={(e) => setForm({ ...form, reading_timestamp: e.target.value })} />
               </Field>
             </div>
             <div className="form-group">
-              <Field label={t('consumption.form_field_source')} icon={<Activity size={15} />}>
+              <Field label={t('consumption.form_source')} icon={<Activity size={15} />}>
                 <select className="form-select" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
                   <option value="manual">{t('consumption.source_manual')}</option>
                   <option value="sensor">{t('consumption.source_sensor')}</option>
