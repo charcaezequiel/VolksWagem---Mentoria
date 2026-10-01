@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import { useTranslation } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import FieldHint from '../../components/admin/FieldHint';
 
 const emptyCategory = { name: '', icon: '', description: '' };
 const emptyAppliance = { category_id: '', name: '', nominal_watts: '', min_watts: '', max_watts: '', hours_daily_usage: '' };
@@ -115,16 +116,19 @@ export default function AdminCatalogPage() {
         {showCatForm && (
           <form className="admin-form admin-form-inline" onSubmit={addCategory}>
             <label>
-              <span>{t('admin.catalog.name')}</span>
-              <input value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} required />
+              <span>{t('admin.form.name')}</span>
+              <input value={catForm.name} onChange={(e) => setCatForm({ ...catForm, name: e.target.value })} placeholder={t('admin.catalog.name_ph')} required />
+              <FieldHint hint={t('admin.catalog.name_help')} />
             </label>
             <label>
               <span>{t('admin.catalog.icon')}</span>
-              <input value={catForm.icon} onChange={(e) => setCatForm({ ...catForm, icon: e.target.value })} />
+              <input value={catForm.icon} onChange={(e) => setCatForm({ ...catForm, icon: e.target.value })} placeholder="🏠" />
+              <FieldHint hint={t('admin.catalog.icon_help')} />
             </label>
             <label className="grow">
               <span>{t('admin.catalog.description')}</span>
-              <input value={catForm.description} onChange={(e) => setCatForm({ ...catForm, description: e.target.value })} />
+              <input value={catForm.description} onChange={(e) => setCatForm({ ...catForm, description: e.target.value })} placeholder={t('admin.catalog.description_ph')} />
+              <FieldHint hint={t('admin.catalog.description_help')} />
             </label>
             <div className="admin-form-actions">
               <button type="submit" className="btn btn-primary" disabled={busy === 'cat'}>{t('common.save')}</button>
@@ -174,23 +178,27 @@ export default function AdminCatalogPage() {
         {showAppForm && (
           <form className="admin-form admin-form-inline" onSubmit={addAppliance}>
             <label>
-              <span>{t('admin.catalog.categories')}</span>
+              <span>{t('admin.catalog.category')}</span>
               <select value={appForm.category_id} onChange={(e) => setAppForm({ ...appForm, category_id: e.target.value })} required>
-                <option value="">—</option>
+                <option value="">{t('admin.catalog.pick_category')}</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+              <FieldHint hint={t('admin.catalog.category_help')} />
             </label>
             <label>
-              <span>{t('admin.catalog.name')}</span>
-              <input value={appForm.name} onChange={(e) => setAppForm({ ...appForm, name: e.target.value })} required />
+              <span>{t('admin.form.name')}</span>
+              <input value={appForm.name} onChange={(e) => setAppForm({ ...appForm, name: e.target.value })} placeholder={t('admin.catalog.appliance_ph')} required />
+              <FieldHint hint={t('admin.catalog.appliance_name_help')} />
             </label>
             <label>
               <span>{t('admin.catalog.watts')}</span>
-              <input type="number" step="any" min="0" value={appForm.nominal_watts} onChange={(e) => setAppForm({ ...appForm, nominal_watts: e.target.value })} required />
+              <input type="number" step="any" min="0" value={appForm.nominal_watts} onChange={(e) => setAppForm({ ...appForm, nominal_watts: e.target.value })} placeholder="1500" required />
+              <FieldHint hint={t('admin.catalog.watts_help')} ejemplo={t('admin.catalog.watts_ej')} />
             </label>
             <label>
               <span>{t('admin.catalog.hours')}</span>
-              <input type="number" step="any" min="0" max="24" value={appForm.hours_daily_usage} onChange={(e) => setAppForm({ ...appForm, hours_daily_usage: e.target.value })} />
+              <input type="number" step="any" min="0" max="24" value={appForm.hours_daily_usage} onChange={(e) => setAppForm({ ...appForm, hours_daily_usage: e.target.value })} placeholder="4" />
+              <FieldHint hint={t('admin.catalog.hours_help')} />
             </label>
             <div className="admin-form-actions">
               <button type="submit" className="btn btn-primary" disabled={busy === 'app'}>{t('common.save')}</button>
@@ -234,28 +242,33 @@ export default function AdminCatalogPage() {
           <label>
             <span>{t('admin.catalog.user')}</span>
             <select value={devForm.user_id} onChange={(e) => setDevForm({ ...devForm, user_id: e.target.value })} required>
-              <option value="">—</option>
+              <option value="">{t('admin.catalog.pick_user')}</option>
               {users.map((u) => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
             </select>
+            <FieldHint hint={t('admin.catalog.user_help')} />
           </label>
           <label>
-            <span>{t('admin.catalog.categories')}</span>
+            <span>{t('admin.catalog.category')}</span>
             <select value={devForm.category_id} onChange={(e) => setDevForm({ ...devForm, category_id: e.target.value })} required>
-              <option value="">—</option>
+              <option value="">{t('admin.catalog.pick_category')}</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+            <FieldHint hint={t('admin.catalog.device_category_help')} />
           </label>
           <label>
-            <span>{t('admin.catalog.name')}</span>
-            <input value={devForm.name} onChange={(e) => setDevForm({ ...devForm, name: e.target.value })} required />
+            <span>{t('admin.form.name')}</span>
+            <input value={devForm.name} onChange={(e) => setDevForm({ ...devForm, name: e.target.value })} placeholder={t('admin.catalog.device_ph')} required />
+            <FieldHint hint={t('admin.catalog.device_name_help')} />
           </label>
           <label>
             <span>{t('admin.catalog.watts')}</span>
-            <input type="number" step="any" min="0" value={devForm.nominal_watts} onChange={(e) => setDevForm({ ...devForm, nominal_watts: e.target.value })} required />
+            <input type="number" step="any" min="0" value={devForm.nominal_watts} onChange={(e) => setDevForm({ ...devForm, nominal_watts: e.target.value })} placeholder="100" required />
+            <FieldHint hint={t('admin.catalog.device_watts_help')} />
           </label>
           <label>
             <span>{t('admin.catalog.hours')}</span>
-            <input type="number" step="any" min="0" max="24" value={devForm.hours_daily_usage} onChange={(e) => setDevForm({ ...devForm, hours_daily_usage: e.target.value })} />
+            <input type="number" step="any" min="0" max="24" value={devForm.hours_daily_usage} onChange={(e) => setDevForm({ ...devForm, hours_daily_usage: e.target.value })} placeholder="24" />
+            <FieldHint hint={t('admin.catalog.device_hours_help')} />
           </label>
           <div className="admin-form-actions">
             <button type="submit" className="btn btn-primary" disabled={busy === 'dev'}>
@@ -264,9 +277,9 @@ export default function AdminCatalogPage() {
           </div>
         </form>
 
-        <p className="admin-hint">
-          {t('admin.catalog.rotate_token')}: se genera un token IoT único por dispositivo.
-        </p>
+        {/* Antes estaba hardcodeado en espanol y con la palabra "IoT", que no le dice
+            nada a un admin que no desarrollo. */}
+          <p className="admin-hint">{t('admin.catalog.token_help')}</p>
       </section>
     </div>
   );

@@ -6,6 +6,7 @@ import {
 import { useTranslation } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { ErrorBoundaryWithTranslation } from '../common/ErrorBoundary';
+import AdminGuide from './AdminGuide';
 
 const TABS = [
   { to: '/admin', end: true, label: 'admin.tab.overview', icon: LayoutDashboard },
@@ -59,6 +60,8 @@ export default function AdminLayout() {
           {t('admin.tab.overview')}
         </button>
       </header>
+
+      <AdminGuide />
 
       <nav className={`admin-nav ${open ? 'open' : ''}`}>
         {TABS.map(({ to, end, label, icon: Icon }) => (

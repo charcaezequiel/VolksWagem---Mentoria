@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import { useTranslation } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import FieldHint from '../../components/admin/FieldHint';
 import { parseTariffFile, plantillaCSV, normProvincia, ACCEPTED_EXTENSIONS } from '../../utils/tariffFileParser';
 
 /* Dos nombres de provincia se consideran el mismo si uno contiene al otro
@@ -283,6 +284,9 @@ export default function AdminTariffsPage() {
         </div>
       ) : (
         <form className="admin-card" onSubmit={submit}>
+          {/* Explicacion de arriba antes que el importador: lo primero que se pregunta
+            un admin es "esto como se usa", no "donde subo el archivo". */}
+          <p className="admin-hint">{t('admin.tariffs.howto')}</p>
           <p className="admin-hint">{t('admin.tariffs.upload_hint')}</p>
 
           {/* Importacion de archivo. El input esta oculto y se dispara con el
@@ -323,6 +327,7 @@ export default function AdminTariffsPage() {
             <label>
               <span>{t('admin.tariffs.province')}</span>
               <strong>{selected?.name}</strong>
+              <FieldHint hint={t('admin.tariffs.province_help')} />
             </label>
             <label>
               <span>{t('admin.tariffs.effective_from')}</span>
@@ -332,6 +337,7 @@ export default function AdminTariffsPage() {
                 onChange={(e) => setEffectiveFrom(e.target.value)}
                 required
               />
+              <FieldHint hint={t('admin.tariffs.effective_from_help')} />
             </label>
           </div>
 
@@ -339,13 +345,39 @@ export default function AdminTariffsPage() {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>{t('admin.tariffs.tier')}</th>
-                  <th>{t('admin.tariffs.from')}</th>
-                  <th>{t('admin.tariffs.to')}</th>
-                  <th>{t('admin.tariffs.n1')}</th>
-                  <th>{t('admin.tariffs.n2')}</th>
-                  <th>{t('admin.tariffs.n3')}</th>
-                  <th>{t('admin.tariffs.fixed')}</th>
+                  {/* Cada columna dice en una linea que se carga ahi. Antes
+                      "Precio N1 / N2 / N3" y "Escalon" no explicaban nada: no
+                      queda claro si N2 es un segundo escalon o el precio de un
+                      segundo tramo, ni si el cargo fijo va por kWh o por
+                      factura. */}
+                  <th>
+                    {t('admin.tariffs.tier')}
+                    <FieldHint hint={t('admin.tariffs.tier_help')} />
+                  </th>
+                  <th>
+                    {t('admin.tariffs.from')}
+                    <FieldHint hint={t('admin.tariffs.from_help')} />
+                  </th>
+                  <th>
+                    {t('admin.tariffs.to')}
+                    <FieldHint hint={t('admin.tariffs.to_help')} />
+                  </th>
+                  <th>
+                    {t('admin.tariffs.n1')}
+                    <FieldHint hint={t('admin.tariffs.n1_help')} />
+                  </th>
+                  <th>
+                    {t('admin.tariffs.n2')}
+                    <FieldHint hint={t('admin.tariffs.n2_help')} />
+                  </th>
+                  <th>
+                    {t('admin.tariffs.n3')}
+                    <FieldHint hint={t('admin.tariffs.n3_help')} />
+                  </th>
+                  <th>
+                    {t('admin.tariffs.fixed')}
+                    <FieldHint hint={t('admin.tariffs.fixed_help')} />
+                  </th>
                   <th style={{ textAlign: 'right' }} />
                 </tr>
               </thead>

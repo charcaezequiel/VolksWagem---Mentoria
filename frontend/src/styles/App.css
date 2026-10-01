@@ -2745,7 +2745,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
   color: var(--on-primary);
 }
 
-.admin-content { min-height: 0; }
+.admin-content {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 /* ---------- Importacion de tarifario desde archivo ---------- */
 .admin-import {
@@ -2851,7 +2856,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
 }
 
 /* ---------- Paneles y tarjetas ---------- */
-.admin-panel { display: flex; flex-direction: column; gap: 18px; }
+.admin-panel { display: flex; flex-direction: column; gap: 24px; }
 
 .admin-panel-head {
   display: flex;
@@ -2984,6 +2989,29 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
 .admin-stat-hint { font-size: 0.76rem; color: var(--text-secondary); }
 
 /* ---------- Barras comparativas ---------- */
+/* ---------- Grupos de tarjetas ---------- */
+.admin-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-group-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.admin-group-hint {
+  margin: -6px 0 0;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
 .admin-grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -3062,17 +3090,292 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
   font-size: 0.87rem;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-.admin-form input:focus,
-.admin-form select:focus,
-.admin-search input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-tint);
+
+/* ---------- Ayuda de campo ----------
+   Cada campo dice que se espera. El hint es texto chico y suave a proposito: si
+   tuviera el mismo peso que la etiqueta competirian entre si y la etiqueta
+   dejaria de leerse como etiqueta. */
+.field-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin-top: 1px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
 }
 
-.admin-input-sm { width: 100%; min-width: 76px; padding: 6px 8px !important; font-size: 0.82rem !important; }
+.field-hint-tag {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
 
-.admin-form-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.field-hint-ej {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--tint-info);
+  color: var(--on-tint-info);
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* La ayuda de campo se apoya en --text-secondary, que en modo noche es un gris
+   medio sobre superficie oscura. Con el tono apagado de las cabeceras la
+   explicacion de los campos quedaba casi invisible, asi que en oscuro sube de
+   tono y el chip cambia de fondo. */
+:root.dark .field-hint-tag { background: var(--surface-2); border-color: var(--border-strong); }
+:root.dark .admin-table th .field-hint { color: var(--text-secondary); opacity: 1; }
+
+/* En la grilla de tarifas los hints van dentro de un <th>: este reset evita que
+   el texto herede el uppercase y la alineacion de las cabeceras y lo deja
+   debajo del titulo, legible. */
+.admin-table th .field-hint {
+  margin-top: 3px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.75;
+}
+
+.admin-table th .field-hint-tag,
+.admin-table th .field-hint-ej { display: none; }
+
+/* El degradado va con tokens, no con blanco fijo: con rgba(255,255,255) el
+   panel quedaba casi blanco en modo noche mientras el texto seguia siendo
+   claro, y la guia dejaba de leerse entera. */
+.admin-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 22px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg-alt) 100%);
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Franja decorativa de la marca. Se apoya en el padding izquierdo de la guia
+   (22px) para no pisar el texto, y el overflow:hidden del padre la recorta con
+   las esquinas redondeadas. Antes iba con rgba de baja opacidad sobre un
+   indigo fijo, que en modo noche no se distinguia de --tint-info. */
+.admin-guide::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--accent-indigo) 100%);
+  opacity: 0.55;
+}
+
+.admin-guide-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-guide-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.admin-guide-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.admin-guide-title h2 {
+  margin: 0;
+  font-size: 1.08rem;
+  letter-spacing: -0.01em;
+}
+
+.admin-guide-title p {
+  margin: 4px 0 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 64ch;
+}
+
+/* El parrafo es el texto que explica el rol: en modo noche --text-secondary
+   sobre la superficie oscura queda justo de legible, asi que sube un tono.
+   El h3 y los li de las tarjetas ya heredan de la tarjeta y no necesitan override. */
+:root.dark .admin-guide-title p { color: var(--text); }
+
+.admin-guide-collapse {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.admin-guide-collapse:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.admin-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.admin-guide-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  /* Las tarjetas van un tono mas abajo que la guia para que se lean como
+     tarjetas y no se fundan con el fondo del bloque. */
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--shadow);
+}
+
+.admin-guide-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.admin-guide-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+/* Numero de orden en un circulo: el orden de las tareas es el punto de la
+   guia, asi que se muestra en vez de dejarlo solo en el titulo del h3. Usa la
+   paleta verde de la marca (antes era indigo y en modo claro competia con el
+   verde de la cabecera), y los tokens ya dan contraste en ambos temas. */
+.admin-guide-num {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-guide-card ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.admin-guide-card li {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.admin-guide-go {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  padding: 5px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-alt);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.admin-guide-card:hover .admin-guide-go {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.admin-guide-foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  /* El borde usaba un indigo fijo (rgba(79,70,229)) que en modo noche quedaba
+     casi invisible contra --tint-info. Se usa el token --accent-indigo, que si
+     cambia de valor con el tema. */
+  background: var(--tint-info);
+  border: 1px solid var(--accent-indigo);
+  color: var(--on-tint-info);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.admin-guide-foot strong { color: var(--on-tint-info); }
+
+/* En modo noche el pie es un bloque oscuro con texto claro, asi que el texto
+   suelto (sin el <strong> de "Regla de oro") necesita su propio tono para no
+   competir con el encabezado. */
+:root.dark .admin-guide-foot { background: var(--tint-violet); color: var(--on-tint-violet); }
+:root.dark .admin-guide-foot strong { color: var(--on-tint-violet); }
+
+.admin-guide-reopen {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.admin-guide-reopen:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
 .admin-sticky-actions {
   position: sticky;
   bottom: 0;
@@ -3349,6 +3652,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); widt
   /* En mobile la nav colapsa: 5 tabs no entran en una fila sin partirse. */
   .admin-nav { display: none; flex-direction: column; }
   .admin-nav.open { display: flex; }
+
+  /* La guia baja de ancho: las tarjetas pasan a una columna y el pie se
+     apila, para que no quede una frase larga de 4px de alto. */
+  .admin-guide { padding: 16px; }
+  .admin-guide-grid { grid-template-columns: 1fr; }
+  .admin-guide-foot { flex-direction: column; gap: 4px; }
   .admin-stats { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); }
   .admin-stat-value { font-size: 1.45rem; }
 }

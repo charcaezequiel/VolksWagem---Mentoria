@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -17,13 +17,19 @@ import LoadingSpinner from './LoadingSpinner';
  * que se esconde es la parte de provincia, rubro y umbral, dentro de la pagina.
  *
  * Como AdminRoute, esto es navegacion y no seguridad: el backend decide.
+ *
+ * Se declara en App.js como `<Route element={<CustomerRoute />}>` con las
+ * paginas del cliente como <Route> hijas. En react-router v6 las rutas hijas
+ * NO llegan por props.children: se montan por <Outlet />. Por eso el guard
+ * devuelve <Outlet /> y no children, que aqui llega undefined y dejaba la
+ * pagina en blanco (solo se veian el header y el menu).
  */
-export default function CustomerRoute({ children }) {
+export default function CustomerRoute() {
   const { user, loading, isAdmin } = useAuth();
 
   if (loading) return <LoadingSpinner fullScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (isAdmin) return <Navigate to="/admin" replace />;
 
-  return children;
+  return <Outlet />;
 }

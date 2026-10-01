@@ -4,43 +4,107 @@ import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import { useTranslation } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import FieldHint from '../../components/admin/FieldHint';
 
 /* Cada campo declara su tipo para que el render y el payload sean automaticos.
    Asi agregar un parametro nuevo es agregar una linea, no un input + un
    handler + una conversion manual. */
+/* Cada campo declara ademas `help`, `ejemplo` y `avanzado` porque esta pantalla
+   es la mas tecnica del panel y sin eso es inmanejable: "anomaly_sigma" no
+   dice nada por si solo, y cambiarlo mal rompe las detecciones de anomalias
+   para todos los clientes. Los marcados como avanzados se pueden dejar como
+   estaban: casi siempre el valor por defecto ya sirve.
+
+   El nombre de la clave (`key`) NO se renombra: es el contrato con la base y
+   con el backend. Lo que se humaniza es la etiqueta y la ayuda. */
+const AVANZADO = 'admin.ai.avanzado';
 const FIELDS = {
   prediction: [
-    { key: 'model_version', label: 'admin.ai.model_version', type: 'text' },
-    { key: 'history_window_days', label: 'admin.ai.history_window', type: 'int' },
-    { key: 'bill_forecast_window_days', label: 'admin.ai.bill_window', type: 'int' },
-    { key: 'weekend_factor', label: 'admin.ai.weekend_factor', type: 'float', step: '0.01' },
-    { key: 'bill_weekend_factor', label: 'admin.ai.bill_weekend_factor', type: 'float', step: '0.01' },
-    { key: 'anomaly_sigma', label: 'admin.ai.anomaly_sigma', type: 'float', step: '0.1' },
-    { key: 'min_days_for_anomalies', label: 'admin.ai.min_days_anomalies', type: 'int' },
-    { key: 'min_confidence', label: 'admin.ai.min_confidence', type: 'float', step: '0.01' },
-    { key: 'max_confidence', label: 'admin.ai.max_confidence', type: 'float', step: '0.01' },
+    {
+      key: 'history_window_days', label: 'admin.ai.history_window', type: 'int',
+      help: 'admin.ai.history_window_help', ejemplo: 'admin.ai.history_window_ej',
+    },
+    {
+      key: 'bill_forecast_window_days', label: 'admin.ai.bill_window', type: 'int',
+      help: 'admin.ai.bill_window_help', ejemplo: 'admin.ai.bill_window_ej',
+    },
+    {
+      key: 'weekend_factor', label: 'admin.ai.weekend_factor', type: 'float', step: '0.01',
+      help: 'admin.ai.weekend_factor_help', ejemplo: 'admin.ai.weekend_factor_ej',
+    },
+    {
+      key: 'bill_weekend_factor', label: 'admin.ai.bill_weekend_factor', type: 'float', step: '0.01',
+      help: 'admin.ai.bill_weekend_factor_help', avanzado: AVANZADO,
+    },
+    {
+      key: 'min_confidence', label: 'admin.ai.min_confidence', type: 'float', step: '0.01',
+      help: 'admin.ai.min_confidence_help', ejemplo: 'admin.ai.min_confidence_ej',
+    },
+    {
+      key: 'max_confidence', label: 'admin.ai.max_confidence', type: 'float', step: '0.01',
+      help: 'admin.ai.max_confidence_help', avanzado: AVANZADO,
+    },
+    {
+      key: 'anomaly_sigma', label: 'admin.ai.anomaly_sigma', type: 'float', step: '0.1',
+      help: 'admin.ai.anomaly_sigma_help', ejemplo: 'admin.ai.anomaly_sigma_ej', avanzado: AVANZADO,
+    },
+    {
+      key: 'min_days_for_anomalies', label: 'admin.ai.min_days_anomalies', type: 'int',
+      help: 'admin.ai.min_days_anomalies_help', avanzado: AVANZADO,
+    },
+    {
+      key: 'model_version', label: 'admin.ai.model_version', type: 'text',
+      help: 'admin.ai.model_version_help', avanzado: AVANZADO,
+    },
   ],
   llm: [
-    { key: 'gemini_model', label: 'admin.ai.gemini_model', type: 'text' },
-    { key: 'temperature', label: 'admin.ai.temperature', type: 'float', step: '0.05' },
-    { key: 'top_p', label: 'admin.ai.top_p', type: 'float', step: '0.01' },
-    { key: 'max_output_tokens', label: 'admin.ai.max_tokens', type: 'int' },
-    { key: 'chat_history_turns', label: 'admin.ai.chat_turns', type: 'int' },
+    {
+      key: 'gemini_model', label: 'admin.ai.gemini_model', type: 'text',
+      help: 'admin.ai.gemini_model_help', avanzado: AVANZADO,
+    },
+    {
+      key: 'temperature', label: 'admin.ai.temperature', type: 'float', step: '0.05',
+      help: 'admin.ai.temperature_help', ejemplo: 'admin.ai.temperature_ej',
+    },
+    {
+      key: 'top_p', label: 'admin.ai.top_p', type: 'float', step: '0.01',
+      help: 'admin.ai.top_p_help', avanzado: AVANZADO,
+    },
+    {
+      key: 'max_output_tokens', label: 'admin.ai.max_tokens', type: 'int',
+      help: 'admin.ai.max_tokens_help', avanzado: AVANZADO,
+    },
+    {
+      key: 'chat_history_turns', label: 'admin.ai.chat_turns', type: 'int',
+      help: 'admin.ai.chat_turns_help', avanzado: AVANZADO,
+    },
   ],
   billing: [
-    { key: 'tax_factor', label: 'admin.ai.tax_factor', type: 'float', step: '0.01' },
-    { key: 'fallback_price_per_kwh', label: 'admin.ai.fallback_price', type: 'float', step: '0.001' },
+    {
+      key: 'tax_factor', label: 'admin.ai.tax_factor', type: 'float', step: '0.01',
+      help: 'admin.ai.tax_factor_help', ejemplo: 'admin.ai.tax_factor_ej',
+    },
+    {
+      key: 'fallback_price_per_kwh', label: 'admin.ai.fallback_price', type: 'float', step: '0.001',
+      help: 'admin.ai.fallback_price_help', ejemplo: 'admin.ai.fallback_price_ej',
+    },
   ],
 };
 
+/* Cada seccion lleva `help`: dice el efecto real de tocarlo, para que el admin
+   sepa si lo que esta a punto de cambiar le afecta a el o a todos los
+   clientes. */
 const SECTIONS = [
-  { key: 'prediction', label: 'admin.ai.prediction', icon: Brain },
-  { key: 'llm', label: 'admin.ai.llm', icon: Sparkles },
-  { key: 'billing', label: 'admin.ai.billing', icon: Receipt },
+  { key: 'prediction', label: 'admin.ai.prediction', icon: Brain, help: 'admin.ai.prediction_help' },
+  { key: 'llm', label: 'admin.ai.llm', icon: Sparkles, help: 'admin.ai.llm_help' },
+  { key: 'billing', label: 'admin.ai.billing', icon: Receipt, help: 'admin.ai.billing_help' },
 ];
 
 const MONTH_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+/* El nombre del mes sale de las traducciones y no de una lista fija en
+   espanol: antes el calendario quedaba en espanol aunque el panel estuviera
+   en ingles. */
+const MONTH_KEYS_I18N = ['jan', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 export default function AdminAISettingsPage() {
   const { t } = useTranslation();
@@ -71,8 +135,13 @@ export default function AdminAISettingsPage() {
      el usuario borra el contenido para reescribir. */
   const buildPayload = () => {
     const payload = {};
-    for (const { fields } of SECTIONS) {
-      for (const f of fields) {
+    /* Se recorre FIELDS, no SECTIONS. SECTIONS no tiene propiedad `fields`
+       (los campos viven en FIELDS, indexados por la clave de la seccion), asi
+       que el for anterior no iteraba nada y el payload salia vacio: se
+       guardaban solo los factores estacionales y la escalera de confianza.
+       Todos los campos declarados se castean segun su `type`. */
+    for (const { key } of SECTIONS) {
+      for (const f of FIELDS[key]) {
         const raw = form[f.key];
         if (raw === '' || raw === null || raw === undefined) continue;
         payload[f.key] = f.type === 'text' ? String(raw) : Number(raw);
@@ -145,11 +214,12 @@ export default function AdminAISettingsPage() {
       <p className="admin-hint">{t('admin.ai.hint')}</p>
 
       <form onSubmit={save}>
-        {SECTIONS.map(({ key, label, icon: Icon }) => (
+        {SECTIONS.map(({ key, label, icon: Icon, help }) => (
           <section key={key} className="admin-card">
             <div className="admin-card-head">
               <h3><Icon size={17} /> {t(label)}</h3>
             </div>
+            <p className="admin-hint">{t(help)}</p>
             <div className="admin-form-grid">
               {FIELDS[key].map((f) => (
                 <label key={f.key}>
@@ -159,6 +229,11 @@ export default function AdminAISettingsPage() {
                     step={f.step}
                     value={form[f.key] ?? ''}
                     onChange={(e) => setField(f.key, e.target.value)}
+                  />
+                  <FieldHint
+                    hint={f.help ? t(f.help) : ''}
+                    ejemplo={f.ejemplo ? t(f.ejemplo) : ''}
+                    avanzado={f.avanzado ? t(f.avanzado) : ''}
                   />
                 </label>
               ))}
@@ -170,10 +245,13 @@ export default function AdminAISettingsPage() {
           <div className="admin-card-head">
             <h3>{t('admin.ai.seasonal')}</h3>
           </div>
+          {/* "1,00 = normal" es lo que hace entendible la grilla: sin esa
+              referencia un 0,9 parece un error. */}
+          <p className="admin-hint">{t('admin.ai.seasonal_help')}</p>
           <div className="admin-seasonal">
             {MONTH_KEYS.map((m, i) => (
               <label key={m} className="admin-seasonal-month">
-                <span>{MONTH_NAMES[i]}</span>
+                <span>{t(`admin.month.${MONTH_KEYS_I18N[i]}`)}</span>
                 <input
                   type="number"
                   step="0.01"
@@ -193,9 +271,10 @@ export default function AdminAISettingsPage() {
           <div className="admin-card-head">
             <h3>{t('admin.ai.confidence_ladder')}</h3>
           </div>
-          <p className="admin-hint">
-            {t('admin.ai.days')} → {t('admin.ai.confidence')}
-          </p>
+          {/* Los dos inputs de la escalera no tenian etiqueta visible, solo un
+              aria-label: el admin ve "30 → 0,6" sin saber cual era el numero
+              de dias y cual la confianza. */}
+          <p className="admin-hint">{t('admin.ai.confidence_ladder_help')}</p>
           <div className="admin-ladder">
             {(form.confidence_thresholds || []).map(([days, conf], i) => (
               <div key={i} className="admin-ladder-row">
@@ -208,7 +287,7 @@ export default function AdminAISettingsPage() {
                     next[i] = [e.target.value, conf];
                     setField('confidence_thresholds', next);
                   }}
-                  aria-label={t('admin.ai.days')}
+                  aria-label={t('admin.ai.ladder_days')}
                 />
                 <span>→</span>
                 <input
@@ -222,7 +301,7 @@ export default function AdminAISettingsPage() {
                     next[i] = [days, e.target.value];
                     setField('confidence_thresholds', next);
                   }}
-                  aria-label={t('admin.ai.confidence')}
+                  aria-label={t('admin.ai.ladder_conf')}
                 />
                 <button
                   type="button"

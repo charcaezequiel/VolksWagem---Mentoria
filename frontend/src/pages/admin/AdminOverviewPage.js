@@ -32,8 +32,11 @@ const RankedBars = ({ items, emptyLabel, valueKey = 'count', format }) => {
   const max = Math.max(...items.map((i) => Number(i[valueKey]) || 0)) || 1;
   return (
     <ul className="admin-bars">
-      {items.map((item) => (
-        <li key={item.label} className="admin-bar">
+      {/* El indice va en la key porque dos filas pueden compartir label: los
+          usuarios sin provincia salen todos como "—", y con key={item.label}
+          React tira el warning de keys duplicadas. */}
+      {items.map((item, i) => (
+        <li key={`${item.label}-${i}`} className="admin-bar">
           <span className="admin-bar-label" title={item.label}>{item.label}</span>
           <span className="admin-bar-track">
             <span
@@ -99,31 +102,78 @@ export default function AdminOverviewPage() {
 
       {error && <ErrorNote error={error} onRetry={load} />}
 
-      <div className="admin-stats">
-        {/* "Clientes" y no "Usuarios": el conteo excluye a los administradores
-            (lo filtra el backend con role:'user'), asi que el numero que se ve
-            aca es el de gente a la que se le factura. Los administradores se
-            informan aparte, en la propia pista de la tarjeta. */}
-        <StatCard
-          accent={1}
-          label={t('admin.stat.customers')}
-          value={totals.users}
-          hint={`${totals.active_users} ${t('admin.stat.active_users').toLowerCase()}`}
-        />
-        <StatCard
-          accent={4}
-          label={t('admin.stat.admins')}
-          value={totals.admins}
-          hint={t('admin.stat.admins_hint')}
-        />
-        <StatCard accent={3} label={t('admin.stat.devices')} value={totals.devices} hint={`${totals.online_devices} ${t('admin.stat.online_devices').toLowerCase()}`} />
-        <StatCard accent={2} label={t('admin.stat.tariffs')} value={totals.tariffs} hint={`${totals.provinces_with_tariffs} provincias`} />
-        <StatCard accent={4} label={t('admin.stat.readings_24h')} value={totals.readings_24h} hint={`${totals.readings_30d} / 30 d`} />
-        <StatCard accent={1} label={t('admin.stat.alerts')} value={totals.unread_alerts} hint={`${totals.alerts} ${t('admin.stat.alerts').toLowerCase()}`} />
-        <StatCard accent={2} label={t('admin.stat.categories')} value={totals.categories} hint={`${totals.appliances} ${t('admin.stat.appliances').toLowerCase()}`} />
-        <StatCard accent={3} label={t('admin.stat.predictions')} value={totals.predictions} />
-        <StatCard accent={4} label={t('admin.stat.recommendations')} value={totals.recommendations} />
-      </div>
+      {/* Las tarjetas van agrupadas por tema en vez de en una fila corrida: asi
+          el admin lee "gente / plataforma / IA" y sabe de un vistazo donde hay
+          algo raro. Antes eran nueve tarjetas juntas sin agrupar, que es lo
+          mismo que no priorizar nada. */}
+      <section className="admin-group">
+        <h3 className="admin-group-title">{t('admin.grupo.personas')}</h3>
+        <p className="admin-group-hint">{t('admin.grupo.personas_hint')}</p>
+        <div className="admin-stats">
+          {/* "Clientes" y no "Usuarios": el conteo excluye a los administradores
+              (lo filtra el backend con role:'user'), asi que el numero que se ve
+              aca es el de gente a la que se le factura. Los administradores se
+              informan aparte, en la propia pista de la tarjeta. */}
+          <StatCard
+            accent={1}
+            label={t('admin.stat.customers')}
+            value={totals.users}
+            hint={`${totals.active_users} ${t('admin.stat.active_users').toLowerCase()}`}
+          />
+          <StatCard
+            accent={4}
+            label={t('admin.stat.admins')}
+            value={totals.admins}
+            hint={t('admin.stat.admins_hint')}
+          />
+          <StatCard
+            accent={1}
+            label={t('admin.stat.alerts')}
+            value={totals.unread_alerts}
+            hint={`${totals.alerts} ${t('admin.stat.alerts').toLowerCase()}`}
+          />
+        </div>
+      </section>
+
+      <section className="admin-group">
+        <h3 className="admin-group-title">{t('admin.grupo.plataforma')}</h3>
+        <p className="admin-group-hint">{t('admin.grupo.plataforma_hint')}</p>
+        <div className="admin-stats">
+          <StatCard
+            accent={3}
+            label={t('admin.stat.devices')}
+            value={totals.devices}
+            hint={`${totals.online_devices} ${t('admin.stat.online_devices').toLowerCase()}`}
+          />
+          <StatCard
+            accent={2}
+            label={t('admin.stat.tariffs')}
+            value={totals.tariffs}
+            hint={`${totals.provinces_with_tariffs} ${t('admin.grupo.provincias')}`}
+          />
+          <StatCard
+            accent={4}
+            label={t('admin.stat.readings_24h')}
+            value={totals.readings_24h}
+            hint={`${totals.readings_30d} / 30 d`}
+          />
+          <StatCard
+            accent={2}
+            label={t('admin.stat.categories')}
+            value={totals.categories}
+            hint={`${totals.appliances} ${t('admin.stat.appliances').toLowerCase()}`}
+          />
+        </div>
+      </section>
+
+      <section className="admin-group">
+        <h3 className="admin-group-title">{t('admin.grupo.ia')}</h3>
+        <p className="admin-group-hint">{t('admin.grupo.ia_hint')}</p>
+        <div className="admin-stats">
+          <StatCard accent={3} label={t('admin.stat.predictions')} value={totals.predictions} />
+          <StatCard accent={4} label={t('admin.stat.recommendations')} value={totals.recommendations} />
+        </div>
+      </section>
 
       <div className="admin-grid-2">
         <section className="admin-card">

@@ -5,6 +5,7 @@ import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import FieldHint from '../../components/admin/FieldHint';
 
 const EMPTY_FORM = { name: '', email: '', password: '', province_id: '', user_type: 'residencial', role: 'user' };
 
@@ -98,25 +99,51 @@ export default function AdminUsersPage() {
 
       {showForm && (
         <form className="admin-card admin-form" onSubmit={submitForm}>
+          {/* Cada campo lleva su explicacion porque aca es donde mas se traba
+              la gente: la contrasenia tiene una politica que el admin no puede
+              ver hasta que falla, y provincia/rubro decidyen que tarifa y que
+              alertas recibe el cliente, asi que no son datos "de contacto". */}
           <div className="admin-form-grid">
             <label>
-              <span>{t('admin.catalog.name')}</span>
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <span>{t('admin.form.name')}</span>
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder={t('admin.form.name_ph')}
+                required
+              />
+              <FieldHint hint={t('admin.form.name_help')} />
             </label>
             <label>
-              <span>Email</span>
-              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              <span>{t('admin.form.email')}</span>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder={t('admin.form.email_ph')}
+                required
+              />
+              <FieldHint hint={t('admin.form.email_help')} />
             </label>
             <label>
-              <span>Password</span>
-              <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} minLength={8} required />
+              <span>{t('admin.form.password')}</span>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder={t('admin.form.password_ph')}
+                minLength={8}
+                required
+              />
+              <FieldHint hint={t('admin.form.password_help')} ejemplo={t('admin.form.password_ej')} />
             </label>
             <label>
-              <span>{t('admin.users.filter_role')}</span>
+              <span>{t('admin.form.role')}</span>
               <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
                 <option value="user">{t('admin.role.user')}</option>
                 <option value="admin">{t('admin.role.admin')}</option>
               </select>
+              <FieldHint hint={t('admin.form.role_help')} />
             </label>
             {/* Provincia y rubro solo aplican a un cliente. Al crear un admin
                 el backend los descarta, asi que ni se ofrecen: es menos
@@ -124,17 +151,19 @@ export default function AdminUsersPage() {
             {form.role !== 'admin' && (
               <>
                 <label>
-                  <span>{t('admin.tariffs.province')}</span>
+                  <span>{t('admin.form.province')}</span>
                   <select value={form.province_id} onChange={(e) => setForm({ ...form, province_id: e.target.value })}>
                     <option value="">—</option>
                     {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
+                  <FieldHint hint={t('admin.form.province_help')} />
                 </label>
                 <label>
-                  <span>{t('admin.by_type')}</span>
+                  <span>{t('admin.form.user_type')}</span>
                   <select value={form.user_type} onChange={(e) => setForm({ ...form, user_type: e.target.value })}>
                     {USER_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
                   </select>
+                  <FieldHint hint={t('admin.form.user_type_help')} />
                 </label>
               </>
             )}
