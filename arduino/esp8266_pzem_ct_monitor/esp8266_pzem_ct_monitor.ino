@@ -1,355 +1,369 @@
 /*
- *  ControlAR – Monitor de consumo energético
- *  Microcontrolador: ESP8266MOD (ESP-12E / NodeMCU compatible)
- *  Sensores: PZEM-004T v3.0 + Bobina CT (SCT-013)
- *
- *  Conexiones:
- *    PZEM-004T  ->  SoftwareSerial D1 (GPIO5/RX) y D2 (GPIO4/TX)
- *    Bobina CT  ->  A0 (ADC del ESP8266)
- *
- *  Librerías requeridas (instalar desde el Board Manager o Library Manager):
- *    - ESP8266WiFi           (incluida con el core ESP8266)
- *    - ESP8266HTTPClient     (incluida con el core ESP8266)
- *    - ArduinoJson           (by Benoit Blanchon, v6 o v7)
- *    - PZEM004Tv30           (by Mandulay)
- *    - EmonLib               (by OpenEnergyMonitor)
- *    - SoftwareSerial        (incluida con el core ESP8266)
- *
- *  Notas sobre ESP8266MOD vs ESP32:
- *    - El ESP8266 tiene un solo UART hardware (reservado para debug por Serial).
- *    - Se usa SoftwareSerial para comunicarse con el PZEM-004T.
- *    - Solo tiene 1 pin analógico (A0), compartido para la bobina CT.
- *    - El ADC es de 10 bits (0–1023) con rango 0–3.3V en la mayoría de
- *      los módulos ESP8266MOD.  Asegurate de que tu placa tenga el divisor
- *      de voltaje adecuado para la bobina CT.
- *    - WiFi usa ESP8266WiFi.h en vez de WiFi.h.
- */
+=====================================================
+ CONTROLAR ENERGIA
+ ESP8266MOD + PZEM-004T V4 + SCT-013
+
+ Envio datos al Backend
+=====================================================
+
+  Microcontrolador: ESP8266MOD (ESP-12F / NodeMCU)
+  Sensores:         PZEM-004T V4 + SCT-013 (pinza CT)
+
+  Conexiones:
+    PZEM TX -> D2 (GPIO4)  RX del ESP
+    PZEM RX -> D1 (GPIO5)  TX del ESP
+    PZEM 5V -> 5V
+    PZEM GND-> GND
+    SCT-013 -> A0
+
+  Librerias requeridas:
+    - ESP8266WiFi / ESP8266HTTPClient / SoftwareSerial (core ESP8266)
+    - ArduinoJson  (Benoit Blanchon, v6 o v7)
+    - PZEM004Tv30  (Mandulay)
+    - EmonLib      (OpenEnergyMonitor)
+
+  Notas sobre ESP8266MOD:
+    - Solo tiene 1 UART hardware (reservado para el monitor serial),
+      por eso el PZEM va por SoftwareSerial.
+    - Solo tiene 1 pin analogo (A0), usado por el SCT-013.
+    - El ADC es de 10 bits (0-1023). Asegurate de que la placa tenga el
+      divisor de voltaje para que el centro de la senal quede en ~1.65V.
+    - WiFi usa ESP8266WiFi.h en vez de WiFi.h.
+*/
 
 #include <ESP8266WiFi.h>
+
 #include <ESP8266HTTPClient.h>
-#include <WiFiClientSecure.h>
-#include <ArduinoJson.h>
-#include <PZEM004Tv30.h>
+#include <WiFiClient.h>
+
 #include <SoftwareSerial.h>
+#include <PZEM004Tv30.h>
+
 #include <EmonLib.h>
+#include <ArduinoJson.h>
 
-// ─────────────── Configuración Wi-Fi ───────────────
-const char* WIFI_SSID = "BA Escuela";
-const char* WIFI_PASS = "";
+// ===============================
+// WIFI
+// ===============================
 
-// ─────────────── Configuración del Backend ───────────────
-// IMPORTANTE: usá la IP de la PC en la MISMA red del ESP.
-// NO uses la IP de CloudflareWARP (172.x) ni de VirtualBox (192.168.56.x).
-// Ver la IP real con "ipconfig" en la PC (ej. 10.120.2.224 / 192.168.x.x).
-const char* SERVER_URL = "http://10.120.2.224:3001";
-const String API_PATH  = "/api/sensor/readings";
+const char* SSID = "Thiagod";
+const char* PASSWORD = "87654321";
 
-// Token del sensor (se genera en el backend al crear el dispositivo)
-const String DEVICE_TOKEN = "a1cb641062e4f6622c3933d5433aac4c4f11928e6b665681";
+// ===============================
+// SERVIDOR CONTROLAR
+// ===============================
 
-// ─────────────── Intervalo de envío ───────────────
-// 30 segundos = 30000 ms
-const unsigned long SEND_INTERVAL_MS = 30000;
+const char* SERVER_URL = "http://10.249.206.200:3001";
 
-// ─────────────── Zona horaria ───────────────
-// Argentina = UTC-3 (sin horario de verano)
-const long   GMT_OFFSET_SEC = -3 * 3600;
-const int    DST_OFFSET_SEC = 0;
+const char* API_PATH = "/api/sensor/readings";
 
-// ─────────────── Pines del PZEM-004T (SoftwareSerial) ───────────────
-// En ESP8266 se recomienda usar GPIO5 (D1) y GPIO4 (D2) para SoftwareSerial.
-#define PZEM_RX_PIN  5   // D1 – conectar al TX del PZEM
-#define PZEM_TX_PIN  4   // D2 – conectar al RX del PZEM
+// TOKEN DEL DISPOSITIVO (verificado: guarda lecturas en la BD)
 
-// ─────────────── Pin de la Bobina CT ───────────────
-// Solo hay un pin analógico en el ESP8266: A0
-#define CT_PIN       A0
+String DEVICE_TOKEN = "72b7957c13750d0931a3bebbd189e27ded27476f24043359";
 
-// ─────────────── Calibración de la Bobina CT ───────────────
-// El factor de calibración depende de:
-//   - Modelo de la bobina (SCT-013-000 = 100A/50mA → ~30 con burden de 33Ω)
-//   - Resistencia burden instalada
-//   - Divisor de voltaje (si tu placa lo tiene)
-//
-// Valores de referencia para SCT-013-000:
-//   Con burden de 33Ω y divisor:  cal_factor ≈ 30.0
-//   Con burden de 100Ω:            cal_factor ≈ 11.1
-//   Sin burden (bobina con salida de voltaje): ajustar según el rango
-//
-// Usá el monitor serial para verificar que los valores sean correctos.
-const float CT_CALIBRATION = 30.0;
+// ===============================
+// PZEM V4
+// ===============================
 
-// ─────────────── Objetos globales ───────────────
+// PZEM TX -> D2 GPIO4 (pin RX del ESP)
+// PZEM RX -> D1 GPIO5 (pin TX del ESP)
 
-// SoftwareSerial para el PZEM-004T
+#define PZEM_RX_PIN 4
+#define PZEM_TX_PIN 5
+
 SoftwareSerial pzemSerial(PZEM_RX_PIN, PZEM_TX_PIN);
 
-// Objeto PZEM (usa SoftwareSerial en vez de HardwareSerial)
 PZEM004Tv30 pzem(pzemSerial);
 
-// Objeto EmonLib para la bobina CT
+// ===============================
+// SCT-013
+// ===============================
+
+#define SCT_PIN A0
+
+// Calibracion del CT (SCT-013-000 con burden interno ~ 30).
+// Si tus valores se ven muy altos o bajos, ajusta esta constante.
+const float CT_CALIBRATION = 30.0;
+
 EnergyMonitor emon;
 
-// Variables de control
-unsigned long lastSend = 0;
-int lastDay = -1;
+float corrienteCT = 0;
 
-// Variables de estado
-unsigned long bootTime = 0;        // millis() de arranque del dispositivo
-unsigned long lastSuccessAt = 0;   // millis() del último envío exitoso
-int lastHttpCode = 0;              // último código HTTP devuelto por el backend
-bool backendReachable = false;     // si el último envío fue exitoso
-char lastHttpError[32] = "-";      // texto breve del último error de red
+// ===============================
+// VARIABLES PZEM
+// ===============================
 
-// ─────────────── Funciones auxiliares ───────────────
+float voltage = 0;
+float current = 0;
+float power = 0;
+float energy = 0;
+float frequency = 0;
+float pf = 0;
 
-void connectWiFi() {
-  Serial.print("Conectando a Wi-Fi");
+// ===============================
+// SETUP
+// ===============================
+
+void setup() {
+
+  Serial.begin(115200);
+  delay(1000);
+
+  Serial.println();
+  Serial.println("==============================");
+  Serial.println(" CONTROLAR ENERGY");
+  Serial.println(" ESP8266 + PZEM V4");
+  Serial.println("==============================");
+
+  // SCT-013: ajuste inicial
+  emon.current(SCT_PIN, CT_CALIBRATION);
+
+  // WIFI
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.setSleep(false);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 60) {
+  WiFi.begin(SSID, PASSWORD);
+
+  Serial.print("Conectando WiFi");
+
+  int intentos = 0;
+  while (WiFi.status() != WL_CONNECTED && intentos < 60) {
     delay(500);
     Serial.print(".");
-    attempts++;
+    intentos++;
   }
+
+  Serial.println();
 
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.println();
-    Serial.print("Conectado. IP: ");
+    Serial.println("WiFi conectado");
+    Serial.print("IP ESP8266: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println();
-    Serial.println("No se pudo conectar a Wi-Fi. Reintentando en el próximo ciclo...");
+    Serial.println("WiFi NO conectado (revisar SSID/red)");
   }
 }
 
-// Formatea millis() como "D días HH:MM:SS"
-String formatMillis(unsigned long ms) {
-  unsigned long totalSec = ms / 1000;
-  char buf[40];
-  sprintf(buf, "%lud %02lu:%02lu:%02lu",
-          totalSec / 86400, (totalSec % 86400) / 3600,
-          (totalSec % 3600) / 60, totalSec % 60);
-  return String(buf);
+// ===============================
+// LOOP
+// ===============================
+
+void loop() {
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi perdido, reconectando...");
+    WiFi.reconnect();
+    delay(3000);
+  }
+
+  leerSensores();
+  mostrarDatos();
+  enviarServidor();
+
+  delay(30000);
 }
 
-// Realiza el POST al backend y devuelve el código HTTP
-int postReading(const String& payload) {
-  HTTPClient http;
+// ===============================
+// LECTURA SENSORES
+// ===============================
+
+void leerSensores() {
+
+  Serial.println();
+  Serial.println("LEYENDO SENSORES...");
+
+  // -------- PZEM (con reintentos) --------
+  // La primera lectura tras encender suele fallar y devolver NaN (0.00).
+  bool pzemOK = false;
+
+  for (int t = 0; t < 3 && !pzemOK; t++) {
+    voltage   = pzem.voltage();
+    current   = pzem.current();
+    power     = pzem.power();
+    energy    = pzem.energy();
+    frequency = pzem.frequency();
+    pf        = pzem.pf();
+
+    if (!isnan(power) && !isnan(voltage)) {
+      pzemOK = true;
+    } else {
+      delay(700);
+    }
+  }
+
+  if (!pzemOK) {
+    Serial.println("PZEM sin respuesta: revisar 5V, GND comun y TX/RX");
+  }
+
+  // Evitar NaN
+  if (isnan(voltage))   voltage = 0;
+  if (isnan(current))   current = 0;
+  if (isnan(power))     power = 0;
+  if (isnan(energy))    energy = 0;
+  if (isnan(frequency)) frequency = 0;
+  if (isnan(pf))        pf = 0;
+
+  // -------- SCT013 --------
+  corrienteCT = emon.calcIrms(1480);
+  if (isnan(corrienteCT)) corrienteCT = 0;
+}
+
+// ===============================
+// MOSTRAR SERIAL
+// ===============================
+
+void mostrarDatos() {
+
+  Serial.println();
+  Serial.println("========== PZEM ==========");
+
+  Serial.print("Voltaje: ");
+  Serial.print(voltage);
+  Serial.println(" V");
+
+  Serial.print("Corriente PZEM: ");
+  Serial.print(current);
+  Serial.println(" A");
+
+  Serial.print("Potencia: ");
+  Serial.print(power);
+  Serial.println(" W");
+
+  Serial.print("Energia: ");
+  Serial.print(energy);
+  Serial.println(" kWh");
+
+  Serial.print("Frecuencia: ");
+  Serial.print(frequency);
+  Serial.println(" Hz");
+
+  Serial.print("Factor potencia: ");
+  Serial.println(pf);
+
+  Serial.println();
+
+  Serial.print("Corriente SCT-013: ");
+  Serial.print(corrienteCT);
+  Serial.println(" A");
+
+  if (corrienteCT > 15.0) {
+    Serial.println("AVISO: lecturas de CT sospechosamente altas.");
+    Serial.println("  Si no hay una carga grande, revisar:");
+    Serial.println("  - bias de A0 (divisor a mitad de escala ~1.65V)");
+    Serial.println("  - que la pinza abrace UN solo cable");
+    Serial.println("  - el factor CT_CALIBRATION");
+  }
+
+  Serial.println("==========================");
+}
+
+// ===============================
+// POST AL BACKEND (una lectura)
+// ===============================
+
+// Verifica si el backend responde (no toca la BD, es rapido)
+bool backendAlcanzable() {
   WiFiClient client;
-  http.begin(client, String(SERVER_URL) + API_PATH);
-  http.setTimeout(5000);
+  HTTPClient http;
+  String url = String(SERVER_URL) + "/api/health";
+  http.begin(client, url);
+  http.setTimeout(10000);
+  int code = http.GET();
+  http.end();
+  return code == 200;
+}
+
+int postJSON(const String& url, const String& json) {
+  WiFiClient client;
+  HTTPClient http;
+
+  http.begin(client, url);
+
+  // CLAVE: el backend tarda varios segundos en responder (Supabase en la
+  // nube, a veces 15-17s). Con timeout menor el POST falla con "-1",
+  // aunque el server y la BD esten OK.
+  http.setTimeout(45000);
+
   http.addHeader("Content-Type", "application/json");
   http.addHeader("Authorization", "Bearer " + DEVICE_TOKEN);
-  int code = http.POST(payload);
+
+  int code = http.POST(json);
+
+  if (code >= 400) {
+    Serial.print("Cuerpo del error: ");
+    Serial.println(http.getString());
+  }
+
   http.end();
   return code;
 }
 
-// Muestra el panel de estado en el Monitor Serial
-void printStatus(float voltage, float current, float power, float energy) {
-  Serial.println("== ESTADO ==");
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.printf("  Wi-Fi  : CONECTADO   IP: %s\n", WiFi.localIP().toString().c_str());
-  } else {
-    Serial.println("  Wi-Fi  : DESCONECTADO");
-  }
-  Serial.printf("  Backend: %s   (HTTP %d)\n",
-                backendReachable ? "OK" : "FALLO", lastHttpCode);
-  if (!backendReachable) {
-    Serial.printf("  Motivo : %s\n", lastHttpError);
-  }
-  Serial.printf("  Tiempo conectado: %s\n", formatMillis(millis() - bootTime).c_str());
-  if (lastSuccessAt > 0) {
-    Serial.printf("  Ultimo envio OK  : hace %s\n", formatMillis(millis() - lastSuccessAt).c_str());
-  } else {
-    Serial.println("  Ultimo envio OK  : ninguna");
-  }
-  Serial.printf("  Carga actual: %.1f W\n", power);
-  Serial.printf("  Tension: %.1f V   Corriente: %.3f A   Energia: %.3f kWh\n",
-                voltage, current, energy);
-  Serial.println("================");
-}
+// ===============================
+// ENVIO BACKEND
+// ===============================
 
-// Resetea la energía acumulada del PZEM al cambiar de día
-void resetEnergyAtMidnight() {
-  time_t now = time(nullptr);
-  struct tm* timeinfo = localtime(&now);
-
-  if (lastDay == -1) {
-    lastDay = timeinfo->tm_mday;
-    return;
-  }
-
-  if (timeinfo->tm_mday != lastDay) {
-    lastDay = timeinfo->tm_mday;
-    Serial.printf("Nuevo dia (%02d/%02d): reseteando energia acumulada del PZEM...\n",
-                  timeinfo->tm_mday, timeinfo->tm_mon + 1);
-    pzem.resetEnergy();
-  }
-}
-
-// Envía una lectura combinada (PZEM + CT) al backend
-void sendReading(float voltage, float currentPzem, float powerPzem,
-                 float energy, float frequency, float powerFactor,
-                 float currentCT, float powerCT) {
+void enviarServidor() {
 
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Sin conexion Wi-Fi. Reintentando...");
-    backendReachable = false;
-    connectWiFi();
+    Serial.println("WiFi desconectado");
     return;
   }
 
-  // Potencia combinada: PZEM (línea principal) + CT (rama adicional)
-  float totalPower = powerPzem + powerCT;
+  String url = String(SERVER_URL) + String(API_PATH);
 
-  // JSON con los campos que espera el endpoint /api/sensor/readings
-  StaticJsonDocument<512> doc;
-  doc["instant_watts"]       = roundf(totalPower * 100.0) / 100.0;
-  doc["accumulated_kwh_day"] = roundf(energy * 1000.0) / 1000.0;
-  doc["voltage"]             = roundf(voltage * 10.0) / 10.0;
-  doc["current"]             = roundf((currentPzem + currentCT) * 1000.0) / 1000.0;
-  doc["frequency"]           = roundf(frequency * 10.0) / 10.0;
-  doc["power_factor"]        = roundf(powerFactor * 100.0) / 100.0;
+  // Verificar que el ESP alcance al backend antes de enviar
+  Serial.print("Revisando backend (" + String(SERVER_URL) + ")... ");
+  if (!backendAlcanzable()) {
+    Serial.println("NO alcanzable");
+    Serial.println(">> El ESP NO puede llegar a la PC desde esta red.");
+    Serial.println(">> Si en la web la IP responde pero aqui no, la red del");
+    Serial.println(">> colegio aisla los dispositivos entre si (AP isolation).");
+    Serial.println(">> Solucion: conectar la PC y el ESP a un hotspot del celular");
+    Serial.println(">> y poner en SERVER_URL la IP de la PC en esa red (ipconfig).");
+    return;
+  }
+  Serial.println("OK");
 
-  String payload;
-  serializeJson(doc, payload);
+  // JSON
+  StaticJsonDocument<300> doc;
 
-  int code = postReading(payload);
+  doc["instant_watts"]       = power;
+  doc["accumulated_kwh_day"] = energy;
+  doc["voltage"]             = voltage;
+  doc["current"]             = current;
+  doc["frequency"]           = frequency;
+  doc["power_factor"]        = pf;
 
-  // Si no se pudo conectar (HTTP -1 = red/backend inalcanzable), reintentar una vez
-  if (code < 0) {
+  String json;
+  serializeJson(doc, json);
+
+  Serial.println();
+  Serial.println("Enviando datos al backend...");
+  Serial.print("URL: ");
+  Serial.println(url);
+  Serial.print("JSON: ");
+  Serial.println(json);
+
+  // Intento 1
+  int response = postJSON(url, json);
+
+  // Reintento ante error de red
+  if (response < 0) {
+    Serial.println("Error de red, reintentando...");
     delay(1500);
-    code = postReading(payload);
+    response = postJSON(url, json);
   }
 
-  if (code == 200 || code == 201) {
-    backendReachable = true;
-    lastHttpCode = code;
-    lastSuccessAt = millis();
-    snprintf(lastHttpError, sizeof(lastHttpError), "-");
-    Serial.printf("[OK %d] PZEM: %.1fW | CT: %.2fA | Total: %.1fW | %.3f kWh\n",
-                  code, powerPzem, currentCT, totalPower, energy);
+  Serial.print("HTTP Response: ");
+  Serial.println(response);
+
+  if (response == 200 || response == 201) {
+    Serial.println("OK: lectura guardada en la base de datos");
+  } else if (response >= 400) {
+    Serial.println("ERROR EN BACKEND (ver mensaje de error arriba)");
   } else {
-    backendReachable = false;
-    lastHttpCode = code;
-    if (code < 0) {
-      snprintf(lastHttpError, sizeof(lastHttpError), "red inalcanzable");
-      Serial.printf("[ERROR HTTP %d] No se pudo contactar %s%s (revisa la IP desde el ESP)\n",
-                    code, SERVER_URL, API_PATH.c_str());
-    } else {
-      snprintf(lastHttpError, sizeof(lastHttpError), "HTTP %d", code);
-      Serial.printf("[ERROR HTTP %d] %s\n", code, payload.c_str());
-    }
+    Serial.println("ERROR DE RED");
+    Serial.println("No se pudo contactar con backend");
   }
-}
-
-// ─────────────── Setup ───────────────
-
-void setup() {
-  Serial.begin(115200);
-  Serial.println();
-  Serial.println("========================================");
-  Serial.println("  ControlAR – ESP8266 + PZEM + CT");
-  Serial.println("========================================");
-
-  bootTime = millis();
-
-  // Inicializar SoftwareSerial para el PZEM
-  // (el constructor de PZEM004Tv30 ya arranca el puerto a 9600)
-
-  // Inicializar EmonLib para la bobina CT
-  // (pin analógico, factor de calibración)
-  emon.current(CT_PIN, CT_CALIBRATION);
-
-  // Conectar a Wi-Fi
-  connectWiFi();
-
-  // Configurar hora vía NTP (para reset diario de energía)
-  configTime(GMT_OFFSET_SEC, DST_OFFSET_SEC, "pool.ntp.org", "time.nist.gov");
-
-  Serial.println("Leyendo sensores cada 30 segundos...");
-  Serial.println();
-}
-
-// ─────────────── Loop ───────────────
-
-void loop() {
-  // Reset de energía acumulada al cambiar de día
-  resetEnergyAtMidnight();
-
-  // Monitorear Wi-Fi: si se pierde, reconectar
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("[ESTADO] Wi-Fi perdido. Reconectando...");
-    backendReachable = false;
-    connectWiFi();
-  }
-
-  // Solo enviar cada SEND_INTERVAL_MS
-  unsigned long now = millis();
-  if (now - lastSend < SEND_INTERVAL_MS) return;
-  lastSend = now;
-
-  // ── Lectura del PZEM-004T (con reintentos) ──
-  // La primera lectura suele fallar al encender; se reintenta hasta 3 veces.
-  float voltage = NAN, currentP = NAN, powerP = NAN, energy = NAN, frequency = NAN, pf = NAN;
-  bool pzemOk = false;
-
-  for (int attempt = 0; attempt < 3; attempt++) {
-    voltage    = pzem.voltage();
-    currentP   = pzem.current();
-    powerP     = pzem.power();
-    energy     = pzem.energy();
-    frequency  = pzem.frequency();
-    pf         = pzem.pf();
-
-    if (!isnan(powerP) && !isnan(voltage)) {
-      pzemOk = true;
-      break;
-    }
-    delay(500);
-  }
-
-  if (!pzemOk) {
-    Serial.println("PZEM sin respuesta (revisar cableado TX/RX, GND y 5V).");
-  }
-
-  // ── Lectura de la Bobina CT ──
-  // EmonLib calcula la corriente RMS (en Amperes)
-  float currentCT = emon.calcIrms(1480);  // 1480 muestras por ciclo (50Hz)
-  float powerCT   = currentCT * (pzemOk ? voltage : 220.0);  // estimar con voltaje PZEM o 220V
-
-  // ── Imprimir en monitor serial ──
-  Serial.println("--- Ciclo de lectura ---");
-  if (pzemOk) {
-    Serial.printf("  PZEM:  V=%.1f  A=%.3f  W=%.1f  kWh=%.3f  Hz=%.1f  PF=%.2f\n",
-                  voltage, currentP, powerP, energy, frequency, pf);
-  }
-  Serial.printf("  CT:    A=%.3f  W=%.1f (estimado con V=%.1f)\n",
-                currentCT, powerCT, pzemOk ? voltage : 220.0);
-  Serial.printf("  TOTAL: W=%.1f  A=%.3f\n",
-                (pzemOk ? powerP : 0) + powerCT,
-                (pzemOk ? currentP : 0) + currentCT);
-
-  // ── Enviar al backend ──
-  if (pzemOk) {
-    sendReading(voltage, currentP, powerP, energy, frequency, pf, currentCT, powerCT);
-  } else {
-    // Si el PZEM no responde, al menos enviar la lectura del CT
-    Serial.println("PZEM no disponible. Enviando solo datos del CT...");
-    sendReading(0, 0, 0, 0, 0, 0, currentCT, powerCT);
-  }
-
-  // ── Panel de estado ──
-  float totalCurrent = (pzemOk ? currentP : 0) + currentCT;
-  float totalPower = (pzemOk ? powerP : 0) + powerCT;
-  float refVoltage = pzemOk ? voltage : (currentCT > 0.01 ? 220.0 : 0);
-  printStatus(refVoltage, totalCurrent, totalPower, pzemOk ? energy : 0);
-
-  Serial.println();
 }
