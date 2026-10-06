@@ -21,6 +21,7 @@ const translations = {
     'header.theme_dark': 'Cambiar a modo oscuro',
     'header.toggle_lang': 'Cambiar a inglés',
     'header.realtime': 'Conexión en tiempo real activa',
+    'header.menu': 'Abrir menú',
 
     // Home
     'home.badge': 'Monitoreo inteligente del consumo energético',
@@ -966,6 +967,7 @@ const translations = {
     'header.theme_dark': 'Switch to dark mode',
     'header.toggle_lang': 'Switch to Spanish',
     'header.realtime': 'Real-time connection active',
+    'header.menu': 'Open menu',
 
     // Home
     'home.badge': 'Smart energy consumption monitoring',

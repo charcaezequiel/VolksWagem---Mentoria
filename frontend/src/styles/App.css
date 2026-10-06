@@ -169,6 +169,11 @@ body {
   height: 100vh;
   z-index: 100;
   transition: var(--transition);
+  /* El sidebar es un contenedor fijo de 100vh: sin esto, si la ventana mide
+     menos que el contenido (~780px), el pie (usuario + Salir) queda POR FUERA
+     de la pantalla y no hay forma de cerrar sesion. Con overflow hidden el
+     desbordamiento lo absorbe .sidebar-nav con scroll propio. */
+  overflow: hidden;
 }
 .sidebar.collapsed { width: 72px; }
 .sidebar-header {
@@ -177,6 +182,7 @@ body {
   justify-content: space-between;
   padding: 20px 16px;
   border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
 }
 .sidebar-logo { font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
 /* Colapsado el sidebar queda en 72px: sobra la marca sola y se centraria. */
@@ -192,7 +198,24 @@ body {
   transition: var(--transition);
 }
 .sidebar-toggle:hover { background: rgba(255,255,255,0.1); }
-.sidebar-nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; }
+/* El nav ocupa el resto del alto y hace scroll propio: asi el pie (usuario +
+   Salir) queda siempre visible aunque la ventana sea baja o se abra en F11. */
+.sidebar-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+}
+.sidebar-nav::-webkit-scrollbar { width: 6px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 999px; }
+.sidebar-nav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
 .sidebar-link {
   display: flex;
   align-items: center;
@@ -229,7 +252,7 @@ body {
   text-align: center;
   box-shadow: 0 0 0 2px var(--sidebar-bg);
 }
-.sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+.sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
 .sidebar-user { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .sidebar-user-avatar {
   width: 36px;
@@ -688,6 +711,7 @@ body {
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
+  .sidebar-backdrop.open { display: block; }
   .main-content { margin-left: 0 !important; }
   .page-content { padding: 20px 16px; }
   .main-header { padding: 12px 16px; }
@@ -1285,6 +1309,16 @@ body {
   padding: 4px 10px;
   border-radius: 20px;
 }
+/* Hamburguesa: unica forma de abrir el menu cuando el sidebar esta off-canvas
+   (pantallas <= 768px). Solo existe en mobile; en desktop se oculta. */
+.header-menu { display: none; }
+/* Salir siempre visible en el header, por si el pie del sidebar queda lejos. */
+.header-logout { color: var(--text-secondary); }
+.header-logout:hover { background: var(--danger-tint); color: var(--danger); }
+/* Va despues de la regla base para ganar por orden (misma especificidad). */
+@media (max-width: 768px) {
+  .header-menu { display: inline-flex; }
+}
 
 /* ============ Sidebar extras ============ */
 .sidebar-section-label {
@@ -1296,6 +1330,17 @@ body {
   color: rgba(255,255,255,0.4);
 }
 .sidebar-ai { border-left: 3px solid var(--primary-light); }
+/* Fondo oscuro detras del drawer en mobile: tocarlo cierra el menu. */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  z-index: 99;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
 
 /* ============ Section title ============ */
 .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; color: var(--text); }

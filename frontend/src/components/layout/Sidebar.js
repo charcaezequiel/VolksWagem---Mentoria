@@ -6,7 +6,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { LayoutDashboard, Cpu, Zap, FileText, Bell, Brain, DollarSign, Bot, Lightbulb, User, LogOut, Menu, X, Shield } from 'lucide-react';
 import Logo from '../common/Logo';
 
-export default function Sidebar({ collapsed, onToggle }) {
+export default function Sidebar({ collapsed, open, onToggle, onClose }) {
   const { user, logout, isAdmin } = useAuth();
   const { t } = useTranslation();
   const { unread } = useNotifications();
@@ -33,7 +33,7 @@ export default function Sidebar({ collapsed, onToggle }) {
      del cliente. */
   if (isAdmin) {
     return (
-      <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+      <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${open ? 'open' : ''}`}>
         <div className="sidebar-header">
           <span className="sidebar-logo">
             <Logo size={30} markClassName="sidebar-logo-mark" />
@@ -42,7 +42,9 @@ export default function Sidebar({ collapsed, onToggle }) {
             {collapsed ? <Menu size={20} /> : <X size={20} />}
           </button>
         </div>
-        <nav className="sidebar-nav">
+        {/* onClick en el nav: al elegir una seccion en mobile el drawer se cierra
+            (en desktop onClose solo deja open en false, sin efecto visible). */}
+        <nav className="sidebar-nav" onClick={onClose}>
           <NavLink
             to="/admin"
             end
@@ -76,7 +78,7 @@ export default function Sidebar({ collapsed, onToggle }) {
   }
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${open ? 'open' : ''}`}>
       <div className="sidebar-header">
         <span className="sidebar-logo">
           <Logo size={30} markClassName="sidebar-logo-mark" />
@@ -85,7 +87,9 @@ export default function Sidebar({ collapsed, onToggle }) {
           {collapsed ? <Menu size={20} /> : <X size={20} />}
         </button>
       </div>
-      <nav className="sidebar-nav">
+      {/* onClick en el nav: al elegir una seccion en mobile el drawer se cierra
+          (en desktop onClose solo deja open en false, sin efecto visible). */}
+      <nav className="sidebar-nav" onClick={onClose}>
         {navItems.map(({ to, label, icon: Icon }) => {
           const showBadge = to === '/alerts' && unread > 0;
           return (
