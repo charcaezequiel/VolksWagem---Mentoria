@@ -9,6 +9,32 @@ exports.getOverview = async (req, res) => {
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
+    // La comparacion "vs mes anterior" es a ventana igual: si hoy es 6 de
+    // octubre, se compara contra los primeros 6 dias de septiembre, no contra
+    // septiembre completo. Comparando 6 dias contra 30 el dashboard marcaba
+    // -81% aunque el consumo fuera normal.
+    const samePeriodEnd = new Date(
+      Math.min(
+        new Date(lastMonthStart.getFullYear(), lastMonthStart.getMonth(), now.getDate()).getTime(),
+        lastMonthEnd.getTime()
+      )
+    );
+
+    const lastMonthSamePeriod = await sequelize.query(
+      `
+      SELECT
+        COALESCE(SUM(accumulated_kwh_day), 0) AS total_kwh
+      FROM consumption_readings
+      WHERE user_id = :userId
+        AND reading_timestamp >= :start
+        AND reading_timestamp <= :end
+      `,
+      {
+        replacements: { userId: req.user.id, start: lastMonthStart, end: samePeriodEnd },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
     const currentMonth = await sequelize.query(
       `
       SELECT
@@ -41,6 +67,7 @@ exports.getOverview = async (req, res) => {
 
     const currentKwh = parseFloat(currentMonth[0].total_kwh) || 0;
     const lastKwh = parseFloat(lastMonth[0].total_kwh) || 0;
+    const lastSamePeriodKwh = parseFloat(lastMonthSamePeriod[0].total_kwh) || 0;
 
     let currentCost = 0;
     let lastCost = 0;
@@ -66,8 +93,8 @@ exports.getOverview = async (req, res) => {
     const daysInMonth = now.getDate();
     const dailyAverage = daysInMonth > 0 ? Math.round((currentKwh / daysInMonth) * 1000) / 1000 : 0;
 
-    const comparisonPercentage = lastKwh > 0
-      ? Math.round(((currentKwh - lastKwh) / lastKwh) * 100 * 100) / 100
+    const comparisonPercentage = lastSamePeriodKwh > 0
+      ? Math.round(((currentKwh - lastSamePeriodKwh) / lastSamePeriodKwh) * 100 * 100) / 100
       : null;
 
     res.json({
@@ -75,6 +102,7 @@ exports.getOverview = async (req, res) => {
       current_month_cost: Math.round(currentCost * 100) / 100,
       last_month_kwh: Math.round(lastKwh * 1000) / 1000,
       last_month_cost: Math.round(lastCost * 100) / 100,
+      last_month_same_period_kwh: Math.round(lastSamePeriodKwh * 1000) / 1000,
       total_devices: totalDevices,
       unread_alerts: unreadAlerts,
       daily_average_kwh: dailyAverage,

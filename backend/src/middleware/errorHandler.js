@@ -15,6 +15,16 @@ const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ error: 'Referenced record not found' });
   }
 
+  // Valor fuera del ENUM (ej: alert_type o severity inexistentes). Sin este
+  // caso Postgres devuelve un error de base de datos y el usuario recibe un
+  // 500 crudo en vez de un 400 que explique que campo esta mal.
+  if (err.name === 'SequelizeDatabaseError' && /invalid input value for enum/i.test(err.message || '')) {
+    return res.status(400).json({
+      error: 'Valor invalido para un campo de tipo enumerado',
+      details: err.message,
+    });
+  }
+
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({ error: 'Invalid token' });
   }
