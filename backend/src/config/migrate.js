@@ -1,4 +1,5 @@
 const sequelize = require('../config/database');
+const { explainDbError } = require('./env');
 
 require('../models');
 
@@ -9,7 +10,8 @@ const migrate = async () => {
     console.log('All tables recreated successfully.');
     process.exit(0);
   } catch (error) {
-    console.error('Migration failed:', error);
+    console.error('La migracion fallo.');
+    console.error(explainDbError(error));
     process.exit(1);
   }
 };

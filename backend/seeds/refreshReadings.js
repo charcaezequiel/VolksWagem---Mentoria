@@ -162,6 +162,7 @@ function lecturasDelDia(device, date, ahora) {
     await sequelize.close();
   } catch (e) {
     console.error('  ERROR: ' + e.message);
+    console.error(require('../src/config/env').explainDbError(e));
     await sequelize.close();
     process.exit(1);
   }

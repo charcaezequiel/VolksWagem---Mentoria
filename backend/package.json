@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "db:check": "node src/config/check.js",
     "db:migrate": "node src/config/migrate.js",
     "db:migrate:admin": "node src/config/migrateAdmin.js",
     "db:admin": "node seeds/createAdmin.js",

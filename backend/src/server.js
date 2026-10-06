@@ -25,6 +25,7 @@ const aiRoutes = require('./routes/ai');
 const sensorRoutes = require('./routes/sensor');
 const adminRoutes = require('./routes/admin');
 const { checkThreshold, checkPeakDetection } = require('./services/alertService');
+const { withRetry, explainDbError } = require('./config/env');
 
 const app = express();
 const server = http.createServer(app);
@@ -115,29 +116,51 @@ const PORT = process.env.PORT || 3001;
 
 const startServer = async () => {
   try {
-    await sequelize.authenticate();
+    // Reintenta solo errores de red transitorios (conexion inicial lenta,
+    // pooler levantandose). Un password malo o un SSL mal configurado cortan
+    // a la primera con el mensaje explicativo.
+    await withRetry(() => sequelize.authenticate(), { attempts: 3, delayMs: 2000, label: 'db' });
     console.log('Database connected.');
 
-    await sequelize.sync({ force: false });
-    console.log('Database synchronized.');
-
-    server.listen(PORT, '0.0.0.0', () => {
-      const nets = require('os').networkInterfaces();
-      const ips = [];
-      for (const name of Object.keys(nets)) {
-        for (const net of nets[name]) {
-          if (net.family === 'IPv4' && !net.internal) ips.push(net.address);
-        }
-      }
-      console.log(`Server running on port ${PORT} (0.0.0.0)`);
-      if (ips.length) {
-        console.log(`Network access: ${ips.map((ip) => `http://${ip}:${PORT}`).join(' | ')}`);
-      }
+    await withRetry(() => sequelize.sync({ force: false }), {
+      attempts: 2,
+      delayMs: 2000,
+      label: 'db sync',
     });
+    console.log('Database synchronized.');
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error(explainDbError(error));
+    console.error('  El servidor NO se inicia sin base de datos.');
+    console.error('  Corregí la configuracion (o completa backend/.env) y volve a arrancar:  npm run dev\n');
+    console.error('  Validacion rapida:  npm run db:check\n');
     process.exit(1);
   }
+
+  server.listen(PORT, '0.0.0.0', () => {
+    const nets = require('os').networkInterfaces();
+    const ips = [];
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]) {
+        if (net.family === 'IPv4' && !net.internal) ips.push(net.address);
+      }
+    }
+    console.log(`Server running on port ${PORT} (0.0.0.0)`);
+    if (ips.length) {
+      console.log(`Network access: ${ips.map((ip) => `http://${ip}:${PORT}`).join(' | ')}`);
+    }
+  }).on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error('');
+      console.error(`  El puerto ${PORT} ya esta en uso.`);
+      console.error('  Probablemente ya haya otro backend corriendo. Opciones:');
+      console.error(`    - Detenelo:  Get-NetTCPConnection -LocalPort ${PORT} | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }`);
+      console.error('    - O arranca este con otro puerto:  $env:PORT=3002; npm run dev');
+      console.error('');
+    } else {
+      console.error(`\n  No se pudo escuchar en el puerto ${PORT}: ${error.message}\n`);
+    }
+    process.exit(1);
+  });
 };
 
 startServer();

@@ -853,7 +853,8 @@ async function seed() {
     await sequelize.close();
     console.log('Connection closed.');
   } catch (error) {
-    console.error('Seed failed:', error);
+    console.error('Seed failed.');
+    console.error(require('../src/config/env').explainDbError(error));
     await sequelize.close();
     process.exit(1);
   }

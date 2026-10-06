@@ -4,7 +4,15 @@ const path = require('path');
 const dns = require('dns');
 require('dotenv').config();
 
-const isCloudDB = process.env.DB_HOST && !process.env.DB_HOST.includes('localhost');
+const { abortOnBadConfig, isLocalHost } = require('./env');
+
+// Un .env incompleto o con placeholders hoy produce un ECONNREFUSED cryptico
+// (Sequelize cae a localhost:5432). Corta antes de construir la conexion y
+// explica que falta, con la ruta del archivo y como completarlo.
+abortOnBadConfig();
+
+// Hosts locales: PostgreSQL en esta maquina (sin TLS obligatorio).
+const isCloudDB = process.env.DB_HOST && !isLocalHost(process.env.DB_HOST);
 if (isCloudDB) {
   dns.setServers(['8.8.8.8', '8.8.4.4']);
 }

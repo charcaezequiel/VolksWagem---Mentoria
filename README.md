@@ -821,6 +821,7 @@ chmod +x start.sh && ./start.sh
 | `npm run db:migrate` | Ejecuta la migracion de tablas |
 | `npm run db:seed` | Carga datos iniciales |
 | `npm run db:seed:readings` | Regenera solo las lecturas de consumo de los ultimos 62 dias |
+| `npm run db:check` | Valida `backend/.env` y prueba la conexion sin arrancar el servidor |
 | `npm run db:reset` | Resetea la base: migra + seed |
 
 > `db:seed` arranca con un `sync({ force: true })`, asi que **borra la base
@@ -1207,6 +1208,18 @@ Sesion de OpenCode (build) + Cursor: se desbloqueo el backend contra PostgreSQL 
 ---
 
 ## Problemas encontrados y soluciones
+
+### Chequeo previo: `npm run db:check` (errores de arranque sin stack traces)
+
+**Problema:** cuando `backend/.env` no existe, esta incompleto o tiene placeholders (`[YOUR-PASSWORD]`), Sequelize cae a `localhost:5432` y el arranque revienta con `SequelizeConnectionRefusedError: ECONNREFUSED` y el stack trace completo. Los mismos ejemplos con `28P01` (password malo), `SELF_SIGNED_CERT_IN_CHAIN` (TLS) o `EADDRINUSE` (puerto ocupado).
+
+**Solucion aplicada:**
+
+- `backend/src/config/env.js` valida `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` **antes** de construir la conexion. Si falta algo o queda un placeholder, el proceso corta con un mensaje que dice que variable falta, en que archivo y como completarla (más avisos: host local, SSL sin validar, CORS vacio).
+- Los errores que llegan igual (red caida, password incorrecto, certificado, puerto ocupado) se traducen a **causa probable + pasos** con `explainDbError()`, sin stack trace.
+- Reintentos automaticos (3 intentos) solo para fallos de red transitorios; autenticacion y SSL cortan a la primera.
+- `backend/.env` se carga aunque el proceso se lance desde la raiz del repo (antes solo se leia si el cwd era `backend/`).
+- Comando nuevo: **`npm run db:check`** valida la configuracion, prueba la conexion y cuenta las tablas sin arrancar el servidor.
 
 ### 1. Supabase IPv6-only -> Connection Pooler (resuelto)
 
