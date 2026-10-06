@@ -21,8 +21,10 @@ const register = [
     .isLength({ max: PASSWORD_POLICY.maxLength }).withMessage(`Password must be at most ${PASSWORD_POLICY.maxLength} characters`)
     .bail()
     .matches(PASSWORD_POLICY.regex).withMessage('Password must include an uppercase letter, a lowercase letter, a number and a symbol'),
+  /* El confirm del password es control de la interfaz (evita typos al tipear),
+     no un requisito de la API: no se exige, pero si viene tiene que coincidir. */
   body('confirmPassword')
-    .notEmpty().withMessage('Confirm password is required')
+    .optional()
     .custom((value, { req }) => value === req.body.password).withMessage('Passwords do not match'),
 ];
 
